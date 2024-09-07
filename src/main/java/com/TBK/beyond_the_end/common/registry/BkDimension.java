@@ -10,7 +10,7 @@ import net.minecraft.world.level.dimension.LevelStem;
 
 
 public class BkDimension{
-    private final static ResourceLocation BEYOND_END_ID = new ResourceLocation(BeyondTheEnd.MODID,"the_new_end");
+    public final static ResourceLocation BEYOND_END_ID = new ResourceLocation(BeyondTheEnd.MODID,"the_new_end");
 
     public static final ResourceKey<Level> BEYOND_END_LEVEL = ResourceKey.create(Registry.DIMENSION_REGISTRY, BEYOND_END_ID);
     public static final ResourceKey<DimensionType> BEYOND_END_TYPE = ResourceKey.create(Registry.DIMENSION_TYPE_REGISTRY, BEYOND_END_ID);

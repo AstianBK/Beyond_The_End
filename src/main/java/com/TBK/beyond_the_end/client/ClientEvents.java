@@ -24,14 +24,18 @@ public class ClientEvents {
             //another mod has cancelled fog rendering.
             return;
         }
+        float end=RenderSystem.getShaderFogEnd();
         float defaultNearPlaneDistance = RenderSystem.getShaderFogStart();
 
         Entity player = Minecraft.getInstance().getCameraEntity();
         if (player.level.getBiome(player.getOnPos()).is(BKBiome.BOSS_FIGHT)) {
-            float nearness = -0.98F;
+            float nearness = -0.2F;
             boolean flag = Math.abs(nearness) - 1.0F < 0.01F;
+            float farness = 0.3F;
+
             if (flag) {
                 event.setCanceled(true);
+                event.setFarPlaneDistance(end * farness);
                 event.setNearPlaneDistance(defaultNearPlaneDistance * nearness);
             }
         }

@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model":"beyond_the_end:block/glowing_energy_streak",
+      "y": 90
+    },
+    "facing=north": {
+      "model":"beyond_the_end:block/glowing_energy_streak"
+    },
+    "facing=south": {
+      "model":"beyond_the_end:block/glowing_energy_streak",
+      "y": 180
+    },
+    "facing=west": {
+      "model":"beyond_the_end:block/glowing_energy_streak",
+      "y": 270
+    }
+  }
+}

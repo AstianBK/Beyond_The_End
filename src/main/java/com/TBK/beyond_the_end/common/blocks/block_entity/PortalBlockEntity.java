@@ -13,7 +13,7 @@ public class PortalBlockEntity extends TheEndPortalBlockEntity {
     }
 
     public PortalBlockEntity(BlockPos p_155859_, BlockState p_155860_) {
-        this(BkBlockEntity.BOSS_ROOM.get(), p_155859_, p_155860_);
+        this(BkBlockEntity.PORTAL.get(), p_155859_, p_155860_);
     }
 
     public boolean shouldRenderFace(Direction p_59980_) {

@@ -1,5 +1,6 @@
 package com.TBK.beyond_the_end.client;
 
+import com.TBK.beyond_the_end.BeyondTheEnd;
 import com.TBK.beyond_the_end.server.world.biome.BKBiome;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
@@ -10,6 +11,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.client.event.RegisterDimensionSpecialEffectsEvent;
 import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -40,5 +42,7 @@ public class ClientEvents {
             }
         }
     }
+
+
 
 }

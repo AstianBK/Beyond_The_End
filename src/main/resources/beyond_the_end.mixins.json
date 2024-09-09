@@ -7,7 +7,6 @@
   "mixins": [
     "EndDragonFightMixins",
     "EntityAccesor",
-    "EntityMixin",
     "LevelAccesor",
     "ServerLevelAccesor"
   ],

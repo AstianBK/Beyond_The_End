@@ -1,5 +1,6 @@
 package com.TBK.beyond_the_end.common.blocks;
 
+import com.TBK.beyond_the_end.common.blocks.block_entity.PortalBlockEntity;
 import com.TBK.beyond_the_end.common.registry.BkDimension;
 import com.TBK.beyond_the_end.server.capabilities.BkCapabilities;
 import com.TBK.beyond_the_end.server.capabilities.PortalPlayer;
@@ -19,9 +20,11 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -31,7 +34,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.common.util.LazyOptional;
 
-public class PortalBlock extends Block {
+public class PortalBlock extends BaseEntityBlock {
     public static final EnumProperty<Direction.Axis> AXIS = BlockStateProperties.HORIZONTAL_AXIS;
     protected static final VoxelShape X_AXIS_AABB = Block.box(0.0, 0.0, 6.0, 16.0, 16.0, 10.0);
     protected static final VoxelShape Z_AXIS_AABB = Block.box(6.0, 0.0, 0.0, 10.0, 16.0, 16.0);
@@ -157,9 +160,10 @@ public class PortalBlock extends Block {
         return !flag && !facingState.is(this) && !(new PortalShape(level, currentPos, blockAxis).isComplete()) ? Blocks.AIR.defaultBlockState() : super.updateShape(state, direction, facingState, level, currentPos, facingPos);
     }
 
-    /**
-     * Warning for "deprecation" is suppressed because the method is fine to override.
-     */
+    @Override
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new PortalBlockEntity(pos, state);
+    }
     @SuppressWarnings("deprecation")
     @Override
     public ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state) {

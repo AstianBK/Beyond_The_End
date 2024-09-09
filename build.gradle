@@ -18,6 +18,10 @@ plugins {
     id 'maven-publish'
     id 'net.minecraftforge.gradle' version '[6.0,6.2)'
 }
+apply plugin: 'org.spongepowered.mixin'
+mixin {
+    add sourceSets.main, "beyond_the_end.refmap.json"
+}
 
 version = mod_version
 group = mod_group_id
@@ -56,15 +60,17 @@ minecraft {
         }
 
         client {
-            // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
             property 'forge.enabledGameTestNamespaces', mod_id
 
             arg "-mixin.config=beyond_the_end.mixins.json"
+            property "mixin.env.remapRefMap", "true"
+
 
         }
 
         server {
             property 'forge.enabledGameTestNamespaces', mod_id
+            property "mixin.env.remapRefMap", "true"
             arg "-mixin.config=beyond_the_end.mixins.json"
 
             args '--nogui'

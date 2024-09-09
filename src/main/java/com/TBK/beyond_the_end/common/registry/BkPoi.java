@@ -17,6 +17,7 @@ public class BkPoi {
     public static final RegistryObject<PoiType> PORTAL = POI.register("portal", () -> new PoiType(getBlockStates(BkCommonRegistry.PORTAL.get()), 0, 1));
 
     private static Set<BlockState> getBlockStates(Block block) {
+
         return ImmutableSet.copyOf(block.getStateDefinition().getPossibleStates());
     }
 }

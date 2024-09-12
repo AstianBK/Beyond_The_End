@@ -7,6 +7,9 @@
   "block.beyond_the_end.cobbled_tephrite": "Cobbled Tephrite",
   "block.beyond_the_end.smooth_tephrite": "Tephrite",
 
+  "itemGroup.beyond_the_end.bk_tab": "Beyond The End",
+
   "block.beyond_the_end.glowing_energy_streak": "Energy Streak",
-  "block.beyond_the_end.glowing_energy": "Energy Dot"
+  "block.beyond_the_end.glowing_energy": "Energy Dot",
+  "block.beyond_the_end.portal": "Beyond The End Portal"
 }

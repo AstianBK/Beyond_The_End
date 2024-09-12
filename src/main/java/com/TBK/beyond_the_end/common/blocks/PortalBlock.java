@@ -36,8 +36,7 @@ import net.minecraftforge.common.util.LazyOptional;
 
 public class PortalBlock extends BaseEntityBlock {
     public static final EnumProperty<Direction.Axis> AXIS = BlockStateProperties.HORIZONTAL_AXIS;
-    protected static final VoxelShape X_AXIS_AABB = Block.box(0.0, 0.0, 6.0, 16.0, 16.0, 10.0);
-    protected static final VoxelShape Z_AXIS_AABB = Block.box(6.0, 0.0, 0.0, 10.0, 16.0, 16.0);
+    protected static final VoxelShape SHAPE = Block.box(0.0D, 6.0D, 0.0D, 16.0D, 12.0D, 16.0D);
 
     public PortalBlock(Properties properties) {
         super(properties);
@@ -92,9 +91,6 @@ public class PortalBlock extends BaseEntityBlock {
         }
     }
 
-    /**
-     * [CODE COPY] - {@link net.minecraft.world.level.block.NetherPortalBlock#animateTick(BlockState, Level, BlockPos, RandomSource)}.
-     */
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
         if (random.nextInt(100) == 0) {
@@ -119,33 +115,11 @@ public class PortalBlock extends BaseEntityBlock {
         }
     }
 
-    /**
-     * Warning for "deprecation" is suppressed because the method is fine to override.
-     */
-    @SuppressWarnings("deprecation")
-    @Override
-    public BlockState rotate(BlockState state, Rotation rotation) {
-        return switch (rotation) {
-            case COUNTERCLOCKWISE_90, CLOCKWISE_90 -> switch (state.getValue(AXIS)) {
-                case Z -> state.setValue(AXIS, Direction.Axis.X);
-                case X -> state.setValue(AXIS, Direction.Axis.Z);
-                default -> state;
-            };
-            default -> state;
-        };
-    }
 
-    /**
-     * Warning for "deprecation" is suppressed because the method is fine to override.
-     */
     @SuppressWarnings("deprecation")
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        if (state.getValue(AXIS) == Direction.Axis.Z) {
-            return Z_AXIS_AABB;
-        } else {
-            return X_AXIS_AABB;
-        }
+        return SHAPE;
     }
 
     /**

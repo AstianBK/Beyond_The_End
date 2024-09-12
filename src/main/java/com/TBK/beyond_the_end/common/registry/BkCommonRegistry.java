@@ -58,7 +58,7 @@ public class BkCommonRegistry {
     }
 
     private static <T extends  Block> void registerBlockItem(String name, RegistryObject<T> block) {
-        ITEMS.register(name, () -> new BlockItem(block.get(), new Item.Properties().tab(CreativeModeTab.TAB_BUILDING_BLOCKS)));
+        ITEMS.register(name, () -> new BlockItem(block.get(), new Item.Properties().tab(BKCreativeModeTab.BK_TAB)));
     }
 
 

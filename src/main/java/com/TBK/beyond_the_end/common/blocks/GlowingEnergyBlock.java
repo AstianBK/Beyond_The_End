@@ -25,8 +25,6 @@ public class GlowingEnergyBlock extends Block {
 
     @Nullable
     public BlockState getStateForPlacement(BlockPlaceContext p_56872_) {
-        Direction direction = p_56872_.getClickedFace();
-        BlockPos blockpos = p_56872_.getClickedPos();
         BlockState blockstate = this.defaultBlockState().setValue(FACING, p_56872_.getHorizontalDirection());
         return blockstate;
 

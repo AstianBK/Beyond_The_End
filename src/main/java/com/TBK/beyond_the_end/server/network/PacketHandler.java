@@ -1,9 +1,7 @@
 package com.TBK.beyond_the_end.server.network;
 
 import com.TBK.beyond_the_end.BeyondTheEnd;
-import com.TBK.beyond_the_end.server.network.message.PacketLeavingDimension;
-import com.TBK.beyond_the_end.server.network.message.PacketSync;
-import com.TBK.beyond_the_end.server.network.message.PacketTravelDimension;
+import com.TBK.beyond_the_end.server.network.message.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
@@ -34,6 +32,17 @@ public class PacketHandler {
 
         channel.registerMessage(index++, PacketSync.class, PacketSync::write,
                 PacketSync::new, PacketSync::handle);
+
+        channel.registerMessage(index++, PacketTargetDragon.class, PacketTargetDragon::write,
+                PacketTargetDragon::new, PacketTargetDragon::handle);
+        channel.registerMessage(index++, PacketTargetAttack.class, PacketTargetAttack::write,
+                PacketTargetAttack::new, PacketTargetAttack::handle);
+
+        channel.registerMessage(index++, PacketFlameParticles.class, PacketFlameParticles::write,
+                PacketFlameParticles::new, PacketFlameParticles::handle);
+
+
+
 
 
 

@@ -1,7 +1,0 @@
-{
-  "type": "beyond_the_end:spike_boss",
-  "config": {
-    "crystal_invulnerable": false,
-    "spikes": []
-  }
-}

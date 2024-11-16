@@ -2,15 +2,18 @@ package com.TBK.beyond_the_end.server;
 
 import com.TBK.beyond_the_end.BeyondTheEnd;
 import com.TBK.beyond_the_end.common.DimensionUtil;
+import com.TBK.beyond_the_end.common.registry.BkDimension;
 import com.TBK.beyond_the_end.server.capabilities.BkCapabilities;
 import com.TBK.beyond_the_end.server.capabilities.PortalPlayer;
 import com.TBK.beyond_the_end.server.capabilities.PortalPlayerCapability;
+import com.TBK.beyond_the_end.server.entity.FallenDragonFight;
 import com.TBK.beyond_the_end.server.network.PacketHandler;
 import com.TBK.beyond_the_end.server.network.message.PacketSync;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -18,7 +21,11 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.dimension.BuiltinDimensionTypes;
+import net.minecraft.world.level.dimension.end.EndDragonFight;
+import net.minecraft.world.level.levelgen.structure.StructureCheck;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.TickEvent;
@@ -94,6 +101,19 @@ public class Events {
         Level level = event.level;
         if (event.side == LogicalSide.SERVER && event.phase == TickEvent.Phase.END) {
             DimensionUtil.tickTime(level);
+            if(BeyondTheEnd.bossFight!=null){
+                //BeyondTheEnd.LOGGER.debug("Se esta dando la batalla cultural");
+                BeyondTheEnd.bossFight.tick();
+            }else {
+                //BeyondTheEnd.LOGGER.debug("La batalla es null");
+                if(level.getServer()!=null && level.dimensionTypeRegistration().is(BkDimension.BEYOND_END_TYPE)){
+                    long i = level.getServer().getWorldData().worldGenSettings().seed();
+                    BeyondTheEnd.bossFight = new FallenDragonFight((ServerLevel) level, i, level.getServer().getWorldData().endDragonFightData());
+                    BeyondTheEnd.bossFight.setPortalLocation(BeyondTheEnd.bossFight.getStructure().getCentre());
+                }else {
+                    BeyondTheEnd.bossFight=null;
+                }
+            }
         }
     }
 

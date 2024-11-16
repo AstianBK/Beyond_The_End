@@ -11,4 +11,7 @@ public interface ServerLevelAccesor {
     @Mutable
     @Accessor("serverLevelData")
     public void setServerLevelData(ServerLevelData data);
+
+    @Accessor("serverLevelData")
+    public ServerLevelData get$ServerLevelData();
 }

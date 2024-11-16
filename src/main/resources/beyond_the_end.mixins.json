@@ -5,6 +5,7 @@
   "minVersion": "0.8",
   "refmap": "beyond_the_end.refmap.json",
   "mixins": [
+    "EnderDragonMixin",
     "EntityAccesor",
     "LevelAccesor",
     "ServerLevelAccesor"

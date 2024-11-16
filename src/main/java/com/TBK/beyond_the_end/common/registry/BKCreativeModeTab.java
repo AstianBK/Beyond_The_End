@@ -35,7 +35,8 @@ public class BKCreativeModeTab {
                 BkCommonRegistry.COBBLED_TEPHRITE.get().asItem(),BkCommonRegistry.CRATERED_DIABASE.get().asItem(),
                 BkCommonRegistry.SMOOTH_DIABASE.get().asItem(),
                 BkCommonRegistry.SMOOTH_TEPHRITE.get().asItem(),
-                BkCommonRegistry.PORTAL.get().asItem()
+                BkCommonRegistry.PORTAL.get().asItem(),
+                BkCommonRegistry.FALLEN_DRAGON_SPAWN_EGG.get()
         );
 
         stackComparator= Ordering.explicit(itemList).onResultOf(ItemStack::getItem);

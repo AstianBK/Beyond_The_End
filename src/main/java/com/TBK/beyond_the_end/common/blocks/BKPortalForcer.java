@@ -178,15 +178,6 @@ public class BKPortalForcer implements ITeleporter {
             blockPos = (new BlockPos(pos.getX(), Mth.clamp(pos.getY(), k1, i2), pos.getZ())).immutable();
         }
 
-        i = blockPos.getX();
-        int j = blockPos.getY() - 2;
-        int k = blockPos.getZ();
-        BlockPos.betweenClosed(i - 2, j + 1, k - 2, i + 2, j + 3, k + 2).forEach((p_207578_) -> {
-            this.level.setBlockAndUpdate(p_207578_, Blocks.AIR.defaultBlockState());
-        });
-        BlockPos.betweenClosed(i - 2, j, k - 2, i + 2, j, k + 2).forEach((p_184101_) -> {
-            this.level.setBlockAndUpdate(p_184101_, Blocks.OBSIDIAN.defaultBlockState());
-        });
         return Optional.of(new BlockUtil.FoundRectangle(blockPos.immutable(), 2, 3));
     }
 

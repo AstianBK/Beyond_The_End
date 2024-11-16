@@ -1,23 +1,18 @@
 package com.TBK.beyond_the_end.client;
 
-import com.TBK.beyond_the_end.BeyondTheEnd;
+import com.TBK.beyond_the_end.client.particle.BKParticles;
+import com.TBK.beyond_the_end.client.particle.custom.FlameParticles;
 import com.TBK.beyond_the_end.server.world.biome.BKBiome;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.DimensionSpecialEffects;
-import net.minecraft.client.renderer.FogRenderer;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.particle.DragonBreathParticle;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.event.RegisterDimensionSpecialEffectsEvent;
+import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
 import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-
-import javax.annotation.Nullable;
 
 public class ClientEvents {
     @SubscribeEvent(priority = EventPriority.LOWEST)
@@ -36,13 +31,12 @@ public class ClientEvents {
             float farness = 0.3F;
 
             if (flag) {
-                event.setCanceled(true);
-                event.setFarPlaneDistance(end * farness);
-                event.setNearPlaneDistance(defaultNearPlaneDistance * nearness);
+                //event.setCanceled(true);
+                //event.setFarPlaneDistance(end * farness);
+                //event.setNearPlaneDistance(defaultNearPlaneDistance * nearness);
             }
         }
     }
-
 
 
 }

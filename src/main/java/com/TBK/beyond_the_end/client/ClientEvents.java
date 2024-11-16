@@ -31,9 +31,9 @@ public class ClientEvents {
             float farness = 0.3F;
 
             if (flag) {
-                //event.setCanceled(true);
-                //event.setFarPlaneDistance(end * farness);
-                //event.setNearPlaneDistance(defaultNearPlaneDistance * nearness);
+                event.setCanceled(true);
+                event.setFarPlaneDistance(end * farness);
+                event.setNearPlaneDistance(defaultNearPlaneDistance * nearness);
             }
         }
     }

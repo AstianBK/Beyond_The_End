@@ -24,6 +24,6 @@ public class Events {
                 return true;
             }
         };
-        //event.register(new ResourceLocation(BeyondTheEnd.MODID, "the_new_end"), effects1);
+        event.register(new ResourceLocation(BeyondTheEnd.MODID, "the_new_end"), effects1);
     }
 }

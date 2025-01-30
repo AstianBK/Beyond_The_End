@@ -16,20 +16,19 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 public class PacketSync implements Packet<PacketListener> {
-    private final Player player;
+    private final int charge;
     public PacketSync(FriendlyByteBuf buf) {
-        assert Minecraft.getInstance().level!=null;
-        this.player=Minecraft.getInstance().level.getPlayerByUUID(buf.readUUID());
+        this.charge=buf.readInt();
 
     }
 
-    public PacketSync(Player player) {
-        this.player=player;
+    public PacketSync(int charge) {
+        this.charge=charge;
     }
 
     @Override
     public void write(FriendlyByteBuf buf) {
-        buf.writeUUID(this.player.getUUID());
+        buf.writeInt(this.charge);
     }
 
     public void handle(Supplier<NetworkEvent.Context> context) {
@@ -42,8 +41,11 @@ public class PacketSync implements Packet<PacketListener> {
 
     @OnlyIn(Dist.CLIENT)
     private void handlerAnim() {
-        PortalPlayer.get(this.player).ifPresent(portalPlayer -> {
-            portalPlayer.setPlayer(this.player);
+        Minecraft mc = Minecraft.getInstance();
+        assert mc.player!=null;
+        PortalPlayer.get(mc.player).ifPresent(portalPlayer -> {
+            portalPlayer.setPlayer(mc.player);
+            portalPlayer.setCharge(this.charge);
         });
     }
 

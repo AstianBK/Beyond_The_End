@@ -4,6 +4,7 @@ import com.TBK.beyond_the_end.common.blocks.block_entity.PortalBlockEntity;
 import com.TBK.beyond_the_end.common.registry.BkDimension;
 import com.TBK.beyond_the_end.server.capabilities.BkCapabilities;
 import com.TBK.beyond_the_end.server.capabilities.PortalPlayer;
+import com.TBK.beyond_the_end.server.capabilities.PortalPlayerCapability;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
@@ -60,7 +61,7 @@ public class PortalBlock extends BaseEntityBlock {
                 if (!entity.level.isClientSide() && !pos.equals(entityAccessor.portalEntrancePos)) {
                     entityAccessor.portalEntrancePos=pos.immutable();
                 }
-                LazyOptional<PortalPlayer> aetherPlayer = entity.getCapability(BkCapabilities.PORTAL_PLAYER_CAPABILITY);
+                LazyOptional<PortalPlayerCapability> aetherPlayer = entity.getCapability(BkCapabilities.PORTAL_PLAYER_CAPABILITY);
                 if (!aetherPlayer.isPresent()) {
                     this.handleTeleportation(entity);
                 } else {

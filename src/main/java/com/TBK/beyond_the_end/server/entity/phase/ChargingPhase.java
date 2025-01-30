@@ -46,12 +46,12 @@ public class ChargingPhase extends AbstractDragonPhaseInstance{
             this.playSkyfall();
         } else {
             double d0 = this.targetLocation.distanceToSqr(this.dragon.getX(), this.dragon.getY(), this.dragon.getZ());
-            if (d0 < 100.0D || d0 > 22500.0D || this.dragon.horizontalCollision || this.dragon.verticalCollision) {
+            if (d0 < 100.0D || d0 > 22500.0D) {
                 ++this.timeSinceCharge;
             }
+            this.targetLocation=this.target.position();
             float dx = this.dragon.distanceTo(target);
             Vec3 vector3d1 = new Vec3(target.getX() - this.dragon.getX(), 0.0D, target.getZ() - this.dragon.getZ());
-
 
             if(dx < 1024D && !this.dragon.isCharging){
                 if (vector3d1.lengthSqr() > 1.0E-7D) {
@@ -67,18 +67,20 @@ public class ChargingPhase extends AbstractDragonPhaseInstance{
         }
     }
 
-    private void playSkyfall() {
+    public void playSkyfall() {
         if(this.target!=null){
+            int random = this.dragon.getRandom().nextInt(0,4);
+            int x= (int) ((target.getX())) + this.dragon.posX[random]*this.dragon.getRandom().nextInt(16,64);
+            int z= (int) ((target.getZ())) + this.dragon.posZ[random]*this.dragon.getRandom().nextInt(16,64);
+            this.dragon.teleportTo(x,85,z);
             this.dragon.phaseManager.setPhase(FallenDragonPhase.SKYFALL);
             this.dragon.phaseManager.getPhase(FallenDragonPhase.SKYFALL).setTarget(this.target);
             PacketHandler.sendToAllTracking(new PacketTargetDragon(this.dragon.getId(),this.target.getId(),0),this.dragon);
+        }else {
+            this.dragon.phaseManager.setPhase(FallenDragonPhase.HOLDING_PATTERN);
         }
     }
 
-    @Override
-    public void end() {
-        this.timeSinceCharge=0;
-    }
 
     public void begin() {
         this.targetLocation = null;
@@ -91,7 +93,7 @@ public class ChargingPhase extends AbstractDragonPhaseInstance{
     }
 
     public float getFlySpeed() {
-        return 3.0F;
+        return 5.0F;
     }
 
     @Nullable

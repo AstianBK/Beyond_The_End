@@ -124,7 +124,6 @@ public class FallenDragonRenderer<T extends FallenDragonEntity> extends GeoEntit
                 getTextureLocation(animatable));
         if(animatable.isRespawn()){
             float porcent=1.0F-((RespawnPhase)animatable.phaseManager.getCurrentPhase()).porcentTimer();
-            System.out.print("\n"+porcent+"\n");
             render(model,
                     animatable, partialTick, RenderType.dragonExplosionAlpha(DRAGON_EXPLODING_LOCATION), poseStack, bufferSource, bufferSource.getBuffer(RenderType.dragonExplosionAlpha(DRAGON_EXPLODING_LOCATION)),
                     packedLight, LivingEntityRenderer.getOverlayCoords(animatable, 0), 1, 1,1, porcent);
@@ -132,7 +131,7 @@ public class FallenDragonRenderer<T extends FallenDragonEntity> extends GeoEntit
             RandomSource randomsource = RandomSource.create(432L);
             VertexConsumer vertexconsumer2 = bufferSource.getBuffer(RenderType.lightning());
             poseStack.pushPose();
-            poseStack.translate(0.0D, -1.0D, -2.0D);
+            poseStack.translate(0.0D, 3.0D, -2.0D);
 
             for(int i = 0; (float)i < (porcent + porcent * porcent) / 2.0F * 60.0F; ++i) {
                 poseStack.mulPose(Vector3f.XP.rotationDegrees(randomsource.nextFloat() * 360.0F));

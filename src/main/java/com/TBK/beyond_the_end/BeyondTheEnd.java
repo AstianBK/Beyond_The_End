@@ -4,13 +4,17 @@ import com.TBK.beyond_the_end.client.ClientProxy;
 import com.TBK.beyond_the_end.client.particle.BKParticles;
 import com.TBK.beyond_the_end.client.particle.custom.FlameParticles;
 import com.TBK.beyond_the_end.client.renderer.FallenDragonRenderer;
+import com.TBK.beyond_the_end.client.renderer.JellyfishRenderer;
 import com.TBK.beyond_the_end.common.registry.*;
 import com.TBK.beyond_the_end.server.entity.FallenDragonFight;
 import com.TBK.beyond_the_end.server.network.PacketHandler;
 import com.TBK.beyond_the_end.server.world.BKConfigFeatures;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.particle.DragonBreathParticle;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.client.renderer.entity.EntityRenderers;
+import net.minecraft.client.renderer.entity.SlimeRenderer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -63,11 +67,14 @@ public class BeyondTheEnd
             BeyondTheEnd.bossFight.saveData();
         }
     }
+
     @OnlyIn(Dist.CLIENT)
     public void registerRenderers(FMLCommonSetupEvent event){
         EntityRenderers.register(BKEntityType.FALLEN_DRAGON.get(), FallenDragonRenderer::new);
+        EntityRenderers.register(BKEntityType.JELLYFISH.get(), JellyfishRenderer::new);
 
     }
+
     @OnlyIn(Dist.CLIENT)
     public void registerParticleFactories(RegisterParticleProvidersEvent event) {
         if(BKParticles.FLAME_PARTICLE.isPresent()){

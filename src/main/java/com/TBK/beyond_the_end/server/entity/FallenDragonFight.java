@@ -29,6 +29,7 @@ import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
 import net.minecraft.world.entity.boss.enderdragon.phases.EnderDragonPhase;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -74,18 +75,12 @@ public class FallenDragonFight extends EndDragonFight {
     private BlockPos portalLocation;
     @Nullable
     private DragonRespawnAnimation respawnStage;
-    private final Structure structure;
     private int respawnTime;
     @Nullable
     private List<EndCrystal> respawnCrystals;
 
     public FallenDragonFight(ServerLevel p_64078_, long p_64079_, CompoundTag p_64080_) {
         super(p_64078_,p_64079_,p_64080_);
-        if(p_64080_.contains("structures")){
-            this.structure=new Structure(p_64080_);
-        }else {
-            this.structure=new Structure();
-        }
         this.level = p_64078_;
         if (p_64080_.contains("NeedsStateScanning")) {
             this.needsStateScanning = p_64080_.getBoolean("NeedsStateScanning");
@@ -114,14 +109,9 @@ public class FallenDragonFight extends EndDragonFight {
         this.exitPortalPattern = BlockPatternBuilder.start().aisle("       ", "       ", "       ", "   #   ", "       ", "       ", "       ").aisle("       ", "       ", "       ", "   #   ", "       ", "       ", "       ").aisle("       ", "       ", "       ", "   #   ", "       ", "       ", "       ").aisle("  ###  ", " #   # ", "#     #", "#  #  #", "#     #", " #   # ", "  ###  ").aisle("       ", "  ###  ", " ##### ", " ##### ", " ##### ", "  ###  ", "       ").where('#', BlockInWorld.hasState(BlockPredicate.forBlock(Blocks.BEDROCK))).build();
     }
 
-    public Structure getStructure(){
-        return this.structure;
-    }
-
     public CompoundTag saveData() {
         CompoundTag compoundtag = new CompoundTag();
         compoundtag.putBoolean("NeedsStateScanning", this.needsStateScanning);
-        compoundtag.put("structures",this.structure.serialise());
         if (this.dragonUUID != null) {
             compoundtag.putUUID("Dragon", this.dragonUUID);
         }
@@ -146,7 +136,7 @@ public class FallenDragonFight extends EndDragonFight {
         }
 
         if (!this.dragonEvent.getPlayers().isEmpty()) {
-            this.level.getChunkSource().addRegionTicket(TicketType.DRAGON, new ChunkPos(0, 0), 9, Unit.INSTANCE);
+            this.level.getChunkSource().addRegionTicket(TicketType.DRAGON, new ChunkPos(0, 0), 14, Unit.INSTANCE);
             boolean flag = this.isArenaLoaded();
             if (this.needsStateScanning && flag) {
                 this.scanState();
@@ -165,7 +155,7 @@ public class FallenDragonFight extends EndDragonFight {
                 }
             }
         } else {
-            this.level.getChunkSource().removeRegionTicket(TicketType.DRAGON, new ChunkPos(0, 0), 9, Unit.INSTANCE);
+            this.level.getChunkSource().removeRegionTicket(TicketType.DRAGON, new ChunkPos(0, 0), 14, Unit.INSTANCE);
         }
     }
 
@@ -348,14 +338,17 @@ public class FallenDragonFight extends EndDragonFight {
     }
 
     private FallenDragonEntity createNewDragon() {
-        this.level.getChunkAt(this.portalLocation);
-        FallenDragonEntity enderdragon = BKEntityType.FALLEN_DRAGON.get().create(this.level);
-        enderdragon.moveTo(this.portalLocation.getX(),this.portalLocation.getY()+5.0D,this.portalLocation.getZ(), this.level.random.nextFloat() * 360.0F, 0.0F);
-        enderdragon.phaseManager.setPhase(FallenDragonPhase.RESPAWN);
-        enderdragon.level.broadcastEntityEvent(enderdragon,(byte) 66);
-        this.level.addFreshEntity(enderdragon);
-        this.dragonUUID = enderdragon.getUUID();
-        return enderdragon;
+        if(this.portalLocation!=null){
+            this.level.getChunkAt(this.portalLocation);
+            FallenDragonEntity enderdragon = BKEntityType.FALLEN_DRAGON.get().create(this.level);
+            enderdragon.moveTo(this.portalLocation.getX(),this.portalLocation.getY()+40.0D,this.portalLocation.getZ(), this.level.random.nextFloat() * 360.0F, 0.0F);
+            enderdragon.phaseManager.setPhase(FallenDragonPhase.RESPAWN);
+            enderdragon.level.broadcastEntityEvent(enderdragon,(byte) 66);
+            this.level.addFreshEntity(enderdragon);
+            this.dragonUUID = enderdragon.getUUID();
+            return enderdragon;
+        }
+        return null;
     }
 
     public void updateDragon(FallenDragonEntity p_64097_) {
@@ -449,10 +442,42 @@ public class FallenDragonFight extends EndDragonFight {
     public void removePlayer(ServerPlayer player) {
         this.dragonEvent.removePlayer(player);
     }
+    public static class StructureManager implements Savable{
+        private Structure structure;
 
-    public static ServerLevel getDimension() {
-        return BeyondTheEnd.getServer().getLevel(BkDimension.BEYOND_END_LEVEL);
+        public StructureManager() {}
+        public StructureManager(CompoundTag data) {
+            this.deserialise(data);
+        }
+
+        @Override
+        public CompoundTag serialise() {
+            CompoundTag data = new CompoundTag();
+
+            data.put("Structure", this.getStructure().serialise());
+
+            return data;
+        }
+
+        @Override
+        public void deserialise(CompoundTag data) {
+            this.structure = new Structure(data.getCompound("Structure"));
+        }
+
+        public Structure getStructure() {
+            if (this.structure == null) {
+                BeyondTheEnd.LOGGER.warn("Missing realm structure! Creating..");
+                this.structure = new Structure();
+            }
+
+            return this.structure;
+        }
+        public static ServerLevel getDimension() {
+            return BeyondTheEnd.getServer().getLevel(BkDimension.BEYOND_END_LEVEL);
+        }
     }
+
+    
     public static class Structure implements Savable {
         private final ResourceLocation structure;
         private boolean isPlaced;
@@ -463,7 +488,7 @@ public class FallenDragonFight extends EndDragonFight {
             this.centre = centre;
         }
         public Structure() {
-            this(getDefaultStructure(), new BlockPos(0, 60, 0)); // default island structure
+            this(getDefaultStructure(), new BlockPos(0, 50, 0)); // default island structure
         }
         public Structure(CompoundTag data) {
             this.structure = new ResourceLocation(data.getString("structure"));
@@ -498,7 +523,7 @@ public class FallenDragonFight extends EndDragonFight {
         }
 
         private static ResourceLocation getDefaultStructure() {
-            return new ResourceLocation(BeyondTheEnd.MODID, "boss_room");
+            return new ResourceLocation(BeyondTheEnd.MODID, "center");
         }
         private Optional<StructureTemplate> findStructure(ResourceLocation structure) {
             return BeyondTheEnd.getServer().getStructureManager().get(structure);
@@ -514,21 +539,16 @@ public class FallenDragonFight extends EndDragonFight {
         }
 
         private void place() {
-            this.place(getDimension(), true);
+            this.place(StructureManager.getDimension(), true);
         }
 
         private void place(ServerLevel level, boolean inform) {
-            if (inform) {
-                for (ServerPlayer p : level.getServer().getPlayerList().getPlayers()) {
-                    p.sendSystemMessage(Component.literal("Please wait while the structure is placed..."));
-                }
-            }
-
             long start = System.currentTimeMillis();
 
 
-            if (this.isPlaced()) {
+            if (this.isPlaced() && level!=null && level.getRandom()!=null) {
                 BeyondTheEnd.LOGGER.warn("Tried to place realm structure twice");
+                return;
             }
 
             makeInitialIsland(level,start);
@@ -537,12 +557,12 @@ public class FallenDragonFight extends EndDragonFight {
 
         }
 
-        public void placeComponent(long start,ServerLevel level,int addX,int height,int addZ,ResourceLocation location,StructurePlaceSettings settings){
+        public Vec3i placeComponent(long start, ServerLevel level, int addX, int height, int addZ, ResourceLocation location, StructurePlaceSettings settings){
             StructureTemplate component = this.findStructure(location).orElse(null);
 
-            if (component == null) {
-                BeyondTheEnd.LOGGER.error("Could not find realm component :" + location.toString());
-                return;
+            if (component == null || level==null) {
+                BeyondTheEnd.LOGGER.error("Could not find island component :" + location.toString());
+                return Vec3i.ZERO;
             }
             Vec3i size = component.getSize();
             BlockPos offset = new BlockPos(-size.getX() / 2+addX, height, -size.getZ() / 2 +addZ);
@@ -556,13 +576,34 @@ public class FallenDragonFight extends EndDragonFight {
                     level.getRandom(),
                     Block.UPDATE_KNOWN_SHAPE
             );
-            BeyondTheEnd.LOGGER.info("Placed " + this + " at " + offset + " in " + (System.currentTimeMillis() - start) + "ms");
+            BeyondTheEnd.LOGGER.info("Placed " + component + " at " + offset + " in " + (System.currentTimeMillis() - start) + "ms");
+            return size;
         }
 
         public void makeInitialIsland(ServerLevel level, long start){
             StructurePlaceSettings settings=new StructurePlaceSettings();
 
-            this.placeComponent(start,level,0,50,0,new ResourceLocation(BeyondTheEnd.MODID, "boss_room"),settings);
+            Vec3i center=this.placeComponent(start,level,0,50,0,new ResourceLocation(BeyondTheEnd.MODID, "center"),settings);
+            this.placeComponent(start,level,center.getX()+26,50,1,new ResourceLocation(BeyondTheEnd.MODID, "island_east"),settings);
+            Vec3i south=this.placeComponent(start,level,0,51,center.getZ()+6,new ResourceLocation(BeyondTheEnd.MODID, "island_south_0"),settings);
+            this.placeComponent(start,level,0,51+south.getY(),center.getZ()+6,new ResourceLocation(BeyondTheEnd.MODID, "island_south_1"),settings);
+
+            this.placeComponent(start,level,0,50,-center.getZ()+17,new ResourceLocation(BeyondTheEnd.MODID, "island_north"),settings);
+            Vec3i west=this.placeComponent(start,level,-center.getX()+15,50,0,new ResourceLocation(BeyondTheEnd.MODID, "island_west_0"),settings);
+            this.placeComponent(start,level,-center.getX()+15,50+west.getY(),0,new ResourceLocation(BeyondTheEnd.MODID, "island_west_1"),settings);
+
+
+            this.placeComponent(start,level,center.getX()+24,50,-center.getZ()+18,new ResourceLocation(BeyondTheEnd.MODID, "island_east_north"),settings);
+
+            Vec3i west_n=this.placeComponent(start,level,-center.getX()+15,50,-center.getZ()+17,new ResourceLocation(BeyondTheEnd.MODID, "west_north_0"),settings);
+            this.placeComponent(start,level,-center.getX()+15,50+west_n.getY(),-center.getZ()+17,new ResourceLocation(BeyondTheEnd.MODID, "west_north_1"),settings);
+
+            Vec3i west_s=this.placeComponent(start,level,-center.getX()+15,50,center.getZ()-4,new ResourceLocation(BeyondTheEnd.MODID, "west_south_0"),settings);
+            this.placeComponent(start,level,-center.getX()+15,50+west_s.getY(),center.getZ()-4,new ResourceLocation(BeyondTheEnd.MODID, "west_south_1"),settings);
+
+            Vec3i east_s=this.placeComponent(start,level,center.getX()-11,50,center.getZ()+7,new ResourceLocation(BeyondTheEnd.MODID, "east_south_0"),settings);
+            this.placeComponent(start,level,center.getX()-11,50+east_s.getY(),center.getZ()+7,new ResourceLocation(BeyondTheEnd.MODID, "east_south_1"),settings);
+
         }
 
         public BlockPos getCentre() {
@@ -570,16 +611,9 @@ public class FallenDragonFight extends EndDragonFight {
 
             if (this.centre != null) return this.centre;
 
-            StructureTemplate found = this.findStructure(getDefaultStructure()).orElse(null);
 
-            if (found == null) {
-                BeyondTheEnd.LOGGER.error("Could not find realm structure template");
-                return null;
-            }
+            this.centre = new BlockPos(0, 80, 0);
 
-            this.centre = new BlockPos(0, 60, 0);
-
-            BeyondTheEnd.LOGGER.info("Placed " + this +"ms");
             return this.centre;
         }
 

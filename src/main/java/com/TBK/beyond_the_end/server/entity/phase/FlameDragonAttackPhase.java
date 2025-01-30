@@ -40,9 +40,8 @@ public class FlameDragonAttackPhase extends AbstractDragonPhaseInstance {
 
     public void doServerTick() {
         if (this.attackTarget == null || (this.attackTarget instanceof Player player && player.isCreative())) {
-            if(this.dragon.canFly()){
-                this.dragon.phaseManager.setPhase(FallenDragonPhase.HOLDING_PATTERN);
-            }else {
+            this.dragon.phaseManager.setPhase(FallenDragonPhase.HOLDING_PATTERN);
+            if(!this.dragon.canFly()){
                 this.dragon.initFall();
             }
         } else {
@@ -58,17 +57,18 @@ public class FlameDragonAttackPhase extends AbstractDragonPhaseInstance {
             }else {
                 this.targetLocation=this.attackTarget.getEyePosition();
             }
-            if (this.attackTarget.distanceToSqr(this.dragon) < 4096.0D) {
+            if (this.attackTarget.distanceToSqr(this.dragon) < 4096.0D && f >= 0.0F && f < 10.0F) {
                 this.waitTime=0;
                 ++this.fireballCharge;
-                if (this.fireballCharge >= 30) {
+                if (this.fireballCharge >= 15) {
                     Vec3 vec32 = this.dragon.getViewVector(1.0F);
-                    double d6 = this.dragon.head.getX() - vec32.x * 1.0D;
+                    double d6 = this.dragon.head.getX();
                     double d7 = this.dragon.head.getY(0.5D) + 0.5D;
-                    double d8 = this.dragon.head.getZ() - vec32.z * 1.0D;
-                    double d9 = this.attackTarget.getX() - d6;
+                    double d8 = this.dragon.head.getZ();
+                    Vec3 deltaTarget = this.attackTarget.getDeltaMovement();
+                    double d9 = this.attackTarget.getX() - d6 + deltaTarget.x;
                     double d10 = this.attackTarget.getY(0.5D) - d7;
-                    double d11 = this.attackTarget.getZ() - d8;
+                    double d11 = this.attackTarget.getZ() - d8 + deltaTarget.z;
                     if (!this.dragon.isSilent()) {
                         this.dragon.level.levelEvent((Player)null, 1017, this.dragon.blockPosition(), 0);
                     }
@@ -87,13 +87,14 @@ public class FlameDragonAttackPhase extends AbstractDragonPhaseInstance {
                     if(this.countFireball>this.maxCountFireball-1){
                         if(!this.isFlyMode){
                             this.dragon.initFall();
-                        }
-                        if(this.dragon.level.random.nextFloat()<0.4F){
-                            this.dragon.phaseManager.setPhase(FallenDragonPhase.CHARGING);
-                            this.dragon.phaseManager.getPhase(FallenDragonPhase.CHARGING).setTarget(this.attackTarget);
-                            PacketHandler.sendToAllTracking(new PacketTargetDragon(this.dragon.getId(),this.attackTarget.getId(),1),this.dragon);
                         }else {
-                            this.dragon.phaseManager.setPhase(FallenDragonPhase.HOLDING_PATTERN);
+                            if(this.dragon.level.random.nextFloat()<0.4F){
+                                this.dragon.phaseManager.setPhase(FallenDragonPhase.CHARGING);
+                                this.dragon.phaseManager.getPhase(FallenDragonPhase.CHARGING).setTarget(this.attackTarget);
+                                PacketHandler.sendToAllTracking(new PacketTargetDragon(this.dragon.getId(),this.attackTarget.getId(),1),this.dragon);
+                            }else {
+                                this.dragon.phaseManager.setPhase(FallenDragonPhase.HOLDING_PATTERN);
+                            }
                         }
                     }
                 }
@@ -101,7 +102,8 @@ public class FlameDragonAttackPhase extends AbstractDragonPhaseInstance {
                 this.fireballCharge=0;
                 this.waitTime++;
             }
-            if(this.waitTime>3000){
+
+            if(this.waitTime>300){
                 if(!this.isFlyMode){
                     this.dragon.initFall();
                 }
@@ -122,7 +124,7 @@ public class FlameDragonAttackPhase extends AbstractDragonPhaseInstance {
         this.currentPath = null;
         this.attackTarget = null;
         this.countFireball = 0;
-        this.maxCountFireball = 5 + this.dragon.level.random.nextInt(0,10);
+        this.maxCountFireball = 10 + this.dragon.level.random.nextInt(0,10);
         this.waitTime = 0;
         this.isFlyMode=false;
     }

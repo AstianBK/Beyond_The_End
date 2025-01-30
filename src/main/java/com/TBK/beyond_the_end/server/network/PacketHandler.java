@@ -38,8 +38,14 @@ public class PacketHandler {
         channel.registerMessage(index++, PacketTargetAttack.class, PacketTargetAttack::write,
                 PacketTargetAttack::new, PacketTargetAttack::handle);
 
+        channel.registerMessage(index++, PacketScreenDirt.class, PacketScreenDirt::write,
+                PacketScreenDirt::new, PacketScreenDirt::handle);
+
         channel.registerMessage(index++, PacketFlameParticles.class, PacketFlameParticles::write,
                 PacketFlameParticles::new, PacketFlameParticles::handle);
+
+        channel.registerMessage(index++, PacketNextActionJellyfish.class, PacketNextActionJellyfish::write,
+                PacketNextActionJellyfish::new, PacketNextActionJellyfish::handle);
 
 
 

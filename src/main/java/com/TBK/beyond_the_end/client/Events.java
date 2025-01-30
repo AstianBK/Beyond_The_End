@@ -13,7 +13,7 @@ import net.minecraftforge.fml.common.Mod;
 public class Events {
     @SubscribeEvent
     public static void registerDimensionSpecialEffects(RegisterDimensionSpecialEffectsEvent event) {
-        DimensionSpecialEffects effects1=new DimensionSpecialEffects(Float.NaN, true, DimensionSpecialEffects.SkyType.END, false, true) {
+        DimensionSpecialEffects effects1=new DimensionSpecialEffects(Float.NaN, true, DimensionSpecialEffects.SkyType.END, false, false) {
             @Override
             public Vec3 getBrightnessDependentFogColor(Vec3 p_108908_, float p_108909_) {
                 return p_108908_;
@@ -21,7 +21,7 @@ public class Events {
 
             @Override
             public boolean isFoggyAt(int p_108874_, int p_108875_) {
-                return true;
+                return false;
             }
         };
         event.register(new ResourceLocation(BeyondTheEnd.MODID, "the_new_end"), effects1);

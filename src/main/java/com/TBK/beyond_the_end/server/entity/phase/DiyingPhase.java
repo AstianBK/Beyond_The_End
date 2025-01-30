@@ -32,8 +32,7 @@ public class DiyingPhase extends AbstractDragonPhaseInstance {
     public void doServerTick() {
         ++this.time;
         if (this.targetLocation == null) {
-            BlockPos blockpos = this.dragon.level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, EndPodiumFeature.END_PODIUM_LOCATION);
-            this.targetLocation = Vec3.atBottomCenterOf(blockpos);
+            this.targetLocation = this.dragon.position();
         }
 
         double d0 = this.targetLocation.distanceToSqr(this.dragon.getX(), this.dragon.getY(), this.dragon.getZ());

@@ -1,9 +1,15 @@
 package com.TBK.beyond_the_end.server.capabilities;
 
+import com.TBK.beyond_the_end.BeyondTheEnd;
+import com.TBK.beyond_the_end.server.entity.JellyfishEntity;
+import com.TBK.beyond_the_end.server.network.PacketHandler;
+import com.TBK.beyond_the_end.server.network.message.PacketSync;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
@@ -19,6 +25,21 @@ public class PortalPlayerCapability implements PortalPlayer{
     private float prevPortalAnimTime;
     private float portalAnimTime;
     private boolean isInPortal;
+    private int charge;
+    private int time;
+    public int chargePos = 0;
+
+    public void setCharge(int charge){
+        this.charge=charge;
+    }
+    public int getCharge(){
+        return this.charge;
+    }
+    public void addCharge(){
+        if(this.getCharge()<5){
+            this.setCharge(this.getCharge()+1);
+        }
+    }
 
     public void setPlayer(Player player){
         this.player=player;
@@ -113,6 +134,19 @@ public class PortalPlayerCapability implements PortalPlayer{
 
     }
 
+    public float damageFinal(JellyfishEntity jellyfish, float damage){
+        if(this.getCharge()>0){
+            this.setCharge(0);
+            if(!this.player.level.isClientSide){
+                PacketHandler.sendToPlayer(new PacketSync(0), (ServerPlayer) this.player);
+            }
+
+            return damage+5*this.getCharge();
+        }else {
+            return damage;
+        }
+    }
+
     @Override
     public boolean isHitting() {
         return false;
@@ -140,12 +174,14 @@ public class PortalPlayerCapability implements PortalPlayer{
 
     @Override
     public CompoundTag serializeNBT() {
-        return new CompoundTag();
+        CompoundTag nbt=new CompoundTag();
+        nbt.putInt("charge",this.getCharge());
+        return nbt;
     }
 
     @Override
     public void deserializeNBT(CompoundTag nbt) {
-
+        this.setCharge(nbt.getInt("charge"));
     }
 
     private void handleAetherPortal() {
@@ -165,6 +201,15 @@ public class PortalPlayerCapability implements PortalPlayer{
                 }
             }
         }
+
+        if(time++>3){
+            time=0;
+            if(chargePos++>1){
+                chargePos=0;
+            }
+        }
+
+
 
         if (this.isInPortal()) {
             ++this.portalTime;

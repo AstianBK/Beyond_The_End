@@ -1,5 +1,7 @@
 package com.TBK.beyond_the_end.client;
 
+import com.TBK.beyond_the_end.BeyondTheEnd;
+import com.TBK.beyond_the_end.client.layer.ChargeLayer;
 import com.TBK.beyond_the_end.client.particle.BKParticles;
 import com.TBK.beyond_the_end.client.particle.custom.FlameParticles;
 import com.TBK.beyond_the_end.server.world.biome.BKBiome;
@@ -9,6 +11,7 @@ import net.minecraft.client.particle.DragonBreathParticle;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
 import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
@@ -31,12 +34,14 @@ public class ClientEvents {
             float farness = 0.3F;
 
             if (flag) {
-                event.setCanceled(true);
-                event.setFarPlaneDistance(end * farness);
-                event.setNearPlaneDistance(defaultNearPlaneDistance * nearness);
+                //event.setCanceled(true);
+                //event.setFarPlaneDistance(end * farness);
+                //event.setNearPlaneDistance(defaultNearPlaneDistance * nearness);
             }
         }
     }
+
+
 
 
 }

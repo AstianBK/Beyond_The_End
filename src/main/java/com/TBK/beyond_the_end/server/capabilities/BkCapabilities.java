@@ -11,16 +11,16 @@ import net.minecraftforge.fml.common.Mod;
 
 
 public class BkCapabilities {
-    public static final Capability<PortalPlayer> PORTAL_PLAYER_CAPABILITY = CapabilityManager.get(new CapabilityToken<>() { });
+    public static final Capability<PortalPlayerCapability> PORTAL_PLAYER_CAPABILITY = CapabilityManager.get(new CapabilityToken<>() { });
 
     @SubscribeEvent
     public static void register(RegisterCapabilitiesEvent event) {
         event.register(PortalPlayer.class);
     }
     @SuppressWarnings("unchecked")
-    public static <T extends PortalPlayer> T getEntityPatch(Entity entity, Class<T> type) {
+    public static <T extends PortalPlayerCapability> T getEntityPatch(Entity entity, Class<T> type) {
         if (entity != null) {
-            PortalPlayer entitypatch = entity.getCapability(BkCapabilities.PORTAL_PLAYER_CAPABILITY).orElse(null);
+            PortalPlayerCapability entitypatch = entity.getCapability(BkCapabilities.PORTAL_PLAYER_CAPABILITY).orElse(null);
 
             if (entitypatch != null && type.isAssignableFrom(entitypatch.getClass())) {
                 return (T)entitypatch;

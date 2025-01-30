@@ -2,6 +2,7 @@ package com.TBK.beyond_the_end.common.registry;
 
 import com.TBK.beyond_the_end.BeyondTheEnd;
 import com.TBK.beyond_the_end.server.entity.FallenDragonEntity;
+import com.TBK.beyond_the_end.server.entity.JellyfishEntity;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -19,5 +20,12 @@ public class BKEntityType {
                             .fireImmune().sized(4.0F, 8.0F)
                             .clientTrackingRange(10)
                             .build(new ResourceLocation(BeyondTheEnd.MODID, "fallen_dragon").toString()));
+
+    public static final RegistryObject<EntityType<JellyfishEntity>> JELLYFISH =
+            ENTITY_TYPES.register("jellyfish",
+                    () -> EntityType.Builder.of(JellyfishEntity::new, MobCategory.MONSTER)
+                            .fireImmune().sized(2.0F, 2.0F)
+                            .clientTrackingRange(10)
+                            .build(new ResourceLocation(BeyondTheEnd.MODID, "jellyfish").toString()));
 
 }

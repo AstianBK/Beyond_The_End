@@ -62,17 +62,12 @@ public class SkyFallAttack extends AbstractDragonPhaseInstance {
 
     public void doServerTick() {
         if (this.attackTarget == null) {
-            BeyondTheEnd.LOGGER.warn("Skipping player strafe phase because no player was found");
             this.dragon.phaseManager.setPhase(FallenDragonPhase.HOLDING_PATTERN);
         } else {
             if (this.currentPath != null && this.currentPath.isDone()) {
                 double d0 = this.attackTarget.getX();
                 double d1 = this.attackTarget.getZ();
-                double d2 = d0 - this.dragon.getX();
-                double d3 = d1 - this.dragon.getZ();
-                double d4 = Math.sqrt(d2 * d2 + d3 * d3);
-                double d5 = Math.min((double)0.4F + d4 / 80.0D - 1.0D, 10.0D);
-                this.targetLocation = new Vec3(d0, this.attackTarget.getY(), d1);
+                this.targetLocation = new Vec3(d0, this.attackTarget.getY()+10.0D, d1);
             }
 
             double d12 = this.targetLocation == null ? 0.0D : this.targetLocation.distanceToSqr(this.dragon.getX(), this.dragon.getY(), this.dragon.getZ());
@@ -83,7 +78,7 @@ public class SkyFallAttack extends AbstractDragonPhaseInstance {
 
             Vec3 pos=new Vec3(this.dragon.getX(),this.dragon.level.getHeight(Heightmap.Types.WORLD_SURFACE, (int) this.dragon.getX(), (int) this.dragon.getZ()),this.dragon.getZ());
 
-            if (this.dragon.getY() > this.attackTarget.getY()+3.0D && this.dragon.getY() < this.attackTarget.getY()+14.0D) {
+            if (this.dragon.getY() > this.attackTarget.getY()+5.0D && this.dragon.getY() < this.attackTarget.getY()+14.0D) {
                 this.flameTime++;
                 if (this.dragon.hasLineOfSight(this.attackTarget)) {
                     this.fireballCharge++;
@@ -91,7 +86,7 @@ public class SkyFallAttack extends AbstractDragonPhaseInstance {
                         this.fireballCharge=0;
                         this.spawnAreaDamage(new BlockPos(pos));
                     }
-                    List<HitResult> results=SkyFallAttack.raycastForEntity(this.dragon.level,this.dragon,100,true,0);
+                    List<HitResult> results=SkyFallAttack.raycastForEntity(this.dragon.level,this.dragon,100,true,3);
                     for (HitResult result:results){
                         if(result.getType().equals(HitResult.Type.ENTITY)){
                             ((EntityHitResult)result).getEntity().hurt(DamageSource.indirectMagic(this.dragon,null),3F);
@@ -105,7 +100,14 @@ public class SkyFallAttack extends AbstractDragonPhaseInstance {
             } else if (this.fireballCharge > 0) {
                 this.dragon.level.broadcastEntityEvent(this.dragon,(byte) 65);
                 this.fireballCharge=0;
+                double d0 = this.attackTarget.getX();
+                double d1 = this.attackTarget.getZ();
+                this.targetLocation = new Vec3(d0, this.attackTarget.getY()+10.0D, d1);
+                this.findNewTarget();
+
             }
+
+
 
             if(this.flameTime>400){
                 this.dragon.teleportTowards(this.attackTarget);
@@ -173,7 +175,7 @@ public class SkyFallAttack extends AbstractDragonPhaseInstance {
 
             double d1;
             do {
-                d1 = (double)((float)vec3i.getY() + this.dragon.getRandom().nextFloat() * 5.0F);
+                d1 = (double)((float)vec3i.getY() + this.dragon.getRandom().nextFloat() * 15.0F);
             } while(d1 < (double)vec3i.getY());
 
             this.targetLocation = new Vec3(d0, d1, d2);
@@ -186,6 +188,7 @@ public class SkyFallAttack extends AbstractDragonPhaseInstance {
         this.targetLocation = null;
         this.currentPath = null;
         this.attackTarget = null;
+        this.flameTime = 0;
     }
 
     @Override

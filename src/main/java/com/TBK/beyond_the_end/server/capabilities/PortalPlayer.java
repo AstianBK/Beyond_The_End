@@ -9,7 +9,7 @@ public interface PortalPlayer extends INBTSerializable<CompoundTag> {
 
     Player getPlayer();
 
-    static LazyOptional<PortalPlayer> get(Player player) {
+    static LazyOptional<PortalPlayerCapability> get(Player player) {
         return player.getCapability(BkCapabilities.PORTAL_PLAYER_CAPABILITY);
     }
     public void setPlayer(Player player);

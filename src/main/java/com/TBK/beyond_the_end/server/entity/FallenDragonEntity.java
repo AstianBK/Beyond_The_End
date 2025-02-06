@@ -336,7 +336,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
             }
         }
 
-        this.move(MoverType.SELF, new Vec3(0.0D, (double)0.1F, 0.0D));
+        this.move(MoverType.SELF,  new Vec3(0.0D, (double)70F, 0.0D).subtract(this.position()).normalize().scale(3.0F));
         this.setYRot(this.getYRot() + 1.0F);
         this.yBodyRot = this.getYRot();
         if (this.dragonDeathTime == 200 && this.level instanceof ServerLevel) {
@@ -348,7 +348,6 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
             if (this.dragonFight != null) {
                 this.dragonFight.setDragonKilled(this);
             }
-
             this.remove(Entity.RemovalReason.KILLED);
             this.gameEvent(GameEvent.ENTITY_DIE);
         }

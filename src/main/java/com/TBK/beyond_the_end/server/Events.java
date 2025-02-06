@@ -8,6 +8,7 @@ import com.TBK.beyond_the_end.server.capabilities.PortalPlayer;
 import com.TBK.beyond_the_end.server.capabilities.PortalPlayerCapability;
 import com.TBK.beyond_the_end.server.entity.FallenDragonFight;
 import com.TBK.beyond_the_end.server.entity.JellyfishEntity;
+import com.TBK.beyond_the_end.server.entity.JellyfishFightEvent;
 import com.TBK.beyond_the_end.server.network.PacketHandler;
 import com.TBK.beyond_the_end.server.network.message.PacketScreenDirt;
 import com.TBK.beyond_the_end.server.network.message.PacketSync;
@@ -119,17 +120,27 @@ public class Events {
     public static void onWorldTick(TickEvent.LevelTickEvent event) {
         Level level = event.level;
         if (event.side == LogicalSide.SERVER && event.phase == TickEvent.Phase.END) {
-            DimensionUtil.tickTime(level);
             Vec3i pos=ServerData.get().getStructureManager().getStructure().getCentre();
-            if(BeyondTheEnd.bossFight!=null){
+            if(BeyondTheEnd.bossFight!=null && !BeyondTheEnd.bossFight.hasKilledDragon()){
                 BeyondTheEnd.bossFight.tick();
             }else {
-                if(level.getServer()!=null && level.dimensionTypeRegistration().is(BkDimension.BEYOND_END_TYPE)){
+                boolean flag = BeyondTheEnd.bossFight == null || !BeyondTheEnd.bossFight.hasKilledDragon();
+                if(level.getServer()!=null && level.dimensionTypeRegistration().is(BkDimension.BEYOND_END_TYPE) && flag){
                     long i = level.getServer().getWorldData().worldGenSettings().seed();
                     BeyondTheEnd.bossFight = new FallenDragonFight((ServerLevel) level, i, level.getServer().getWorldData().endDragonFightData());
                     BeyondTheEnd.bossFight.setPortalLocation(new BlockPos(pos));
+                }
+            }
+
+            if(BeyondTheEnd.jellyfishFightEvent!=null && BeyondTheEnd.bossFight!=null && BeyondTheEnd.bossFight.hasKilledDragon()){
+                BeyondTheEnd.jellyfishFightEvent.tick();
+            }else {
+                if(level.getServer()!=null && level.dimensionTypeRegistration().is(BkDimension.BEYOND_END_TYPE)){
+                    long i = level.getServer().getWorldData().worldGenSettings().seed();
+                    BeyondTheEnd.jellyfishFightEvent = new JellyfishFightEvent((ServerLevel) level, i, level.getServer().getWorldData().endDragonFightData());
+                    BeyondTheEnd.jellyfishFightEvent.setPortalLocation(new BlockPos(pos));
                 }else {
-                    BeyondTheEnd.bossFight=null;
+                    BeyondTheEnd.jellyfishFightEvent=null;
                 }
             }
         }
@@ -249,7 +260,8 @@ public class Events {
             PortalPlayer.get(player1).ifPresent(e->{
                 if(e.getCharge() > 0){
                     event.setCanceled(true);
-                    jellyfish.hurt(event.getSource(),e.damageFinal(jellyfish,event.getAmount()),true );
+                    jellyfish.hurt(event.getSource(),e.damageFinal(jellyfish,event.getAmount()),true);
+                    BeyondTheEnd.LOGGER.debug("Se Golpeo al jellyfish y su phase actual es :" + jellyfish.actuallyPhase);
                 }
             });
         }

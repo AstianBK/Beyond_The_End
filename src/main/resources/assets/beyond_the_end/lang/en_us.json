@@ -11,5 +11,6 @@
 
   "block.beyond_the_end.glowing_energy_streak": "Energy Streak",
   "block.beyond_the_end.glowing_energy": "Energy Dot",
-  "block.beyond_the_end.portal": "Beyond The End Portal"
+  "block.beyond_the_end.portal": "Beyond The End Portal",
+  "entity.beyond_the_end.jellyfish": "Jellyfish"
 }

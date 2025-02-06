@@ -60,7 +60,6 @@ public class FallenDragonFight extends EndDragonFight {
     private static final Predicate<Entity> VALID_PLAYER = EntitySelector.ENTITY_STILL_ALIVE.and(EntitySelector.withinDistance(0.0D, 128.0D, 0.0D, 192.0D));
     private final ServerBossEvent dragonEvent = (ServerBossEvent)(new ServerBossEvent(Component.translatable("entity.beyond_the_end.fallen_dragon"), BossEvent.BossBarColor.RED, BossEvent.BossBarOverlay.PROGRESS)).setPlayBossMusic(true).setCreateWorldFog(true);
     private final ServerLevel level;
-    private final ObjectArrayList<Integer> gateways = new ObjectArrayList<>();
     private final BlockPattern exitPortalPattern;
     private int ticksSinceDragonSeen;
     private int crystalsAlive;
@@ -76,8 +75,6 @@ public class FallenDragonFight extends EndDragonFight {
     @Nullable
     private DragonRespawnAnimation respawnStage;
     private int respawnTime;
-    @Nullable
-    private List<EndCrystal> respawnCrystals;
 
     public FallenDragonFight(ServerLevel p_64078_, long p_64079_, CompoundTag p_64080_) {
         super(p_64078_,p_64079_,p_64080_);
@@ -128,6 +125,7 @@ public class FallenDragonFight extends EndDragonFight {
     public void setPortalLocation(BlockPos pos){
         this.portalLocation=pos;
     }
+
     public void tick() {
         this.dragonEvent.setVisible(!this.dragonKilled);
         if (++this.ticksSinceLastPlayerScan >= 20) {
@@ -147,11 +145,6 @@ public class FallenDragonFight extends EndDragonFight {
                 if ((this.dragonUUID == null || ++this.ticksSinceDragonSeen >= 1200) && flag) {
                     this.findOrCreateDragon();
                     this.ticksSinceDragonSeen = 0;
-                }
-
-                if (++this.ticksSinceCrystalsScanned >= 100 && flag) {
-                    this.updateCrystalCount();
-                    this.ticksSinceCrystalsScanned = 0;
                 }
             }
         } else {
@@ -301,17 +294,6 @@ public class FallenDragonFight extends EndDragonFight {
 
     }
 
-    private void updateCrystalCount() {
-        this.ticksSinceCrystalsScanned = 0;
-        this.crystalsAlive = 0;
-
-        for(SpikeFeature.EndSpike spikefeature$endspike : SpikeFeature.getSpikesForLevel(this.level)) {
-            this.crystalsAlive += this.level.getEntitiesOfClass(EndCrystal.class, spikefeature$endspike.getTopBoundingBox()).size();
-        }
-
-        BeyondTheEnd.LOGGER.debug("Found {} end crystals still alive", (int)this.crystalsAlive);
-    }
-
     public void setDragonKilled(FallenDragonEntity p_64086_) {
         if (p_64086_.getUUID().equals(this.dragonUUID)) {
             this.dragonEvent.setProgress(0.0F);
@@ -329,9 +311,7 @@ public class FallenDragonFight extends EndDragonFight {
 
     }
 
-    private void spawnNewGateway(BlockPos p_64090_) {
-        this.level.levelEvent(3000, p_64090_, 0);
-    }
+
 
     private void spawnExitPortal(boolean p_64094_) {
 
@@ -372,6 +352,10 @@ public class FallenDragonFight extends EndDragonFight {
 
     public boolean hasPreviouslyKilledDragon() {
         return this.previouslyKilled;
+    }
+
+    public boolean hasKilledDragon(){
+        return this.dragonKilled;
     }
 
     public void tryRespawn() {
@@ -426,7 +410,6 @@ public class FallenDragonFight extends EndDragonFight {
             this.respawnStage = DragonRespawnAnimation.START;
             this.respawnTime = 0;
             this.spawnExitPortal(false);
-            this.respawnCrystals = p_64092_;
         }
 
     }

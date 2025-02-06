@@ -2,6 +2,7 @@ package com.TBK.beyond_the_end.server.network.message;
 
 import com.TBK.beyond_the_end.BeyondTheEnd;
 import com.TBK.beyond_the_end.server.entity.JellyfishEntity;
+import com.TBK.beyond_the_end.server.entity.JellyfishMinionEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.PacketListener;
@@ -55,6 +56,12 @@ public class PacketNextActionJellyfish implements Packet<PacketListener> {
             jellyfish.nextTimer=0;
             if(this.idAction!=0){
                 jellyfish.maxNextTimer=timeForNextAction;
+            }
+        }else if(dragon instanceof JellyfishMinionEntity minion){
+            minion.setActionForID(this.idAction);
+            minion.nextTimer=0;
+            if(this.idAction!=0){
+                minion.maxNextTimer=timeForNextAction;
             }
         }
     }

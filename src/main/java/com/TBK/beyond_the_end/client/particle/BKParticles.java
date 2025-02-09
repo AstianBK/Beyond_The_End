@@ -15,4 +15,8 @@ public class BKParticles {
 
     public static final RegistryObject<SimpleParticleType> FLAME_PARTICLE =
             PARTICLE_TYPES.register("flame_particle", () -> new SimpleParticleType(true));
+
+    public static final RegistryObject<SimpleParticleType> MIST_PARTICLE =
+            PARTICLE_TYPES.register("mist", () -> new SimpleParticleType(true));
+
 }

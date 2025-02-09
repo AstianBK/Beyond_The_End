@@ -1,6 +1,7 @@
 package com.TBK.beyond_the_end.server.network.message;
 
 import com.TBK.beyond_the_end.server.entity.FallenDragonEntity;
+import com.TBK.beyond_the_end.server.entity.JellyfishEntity;
 import com.TBK.beyond_the_end.server.entity.phase.FallenDragonPhase;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -9,6 +10,7 @@ import net.minecraft.network.PacketListener;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.network.NetworkDirection;
@@ -59,6 +61,8 @@ public class PacketTargetAttack implements Packet<PacketListener> {
         Entity dragon=mc.level.getEntity(this.idDragon);
         if(dragon instanceof FallenDragonEntity fallenDragon){
             fallenDragon.targetPos=new BlockPos(x,y,z);
+        }else if(dragon instanceof JellyfishEntity jellyfish){
+            jellyfish.directionBlock=new Vec3(x,y,z);
         }
     }
 

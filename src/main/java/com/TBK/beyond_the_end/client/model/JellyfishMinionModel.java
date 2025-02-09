@@ -4,27 +4,20 @@ package com.TBK.beyond_the_end.client.model;// Made with Blockbench 4.12.2
 
 
 import com.TBK.beyond_the_end.BeyondTheEnd;
-import com.TBK.beyond_the_end.client.animacion.JellyfishAnim;
-import com.TBK.beyond_the_end.server.entity.JellyfishEntity;
-import com.google.common.collect.ImmutableList;
+import com.TBK.beyond_the_end.client.animacion.JellyfishMinionAnim;
+import com.TBK.beyond_the_end.server.entity.JellyfishMinionEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.HierarchicalModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.phys.Vec3;
 
-import java.util.List;
-
-public class JellyfishModel<T extends JellyfishEntity> extends HierarchicalModel<T> {
+public class JellyfishMinionModel<T extends JellyfishMinionEntity> extends HierarchicalModel<T> {
 	// This layer location should be baked with EntityRendererProvider.Context in the entity renderer and passed into this model's constructor
-	public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(new ResourceLocation("modid", "jellyfish"), "main");
+	public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(new ResourceLocation(BeyondTheEnd.MODID, "jellyfish_minion"), "main");
 	private final ModelPart truemain;
 	private final ModelPart main;
 	private final ModelPart jellyfish;
@@ -94,11 +87,8 @@ public class JellyfishModel<T extends JellyfishEntity> extends HierarchicalModel
 	private final ModelPart LowerTendril1Section12;
 	private final ModelPart LowerTendrilSectionMiddle;
 	private final ModelPart LowerTendril1Section13;
-	private final List<ModelPart> glowingPart;
 
-
-	public JellyfishModel(ModelPart root) {
-		super(RenderType::entityCutoutNoCull);
+	public JellyfishMinionModel(ModelPart root) {
 		this.truemain = root.getChild("truemain");
 		this.main = this.truemain.getChild("main");
 		this.jellyfish = this.main.getChild("jellyfish");
@@ -168,18 +158,8 @@ public class JellyfishModel<T extends JellyfishEntity> extends HierarchicalModel
 		this.LowerTendril1Section12 = this.LowerTendril1Section11.getChild("LowerTendril1Section12");
 		this.LowerTendrilSectionMiddle = this.LowerTendril1Section12.getChild("LowerTendrilSectionMiddle");
 		this.LowerTendril1Section13 = this.LowerTendrilSectionMiddle.getChild("LowerTendril1Section13");
-		this.glowingPart = ImmutableList.of(
-				this.main
-		);
 	}
 
-	public List<ModelPart> getBody(){
-		return this.glowingPart;
-	}
-
-	public List<ModelPart> getEye(){
-		return List.of(this.Eyes);
-	}
 	public static LayerDefinition createBodyLayer() {
 		MeshDefinition meshdefinition = new MeshDefinition();
 		PartDefinition partdefinition = meshdefinition.getRoot();
@@ -574,26 +554,12 @@ public class JellyfishModel<T extends JellyfishEntity> extends HierarchicalModel
 	@Override
 	public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
 		this.reset();
-
-		this.animate(entity.idle, JellyfishAnim.idle,ageInTicks);
-
-		if(entity.lazerTimer>0 || entity.startLazerTimer>0){
+		this.animate(entity.idle, JellyfishMinionAnim.idle,ageInTicks);
+		if(entity.shootTimer >0){
 			this.reset();
-			Vec3 vec32 = entity.directionBlock.subtract(entity.getEyePosition());
-			double f5 = Math.atan2(vec32.y,Math.sqrt(vec32.x*vec32.x + vec32.z*vec32.z));
-			double f6 = Math.atan2(vec32.z, vec32.x) ;
-
-			this.truemain.xRot = (float) (headPitch *((float)Math.PI / 180F));
-			this.truemain.yRot = (float) (netHeadYaw *((float)Math.PI / 180F));
 		}
-
-		this.truemain.y+=40;
-		this.animate(entity.startSummoning,JellyfishAnim.startsummon,ageInTicks);
-		this.animate(entity.summoning,JellyfishAnim.summoning,ageInTicks);
-
-		this.animate(entity.startLazer,JellyfishAnim.startlazer,ageInTicks);
-		this.animate(entity.shootLaser,JellyfishAnim.shootlazer,ageInTicks);
-		this.animate(entity.spinning,JellyfishAnim.spinning,ageInTicks);
+		this.truemain.y+=25;
+		this.animate(entity.shoot,JellyfishMinionAnim.shoot,ageInTicks);
 	}
 
 	public void reset(){
@@ -604,7 +570,6 @@ public class JellyfishModel<T extends JellyfishEntity> extends HierarchicalModel
 	public void renderToBuffer(PoseStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay, float red, float green, float blue, float alpha) {
 		truemain.render(poseStack, vertexConsumer, packedLight, packedOverlay, red, green, blue, alpha);
 	}
-
 
 	@Override
 	public ModelPart root() {

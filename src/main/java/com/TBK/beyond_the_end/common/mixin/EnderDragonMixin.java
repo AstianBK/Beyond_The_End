@@ -19,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(EnderDragon.class)
 public class EnderDragonMixin {
     @ModifyArg(method = "<init>",at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Mob;<init>(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/Level;)V"))
-    private static EntityType<? extends Mob> renderTentacle(EntityType<? extends Mob> p_21368_,Level level){
+    private static EntityType<? extends Mob> summon(EntityType<? extends Mob> p_21368_,Level level){
         return level.dimension().equals(PortalBlock.destinationDimension()) ? BKEntityType.FALLEN_DRAGON.get() : EntityType.ENDER_DRAGON;
     }
 }

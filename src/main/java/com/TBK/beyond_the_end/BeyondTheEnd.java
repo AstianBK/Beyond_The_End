@@ -3,10 +3,11 @@ package com.TBK.beyond_the_end;
 import com.TBK.beyond_the_end.client.ClientProxy;
 import com.TBK.beyond_the_end.client.particle.BKParticles;
 import com.TBK.beyond_the_end.client.particle.custom.FlameParticles;
-import com.TBK.beyond_the_end.client.renderer.FallenDragonRenderer;
-import com.TBK.beyond_the_end.client.renderer.JellyfishRenderer;
+import com.TBK.beyond_the_end.client.particle.custom.MistParticles;
+import com.TBK.beyond_the_end.client.renderer.*;
 import com.TBK.beyond_the_end.common.registry.*;
 import com.TBK.beyond_the_end.server.entity.FallenDragonFight;
+import com.TBK.beyond_the_end.server.entity.JellyfishFightEvent;
 import com.TBK.beyond_the_end.server.network.PacketHandler;
 import com.TBK.beyond_the_end.server.world.BKConfigFeatures;
 import com.mojang.logging.LogUtils;
@@ -36,6 +37,7 @@ import org.slf4j.Logger;
 public class BeyondTheEnd
 {
     public static FallenDragonFight bossFight = null;
+    public static JellyfishFightEvent jellyfishFightEvent = null;
     public static final String MODID = "beyond_the_end";
     public static final Logger LOGGER = LogUtils.getLogger();
     public static CommonProxy PROXY = DistExecutor.safeRunForDist(() -> ClientProxy::new, () -> CommonProxy::new);
@@ -66,12 +68,18 @@ public class BeyondTheEnd
         if(BeyondTheEnd.bossFight!=null){
             BeyondTheEnd.bossFight.saveData();
         }
+        if(BeyondTheEnd.jellyfishFightEvent!=null){
+            BeyondTheEnd.jellyfishFightEvent.saveData();
+        }
     }
 
     @OnlyIn(Dist.CLIENT)
     public void registerRenderers(FMLCommonSetupEvent event){
         EntityRenderers.register(BKEntityType.FALLEN_DRAGON.get(), FallenDragonRenderer::new);
         EntityRenderers.register(BKEntityType.JELLYFISH.get(), JellyfishRenderer::new);
+        EntityRenderers.register(BKEntityType.JELLYFISH_MINION.get(), JellyfishMinionRenderer::new);
+        EntityRenderers.register(BKEntityType.CHARGE_FOLLOWING.get(), ChargeFollowingRenderer::new);
+        EntityRenderers.register(BKEntityType.CHARGE_FLASH.get(), ChargeFlashRenderer::new);
 
     }
 
@@ -79,6 +87,9 @@ public class BeyondTheEnd
     public void registerParticleFactories(RegisterParticleProvidersEvent event) {
         if(BKParticles.FLAME_PARTICLE.isPresent()){
             event.register(BKParticles.FLAME_PARTICLE.get(), FlameParticles.Factory::new);
+        }
+        if(BKParticles.MIST_PARTICLE.isPresent()){
+            event.register(BKParticles.MIST_PARTICLE.get(), MistParticles.Factory::new);
         }
     }
 

@@ -1,7 +1,9 @@
 package com.TBK.beyond_the_end.client.renderer;
 
 import com.TBK.beyond_the_end.BeyondTheEnd;
+import com.TBK.beyond_the_end.client.layer.JellyfishEmissiveLayer;
 import com.TBK.beyond_the_end.client.model.JellyfishModel;
+import com.TBK.beyond_the_end.common.Util;
 import com.TBK.beyond_the_end.server.entity.JellyfishEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -17,57 +19,81 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 public class JellyfishRenderer<T extends JellyfishEntity,M extends JellyfishModel<T>> extends MobRenderer<T,M> {
     public final ResourceLocation TEXTURE = new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/jellyfish/jellyfish.png");
     private static final ResourceLocation GUARDIAN_BEAM_LOCATION = new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/beacon_beam.png");
+    public final ResourceLocation GLOWING = new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/jellyfish/jellyfish_glowing.png");
+    public final ResourceLocation EYE = new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/jellyfish/jellyfish_eyes.png");
 
     public JellyfishRenderer(EntityRendererProvider.Context p_174304_) {
         super(p_174304_, (M) new JellyfishModel<>(p_174304_.bakeLayer(JellyfishModel.LAYER_LOCATION)), 0.0F);
+
+        this.addLayer(new JellyfishEmissiveLayer<>(this,EYE,(entity,f1,f2)->{
+            return 1.0F;
+        },JellyfishModel::getEye));
+
+        this.addLayer(new JellyfishEmissiveLayer<>(this,GLOWING,(entity,f1,f2)->{
+            return entity.lazerTimer>0 ? 1.0F : entity.getHeartAnimation(f1);
+        },JellyfishModel::getBody));
+
+
     }
 
     @Override
     public boolean shouldRender(T livingEntityIn, Frustum camera, double camX, double camY, double camZ) {
-        if (livingEntityIn.shootLaserTimer>0) {
+        if (livingEntityIn.lazerTimer<=0) {
             return super.shouldRender(livingEntityIn, camera, camX, camY, camZ);
         } else {
-            var hit = JellyfishEntity.raycastForEntity(livingEntityIn.level,livingEntityIn,200.0F,true,2.0F);
+            var hit = Util.raycastForAllEntities(livingEntityIn.level,livingEntityIn,200.0F,true,0.5F).get(0);
             Vec3 vector3d = livingEntityIn.getEyePosition();
             Vec3 vector3d1 = hit.getLocation();
-            return camera.isVisible(new AABB(vector3d1.x, vector3d1.y, vector3d1.z, vector3d.x, vector3d.y, vector3d.z));
+            return camera.isVisible(new AABB(vector3d.x, vector3d.y, vector3d.z, vector3d1.x, vector3d1.y, vector3d1.z));
         }
     }
 
     @Override
+    protected void scale(T p_115314_, PoseStack p_115315_, float p_115316_) {
+        super.scale(p_115314_, p_115315_, p_115316_);
+        p_115315_.scale(10.0F,10.0F,10.0F);
+    }
+
+    @Override
     public void render(T p_115455_, float p_115456_, float p_115457_, PoseStack p_115458_, MultiBufferSource p_115459_, int p_115460_) {
-        p_115458_.scale(10.0F,10.0F,10.0F);
         super.render(p_115455_, p_115456_, p_115457_, p_115458_, p_115459_, p_115460_);
         if(p_115455_.lazerTimer>0){
             render(p_115458_,p_115459_,p_115455_,p_115456_);
         }
+
     }
 
 
-    public static void render(PoseStack pMatrixStack, MultiBufferSource pBuffer, LivingEntity player, float pPartialTicks) {
-        pMatrixStack.pushPose();
-        Vec3 vec32 = player.getLookAngle();
-        vec32 = vec32.normalize();
-        float f5 = (float)Math.atan2(vec32.y, vec32.x*vec32.x+vec32.z*vec32.z);
-        float f6 = (float)Math.atan2(vec32.z, vec32.x);
-        var hit = JellyfishEntity.raycastForEntity(player.level,player,200.0F,true,2.0F);
-        float distance = (float) player.getEyePosition(pPartialTicks).distanceTo(hit.getLocation()) * 4;
-        pMatrixStack.translate(1.0F,player.getEyeHeight(),0.0F);
+    public static void render(PoseStack pMatrixStack, MultiBufferSource pBuffer, JellyfishEntity jellyfish, float pPartialTicks) {
 
-        pMatrixStack.mulPose(Vector3f.YP.rotation(-(f6-1.57F)));
-        pMatrixStack.mulPose(Vector3f.XP.rotation(-(f5-1.57F)));
-        pMatrixStack.scale(2F,2F,2F);
+        pMatrixStack.pushPose();
+        var hit = Util.internalRaycastForEntity(jellyfish.level, jellyfish,jellyfish.getEyePosition(),jellyfish.directionBlock,true,2F);
+
+        Vec3 vec32 = hit.getLocation().subtract(jellyfish.getEyePosition());
+        double f5 = Math.atan2(vec32.y,Math.sqrt(vec32.x*vec32.x + vec32.z*vec32.z));
+        double f6 = Math.atan2(vec32.z, vec32.x) ;
+        float distance = (float) jellyfish.getEyePosition(pPartialTicks).distanceTo(hit.getLocation()) * 0.1F;
+        pMatrixStack.translate(0.0F, jellyfish.getEyeHeight(),0.0F);
+
+        pMatrixStack.mulPose(Vector3f.YP.rotation((float) -(f6-1.57F)));
+
+        pMatrixStack.mulPose(Vector3f.XP.rotation((float) -(f5-1.57F)));
+
+
+
+        //pMatrixStack.translate(0.0F,-1.0F,0.0F);
+        pMatrixStack.scale(10F,10F,10F);
 
         for (int i1 = 1; i1 <= distance; i1++) {
             float[] f1={0.3F,0.1F,0.99F};
-            renderBeaconBeam(pMatrixStack,pBuffer, GUARDIAN_BEAM_LOCATION, pPartialTicks, 1.0F, player.level.getGameTime(), i1, (int) distance,f1, 0.2F, 0.25F);
+            renderBeaconBeam(pMatrixStack,pBuffer, GUARDIAN_BEAM_LOCATION, pPartialTicks, 1.0F, jellyfish.level.getGameTime(), i1, (int) distance,f1, 0.2F, 0.25F);
         }
 
         pMatrixStack.popPose();
@@ -121,6 +147,7 @@ public class JellyfishRenderer<T extends JellyfishEntity,M extends JellyfishMode
     private static void addVertex(Matrix4f p_253955_, Matrix3f p_253713_, VertexConsumer p_253894_, float p_253871_, float p_253841_, float p_254568_, float p_254361_, int p_254357_, float p_254451_, float p_254240_, float p_254117_, float p_253698_) {
         p_253894_.vertex(p_253955_, p_254451_, (float)p_254357_, p_254240_).color(p_253871_, p_253841_, p_254568_, p_254361_).uv(p_254117_, p_253698_).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(p_253713_, 0.0F, 1.0F, 0.0F).endVertex();
     }
+
 
     @Override
     public ResourceLocation getTextureLocation(T p_114482_) {

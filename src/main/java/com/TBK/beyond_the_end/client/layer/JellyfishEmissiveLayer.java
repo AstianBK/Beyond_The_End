@@ -6,6 +6,7 @@ import com.TBK.beyond_the_end.server.entity.JellyfishEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.model.HierarchicalModel;
 import net.minecraft.client.model.WardenModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -14,6 +15,7 @@ import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.monster.warden.Warden;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -21,7 +23,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import java.util.List;
 
 @OnlyIn(Dist.CLIENT)
-public class JellyfishEmissiveLayer<T extends JellyfishEntity, M extends JellyfishModel<T>> extends RenderLayer<T, M> {
+public class JellyfishEmissiveLayer<T extends Mob, M extends HierarchicalModel<T>> extends RenderLayer<T, M> {
     private final ResourceLocation texture;
     private final AlphaFunction<T> alphaFunction;
     private final DrawSelector<T, M> drawSelector;
@@ -66,12 +68,12 @@ public class JellyfishEmissiveLayer<T extends JellyfishEntity, M extends Jellyfi
     }
 
     @OnlyIn(Dist.CLIENT)
-    public interface AlphaFunction<T extends JellyfishEntity> {
+    public interface AlphaFunction<T extends Mob> {
         float apply(T p_234920_, float p_234921_, float p_234922_);
     }
 
     @OnlyIn(Dist.CLIENT)
-    public interface DrawSelector<T extends JellyfishEntity, M extends EntityModel<T>> {
+    public interface DrawSelector<T extends Mob, M extends EntityModel<T>> {
         List<ModelPart> getPartsToDraw(M p_234924_);
     }
 }

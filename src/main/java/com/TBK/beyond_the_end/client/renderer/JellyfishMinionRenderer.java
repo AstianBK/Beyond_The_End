@@ -2,6 +2,7 @@ package com.TBK.beyond_the_end.client.renderer;
 
 import com.TBK.beyond_the_end.BeyondTheEnd;
 import com.TBK.beyond_the_end.client.animacion.JellyfishMinionAnim;
+import com.TBK.beyond_the_end.client.layer.JellyfishEmissiveLayer;
 import com.TBK.beyond_the_end.client.model.JellyfishMinionModel;
 import com.TBK.beyond_the_end.client.model.JellyfishModel;
 import com.TBK.beyond_the_end.common.Util;
@@ -26,9 +27,14 @@ import net.minecraft.world.phys.Vec3;
 
 public class JellyfishMinionRenderer<T extends JellyfishMinionEntity,M extends JellyfishMinionModel<T>> extends MobRenderer<T,M> {
     public final ResourceLocation TEXTURE = new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/jellyfish/jellyfish_minion.png");
+    public final ResourceLocation GLOWING = new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/jellyfish/jellyfish_minion_glowing.png");
 
     public JellyfishMinionRenderer(EntityRendererProvider.Context p_174304_) {
         super(p_174304_, (M) new JellyfishMinionModel<>(p_174304_.bakeLayer(JellyfishMinionModel.LAYER_LOCATION)), 0.0F);
+        this.addLayer(new JellyfishEmissiveLayer<>(this,GLOWING,(entity, f1, f2)->{
+            return 1.0F;
+        },JellyfishMinionModel::getEye));
+
     }
 
 

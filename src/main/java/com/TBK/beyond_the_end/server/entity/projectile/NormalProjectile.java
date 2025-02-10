@@ -15,6 +15,8 @@ import net.minecraft.world.phys.Vec3;
 import java.util.List;
 
 public abstract class NormalProjectile extends ThrowableProjectile {
+    public int animTimer0=0;
+    public int animTimer=0;
 
     protected NormalProjectile(EntityType<? extends ThrowableProjectile> p_37466_, Level p_37467_) {
         super(p_37466_, p_37467_);
@@ -22,6 +24,12 @@ public abstract class NormalProjectile extends ThrowableProjectile {
 
     @Override
     public void tick() {
+        if(this.level.isClientSide){
+            this.animTimer0=this.animTimer;
+            if(this.animTimer++>19){
+                this.animTimer=0;
+            }
+        }
         if (!this.level.isClientSide()) {
             HitResult result = ProjectileUtil.getHitResult(this, this::canHitEntity);
             if (result.getType() == HitResult.Type.MISS && this.isAlive()) {
@@ -49,6 +57,10 @@ public abstract class NormalProjectile extends ThrowableProjectile {
 
         this.setPos(d7, d2, d3);
         this.checkInsideBlocks();
+    }
+
+    public float getAnimTimer(float partialTicks){
+        return Math.max((20.0F - Mth.lerp(partialTicks,(float) this.animTimer0,(float)this.animTimer))/ 20.0F,0.1F);
     }
 
     @Override

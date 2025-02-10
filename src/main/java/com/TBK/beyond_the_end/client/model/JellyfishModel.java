@@ -17,6 +17,7 @@ import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 
@@ -576,23 +577,16 @@ public class JellyfishModel<T extends JellyfishEntity> extends HierarchicalModel
 		this.reset();
 
 		this.animate(entity.idle, JellyfishAnim.idle,ageInTicks);
-
-		if(entity.lazerTimer>0 || entity.startLazerTimer>0){
-			this.reset();
-			Vec3 vec32 = entity.directionBlock.subtract(entity.getEyePosition());
-			double f5 = Math.atan2(vec32.y,Math.sqrt(vec32.x*vec32.x + vec32.z*vec32.z));
-			double f6 = Math.atan2(vec32.z, vec32.x) ;
-
-			this.truemain.xRot = (float) (headPitch *((float)Math.PI / 180F));
-			this.truemain.yRot = (float) (netHeadYaw *((float)Math.PI / 180F));
-		}
-
-		this.truemain.y+=40;
 		this.animate(entity.startSummoning,JellyfishAnim.startsummon,ageInTicks);
+
 		this.animate(entity.summoning,JellyfishAnim.summoning,ageInTicks);
 
 		this.animate(entity.startLazer,JellyfishAnim.startlazer,ageInTicks);
+
 		this.animate(entity.shootLaser,JellyfishAnim.shootlazer,ageInTicks);
+
+		this.truemain.y+=40;
+
 		this.animate(entity.spinning,JellyfishAnim.spinning,ageInTicks);
 	}
 

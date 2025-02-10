@@ -5,6 +5,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ThrowableProjectile;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
@@ -25,8 +26,10 @@ public class ChargeFlash extends NormalProjectile{
 
     @Override
     protected void onHitEntity(EntityHitResult p_37259_) {
-        if(p_37259_.getEntity() instanceof LivingEntity living){
-            living.hurt(DamageSource.LIGHTNING_BOLT,2.0F);
+        if(p_37259_.getEntity() instanceof LivingEntity living ){
+            if(!living.isBlocking()){
+                living.hurt(DamageSource.LIGHTNING_BOLT,2.0F);
+            }
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.TBK.beyond_the_end.server;
 
 import com.TBK.beyond_the_end.BeyondTheEnd;
+import com.TBK.beyond_the_end.common.registry.BkDimension;
 import com.TBK.beyond_the_end.server.entity.FallenDragonFight;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
@@ -26,7 +27,7 @@ public class ServerData extends SavedData {
 	}
 
 	public static ServerData get() {
-		DimensionDataStorage manager = BeyondTheEnd.getServer().getLevel(Level.END).getDataStorage();
+		DimensionDataStorage manager = BeyondTheEnd.getServer().getLevel(BkDimension.BEYOND_END_LEVEL).getDataStorage();
 
 		ServerData state = manager.computeIfAbsent(
 				ServerData::load,

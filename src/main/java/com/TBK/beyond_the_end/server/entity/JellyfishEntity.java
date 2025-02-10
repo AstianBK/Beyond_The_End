@@ -9,13 +9,16 @@ import com.TBK.beyond_the_end.server.network.message.PacketFlameParticles;
 import com.TBK.beyond_the_end.server.network.message.PacketNextActionJellyfish;
 import com.TBK.beyond_the_end.server.network.message.PacketSync;
 import com.TBK.beyond_the_end.server.network.message.PacketTargetAttack;
+import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -31,6 +34,7 @@ import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.monster.warden.AngerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.BaseFireBlock;
 import net.minecraft.world.level.block.CampfireBlock;
 import net.minecraft.world.level.block.CandleBlock;
@@ -38,7 +42,9 @@ import net.minecraft.world.level.block.CandleCakeBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -161,7 +167,7 @@ public class JellyfishEntity extends PathfinderMob {
     @Override
     public void tick() {
         super.tick();
-
+        this.setNoGravity(true);
         if(this.lazerTimer>0){
             this.lazerTimer--;
             if(!this.level.isClientSide){
@@ -229,7 +235,7 @@ public class JellyfishEntity extends PathfinderMob {
                 int time=300 + this.level.random.nextInt(0,5)*this.level.random.nextInt(0,5);
                 this.maxNextTimer=time;
                 this.nextTimer=0;
-                int nextAction=this.level.random.nextInt(0,4);
+                int nextAction=2; //this.level.random.nextInt(0,4);
                 if(nextAction==3){
                     if(BeyondTheEnd.jellyfishFightEvent!=null && !BeyondTheEnd.jellyfishFightEvent.minions.isEmpty()){
                         nextAction=2;
@@ -255,7 +261,7 @@ public class JellyfishEntity extends PathfinderMob {
         if(this.startLazerTimer>0){
             this.startLazerTimer--;
             if(this.getTarget()!=null){
-                Vec3 vec3=this.getTarget().position();
+                Vec3 vec3=new Vec3(this.getTarget().getBlockX(),this.getTarget().getBlockY(),this.getTarget().getBlockZ());
                 this.directionBlock=vec3;
                 if(!this.level.isClientSide){
                     PacketHandler.sendToAllTracking(new PacketTargetAttack(this.getId(), (int) vec3.x, (int) vec3.y, (int) vec3.z),this);
@@ -284,11 +290,10 @@ public class JellyfishEntity extends PathfinderMob {
         if(this.summoningTimer>0){
             this.summoningTimer--;
             if(this.summoningTimer>90){
-                if(this.summoningTimer%130==0){
+                if((90+this.summoningTimer)%130==0 || this.summoningTimer==91){
                     JellyfishMinionEntity minion = new JellyfishMinionEntity(BKEntityType.JELLYFISH_MINION.get(), this.level);
                     minion.setPos(this.position().add(0.0F,-3.0D,0.0D));
-                    minion.setFavoriteBullet(this.level.random.nextBoolean() ? JellyfishMinionEntity.Bullet.FOLLOWING : JellyfishMinionEntity.Bullet.FLASH);
-                    minion.actuallyPhase= JellyfishMinionEntity.PhaseAttack.SPIN_AROUND;
+                    minion.actuallyPhase= JellyfishMinionEntity.PhaseAttack.SPAWN;
                     this.level.addFreshEntity(minion);
                     if(this.getTarget()!=null){
                         minion.setTarget(this.getTarget());
@@ -331,6 +336,7 @@ public class JellyfishEntity extends PathfinderMob {
 
         this.refreshDimensions();
     }
+
 
     @Override
     public Packet<?> getAddEntityPacket() {
@@ -404,8 +410,7 @@ public class JellyfishEntity extends PathfinderMob {
                 this.rotateTowardsTarget(pos);
             }
         }else {
-            this.setPos(this.getX(),this.getY(),this.getZ());
-            this.lookControl.setLookAt(this.directionBlock);
+            this.setPos(this.position());
         }
 
 
@@ -422,7 +427,6 @@ public class JellyfishEntity extends PathfinderMob {
         this.setYRot(this.lerpRotation(this.getYRot(), (float)targetYaw, 30.0F));
         this.setXRot((float)pitch);
         this.setRot(this.getYRot(),this.getXRot());
-
     }
 
     private void rotateTowardsTarget(BlockPos target) {
@@ -433,9 +437,11 @@ public class JellyfishEntity extends PathfinderMob {
         double dz = targetPos.z - harpyPos.z;
         double targetYaw = Math.toDegrees(Math.atan2(dz, dx)) - 90.0;
         double pitch = -Math.toDegrees(Math.atan2(dy, Math.sqrt(dx * dx + dz * dz)));
-        this.setYRot(this.lerpRotation(this.getYRot(), (float)targetYaw, 30.0F));
+        this.setYRot((float) targetYaw);
         this.setXRot((float)pitch);
         this.setRot(this.getYRot(),this.getXRot());
+        this.yBodyRot=this.getYRot();
+        this.setYBodyRot(this.getYRot());
     }
 
     private float lerpRotation(float currentYaw, float targetYaw, float maxTurnSpeed) {
@@ -683,8 +689,11 @@ public class JellyfishEntity extends PathfinderMob {
                     } else if (d0 > 256.0D) {
                         this.ticksUntilNextPathRecalculation += 5;
                     }
+                    Path path=this.mob.getNavigation().createPath(new BlockPos(this.pathedTargetX,this.pathedTargetY,this.pathedTargetZ),3);
 
-                    this.mob.setDeltaMovement(vec3.add(livingentity.getDeltaMovement()).subtract(this.mob.position()).normalize().scale(0.9D));
+                    if(path!=null){
+                        this.mob.navigation.moveTo(path,1.2F);
+                    }
 
                     this.ticksUntilNextPathRecalculation = this.adjustedTickDelay(this.ticksUntilNextPathRecalculation);
                 }

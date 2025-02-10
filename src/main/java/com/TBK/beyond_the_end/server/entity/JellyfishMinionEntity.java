@@ -9,8 +9,10 @@ import com.TBK.beyond_the_end.server.network.message.PacketNextActionJellyfish;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -20,12 +22,15 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.monster.Shulker;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Fireball;
 import net.minecraft.world.entity.projectile.LargeFireball;
 import net.minecraft.world.entity.projectile.ShulkerBullet;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 import java.util.Random;
@@ -40,7 +45,6 @@ public class JellyfishMinionEntity extends PathfinderMob {
     public int nextTimer=0;
     public int maxNextTimer=50;
     public BlockPos origin= new BlockPos(0,70,0);
-    public Bullet favoriteBullet = Bullet.FLASH;
     public JellyfishMinionEntity(EntityType<? extends PathfinderMob> p_21368_, Level p_21369_) {
         super(p_21368_, p_21369_);
         this.moveControl = new JellyfishMinionEntityMoveControl(this);
@@ -52,10 +56,9 @@ public class JellyfishMinionEntity extends PathfinderMob {
 
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 100.0D)
+                .add(Attributes.MAX_HEALTH, 30.0D)
                 .add(Attributes.FOLLOW_RANGE,100.0D)
-                .add(Attributes.FLYING_SPEED,0.35D)
-                .add(Attributes.KNOCKBACK_RESISTANCE,1.0F);
+                .add(Attributes.FLYING_SPEED,0.35D);
     }
 
     public boolean causeFallDamage(float pFallDistance, float pMultiplier, DamageSource pSource) {
@@ -69,18 +72,28 @@ public class JellyfishMinionEntity extends PathfinderMob {
     @Override
     protected void registerGoals() {
         super.registerGoals();
-        this.goalSelector.addGoal(3,new JellyfishMinionEntityRandomMoveGoal());
+        this.goalSelector.addGoal(0,new JellyfishMinionEntityRandomMoveGoal());
         this.goalSelector.addGoal(1,new MinionShoot(this));
         this.targetSelector.addGoal(1,new HurtByTargetGoal(this));
-        this.targetSelector.addGoal(2,new NearestAttackableTargetGoal<>(this, LivingEntity.class,true));
+        this.targetSelector.addGoal(2,new NearestAttackableTargetGoal<>(this, Player.class,true));
     }
 
-    public void setFavoriteBullet(Bullet bullet){
-        this.favoriteBullet=bullet;
+    @Override
+    public void addAdditionalSaveData(CompoundTag p_21484_) {
+        super.addAdditionalSaveData(p_21484_);
+        if(this.origin!=null){
+            p_21484_.putInt("x",this.origin.getX());
+            p_21484_.putInt("y",this.origin.getY());
+            p_21484_.putInt("z",this.origin.getZ());
+        }
     }
 
-    public Bullet getFavoriteBullet(){
-        return this.favoriteBullet;
+    @Override
+    public void readAdditionalSaveData(CompoundTag p_21450_) {
+        super.readAdditionalSaveData(p_21450_);
+        if(p_21450_.contains("x") && p_21450_.contains("y") && p_21450_.contains("z")){
+            this.origin=new BlockPos(p_21450_.getInt("x"),p_21450_.getInt("y"),p_21450_.getInt("z"));
+        }
     }
 
     @Override
@@ -106,7 +119,7 @@ public class JellyfishMinionEntity extends PathfinderMob {
         }
 
         if(!this.level.isClientSide){
-            if(this.nextTimer>this.maxNextTimer && this.actuallyPhase== PhaseAttack.SPIN_AROUND){
+            if(this.nextTimer>this.maxNextTimer && this.actuallyPhase == PhaseAttack.SPIN_AROUND){
                 int time=30 + this.level.random.nextInt(0,5)*this.level.random.nextInt(0,5);
                 this.maxNextTimer=time;
                 this.nextTimer=0;
@@ -121,7 +134,7 @@ public class JellyfishMinionEntity extends PathfinderMob {
             if(this.shootTimer==0){
                 if(!this.level.isClientSide){
                     if(this.getTarget()!=null && this.shootTimer<=0){
-                        if(this.getFavoriteBullet()==Bullet.FLASH){
+                        if(this.level.random.nextFloat()>0.25F){
                             ChargeFlash ball = new ChargeFlash(this.level,this);
                             ball.setPos(this.getEyePosition());
                             ball.shoot(this.getTarget().getEyePosition().x-this.getEyePosition().x,this.getTarget().getEyePosition().y-this.getEyePosition().y,this.getTarget().getEyePosition().z-this.getEyePosition().z,1.0F,1.0F);
@@ -130,9 +143,10 @@ public class JellyfishMinionEntity extends PathfinderMob {
                             this.level.addFreshEntity(new ChargeFollowing(this.level,this,this.getTarget()));
                             this.playSound(SoundEvents.SHULKER_SHOOT, 2.0F, (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F);
                         }
-                        this.setActionForID(0);
-                        PacketHandler.sendToAllTracking(new PacketNextActionJellyfish(this.getId(),0,0),this);
                     }
+                    this.setActionForID(0);
+                    PacketHandler.sendToAllTracking(new PacketNextActionJellyfish(this.getId(),0,0),this);
+
                 }
             }
         }
@@ -149,6 +163,13 @@ public class JellyfishMinionEntity extends PathfinderMob {
         return this.getType().getDimensions().scale(this.getScale(), 1.0F);
     }
 
+    @Nullable
+    @Override
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor p_21434_, DifficultyInstance p_21435_, MobSpawnType p_21436_, @Nullable SpawnGroupData p_21437_, @Nullable CompoundTag p_21438_) {
+        this.origin=this.blockPosition();
+        return super.finalizeSpawn(p_21434_, p_21435_, p_21436_, p_21437_, p_21438_);
+    }
+
     @Override
     public void aiStep() {
         super.aiStep();
@@ -163,6 +184,11 @@ public class JellyfishMinionEntity extends PathfinderMob {
                 BeyondTheEnd.jellyfishFightEvent.onMinionDeath(this,p_21014_);
             }
         }
+    }
+
+    @Override
+    public void checkDespawn() {
+
     }
 
     public void clientAnim(){
@@ -238,7 +264,7 @@ public class JellyfishMinionEntity extends PathfinderMob {
         }
 
         public boolean canUse() {
-            return !JellyfishMinionEntity.this.getMoveControl().hasWanted() && JellyfishMinionEntity.this.random.nextInt(reducedTickDelay(7)) == 0;
+            return !JellyfishMinionEntity.this.getMoveControl().hasWanted();
         }
 
         public boolean canContinueToUse() {
@@ -297,10 +323,7 @@ public class JellyfishMinionEntity extends PathfinderMob {
 
     }
 
-    public enum Bullet{
-        FOLLOWING,
-        FLASH;
-    }
+
 
 
     public enum PhaseAttack{

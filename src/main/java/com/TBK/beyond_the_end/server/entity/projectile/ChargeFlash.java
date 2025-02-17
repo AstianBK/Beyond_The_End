@@ -34,6 +34,8 @@ public class ChargeFlash extends NormalProjectile{
         }
     }
 
+
+
     @Override
     protected void onHit(HitResult p_37260_) {
         super.onHit(p_37260_);
@@ -43,9 +45,8 @@ public class ChargeFlash extends NormalProjectile{
     @Override
     protected void onHitEntity(EntityHitResult p_37259_) {
         if(p_37259_.getEntity() instanceof LivingEntity living ){
-            if(!living.isBlocking()){
-                living.hurt(DamageSource.LIGHTNING_BOLT,4.0F);
-            }
+            living.hurt(DamageSource.LIGHTNING_BOLT,4.0F);
+
         }
     }
 }

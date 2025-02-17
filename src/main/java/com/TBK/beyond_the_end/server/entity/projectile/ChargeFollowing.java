@@ -115,6 +115,19 @@ public class ChargeFollowing extends NormalProjectile{
     }
 
     @Override
+    public boolean hurt(DamageSource p_19946_, float p_19947_) {
+        if (!this.isInvulnerableTo(p_19946_)) {
+            this.markHurt();
+
+            if (p_19946_.getEntity() != null) {
+                this.discard();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
     protected void onHit(HitResult p_37260_) {
         super.onHit(p_37260_);
         this.discard();
@@ -123,9 +136,7 @@ public class ChargeFollowing extends NormalProjectile{
     @Override
     protected void onHitEntity(EntityHitResult p_37259_) {
         if(p_37259_.getEntity() instanceof LivingEntity living ){
-            if(!living.isBlocking()){
-                living.hurt(DamageSource.LIGHTNING_BOLT,9.0F);
-            }
+            living.hurt(DamageSource.LIGHTNING_BOLT,9.0F);
         }
     }
 }

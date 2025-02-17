@@ -82,8 +82,8 @@ public class JellyfishFightEvent {
             this.dragonKilled = p_64080_.getBoolean("jellyfishKilled");
             this.previouslyKilled = p_64080_.getBoolean("jellyfishPreviouslyKilled");
         } else {
-            this.dragonKilled = true;
-            this.previouslyKilled = true;
+            this.dragonKilled = false;
+            this.previouslyKilled = false;
         }
 
         this.exitPortalPattern = BlockPatternBuilder.start().aisle("       ", "       ", "       ", "   #   ", "       ", "       ", "       ").aisle("       ", "       ", "       ", "   #   ", "       ", "       ", "       ").aisle("       ", "       ", "       ", "   #   ", "       ", "       ", "       ").aisle("  ###  ", " #   # ", "#     #", "#  #  #", "#     #", " #   # ", "  ###  ").aisle("       ", "  ###  ", " ##### ", " ##### ", " ##### ", "  ###  ", "       ").where('#', BlockInWorld.hasState(BlockPredicate.forBlock(Blocks.BEDROCK))).build();
@@ -123,8 +123,9 @@ public class JellyfishFightEvent {
             this.ticksSinceLastPlayerScan = 0;
         }
 
+        this.level.getChunkSource().removeRegionTicket(TicketType.DRAGON, new ChunkPos(0, 0), 14, Unit.INSTANCE);
         if (!this.dragonEvent.getPlayers().isEmpty()) {
-            this.level.getChunkSource().addRegionTicket(TicketType.DRAGON, new ChunkPos(0, 0), 14, Unit.INSTANCE);
+            this.level.getChunkSource().addRegionTicket(BeyondTheEnd.JELLY, new ChunkPos(0, 0), 14, Unit.INSTANCE);
             boolean flag = this.isArenaLoaded();
             if (this.needsStateScanning && flag) {
                 this.scanState();
@@ -141,7 +142,7 @@ public class JellyfishFightEvent {
 
             }
         } else {
-            this.level.getChunkSource().removeRegionTicket(TicketType.DRAGON, new ChunkPos(0, 0), 14, Unit.INSTANCE);
+            this.level.getChunkSource().removeRegionTicket(BeyondTheEnd.JELLY, new ChunkPos(0, 0), 14, Unit.INSTANCE);
         }
     }
 

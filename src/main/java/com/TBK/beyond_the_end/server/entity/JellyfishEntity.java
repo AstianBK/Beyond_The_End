@@ -36,6 +36,7 @@ import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.monster.warden.AngerLevel;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.BaseFireBlock;
@@ -126,6 +127,9 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
         if(this.lazerTimer<=0){
             if(source.getEntity() instanceof Player player && PortalPlayer.get(player).isPresent()){
                 damage= PortalPlayer.get(player).orElse(null).damageFinal(this,damage);
+                if(this.level.isClientSide){
+                    this.particleHurt();
+                }
             }
             if(!this.level.isClientSide){
                 if(BeyondTheEnd.jellyfishFightEvent!=null){
@@ -755,8 +759,9 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
                 if(livingentity.distanceToSqr(this.pathedTargetX, this.pathedTargetY, this.pathedTargetZ) < 30.0D){
                     this.upgradePosTarget(livingentity);
                 }
-
-                this.checkAndPerformAttack();
+                if(this.mob.tickCount%5==0){
+                    this.checkAndPerformAttack();
+                }
             }
         }
 
@@ -768,13 +773,13 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
         }
 
         protected void checkAndPerformAttack() {
-            this.mob.level.getEntitiesOfClass(LivingEntity.class,this.mob.getBoundingBox().inflate(25.0D),e->e!=this.mob).forEach(e->{
-                if(e.hurt(DamageSource.mobAttack(this.mob),15.0F)){
+            this.mob.level.getEntitiesOfClass(LivingEntity.class,this.mob.getBoundingBox().inflate(25.0D,12.0F,25.0F),e->e!=this.mob).forEach(e->{
+                if(e.hurt(DamageSource.mobAttack(this.mob),10.0F)){
                     double dX=e.getX()-this.mob.getX();
                     double dZ=e.getZ()-this.mob.getZ();
                     double d0=dX*dX+dZ*dZ;
                     if(e.isOnGround()){
-                        e.push(dX/d0,4.0F,dZ/d0);
+                        e.push(dX/d0,2.4F,dZ/d0);
                     }
                 }
             });

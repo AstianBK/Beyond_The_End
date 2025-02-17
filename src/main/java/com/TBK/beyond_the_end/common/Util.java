@@ -1,8 +1,10 @@
 package com.TBK.beyond_the_end.common;
 
+import com.TBK.beyond_the_end.server.entity.JellyfishMinionEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -86,6 +88,9 @@ public class Util {
 
     public static HitResult checkEntityIntersecting(Entity entity, Vec3 start, Vec3 end, float bbInflation) {
         Vec3 hitPos = null;
+        if(entity instanceof Projectile || entity instanceof JellyfishMinionEntity){
+            return BlockHitResult.miss(end, Direction.UP, new BlockPos(end));
+        }
         if (entity.isMultipartEntity()) {
             for (PartEntity p : entity.getParts()) {
                 var hit = p.getBoundingBox().inflate(bbInflation).clip(start, end).orElse(null);

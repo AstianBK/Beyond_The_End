@@ -6,6 +6,7 @@ import com.TBK.beyond_the_end.client.particle.custom.FlameParticles;
 import com.TBK.beyond_the_end.client.particle.custom.MistParticles;
 import com.TBK.beyond_the_end.client.renderer.*;
 import com.TBK.beyond_the_end.common.registry.*;
+import com.TBK.beyond_the_end.server.ServerData;
 import com.TBK.beyond_the_end.server.entity.FallenDragonFight;
 import com.TBK.beyond_the_end.server.entity.JellyfishFightEvent;
 import com.TBK.beyond_the_end.server.network.PacketHandler;
@@ -17,6 +18,8 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraft.client.renderer.entity.SlimeRenderer;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.TicketType;
+import net.minecraft.util.Unit;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
@@ -37,11 +40,14 @@ import org.slf4j.Logger;
 public class BeyondTheEnd
 {
     public static FallenDragonFight bossFight = null;
+    public static ServerData serverData;
     public static JellyfishFightEvent jellyfishFightEvent = null;
     public static final String MODID = "beyond_the_end";
     public static final Logger LOGGER = LogUtils.getLogger();
     public static CommonProxy PROXY = DistExecutor.safeRunForDist(() -> ClientProxy::new, () -> CommonProxy::new);
-
+    public static final TicketType<Unit> JELLY = TicketType.create("jelly", (p_9460_, p_9461_) -> {
+        return 0;
+    });
 
     public BeyondTheEnd()
     {

@@ -36,14 +36,12 @@ public class ServerData extends SavedData {
 				ServerData::new,
 				BeyondTheEnd.MODID
 		);
-
 		state.setDirty();
 
 		return state;
 	}
 
 	public CompoundTag tag(){
-		this.setDirty();
 		return this.tag;
 	}
 
@@ -71,7 +69,6 @@ public class ServerData extends SavedData {
 		if(data.contains("jellyfishBattle")){
 			BeyondTheEnd.jellyfishFightEvent = new JellyfishFightEvent(BeyondTheEnd.getServer().getLevel(BkDimension.BEYOND_END_LEVEL),data.getCompound("jellyfishBattle"));
 		}
-		created.setDirty();
 		return created;
 	}
 

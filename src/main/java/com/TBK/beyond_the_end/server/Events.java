@@ -126,27 +126,25 @@ public class Events {
                         BeyondTheEnd.bossFight = new FallenDragonFight((ServerLevel) level, i, nbt);
                         BeyondTheEnd.bossFight.setPortalLocation(new BlockPos(pos));
                     }else {
-                        BeyondTheEnd.bossFight=null;
+                        BeyondTheEnd.bossFight = null;
                     }
                 }
-                if(hasDefeat){
-                    BeyondTheEnd.bossFight=null;
-                }
-                if(hasDefeat){
-                    CompoundTag tag = ServerData.get().tag().getCompound("jellyfishBattle");
 
-                    if(BeyondTheEnd.jellyfishFightEvent != null && BeyondTheEnd.jellyfishFightEvent.level != null){
-                        BeyondTheEnd.jellyfishFightEvent.tick();
-                    }else {
-                        if(level.dimensionTypeRegistration().is(BkDimension.BEYOND_END_TYPE)){
-                            BeyondTheEnd.jellyfishFightEvent = new JellyfishFightEvent((ServerLevel) level, tag);
-                            BeyondTheEnd.jellyfishFightEvent.setPortalLocation(new BlockPos(pos));
+                    if(hasDefeat){
+                        CompoundTag tag = ServerData.get().tag().getCompound("jellyfishBattle");
+                        if(BeyondTheEnd.jellyfishFightEvent != null && BeyondTheEnd.jellyfishFightEvent.level != null){
+                            BeyondTheEnd.jellyfishFightEvent.tick();
                         }else {
-                            BeyondTheEnd.jellyfishFightEvent = null;
+                            if(level.dimensionTypeRegistration().is(BkDimension.BEYOND_END_TYPE)){
+                                BeyondTheEnd.jellyfishFightEvent = new JellyfishFightEvent((ServerLevel) level, tag);
+                                BeyondTheEnd.jellyfishFightEvent.setPortalLocation(new BlockPos(pos));
+                            }else {
+                                BeyondTheEnd.jellyfishFightEvent = null;
+                            }
                         }
                     }
-                }
             }
+
         }else if(event.side == LogicalSide.CLIENT && event.phase == TickEvent.Phase.END){
             if(BeyondTheEnd.jellyfishFightEvent!=null){
                 BeyondTheEnd.jellyfishFightEvent.tickClient();

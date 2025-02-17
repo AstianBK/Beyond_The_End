@@ -12,24 +12,24 @@ public class BTESounds {
     public static final DeferredRegister<SoundEvent> SOUND_EVENTS =
             DeferredRegister.create(ForgeRegistries.SOUND_EVENTS, BeyondTheEnd.MODID);
 
-    //GUNS
-    public static final RegistryObject<SoundEvent> ARQUEBUS_SHOOT =
+    //ENTITY
+    public static final RegistryObject<SoundEvent> JELLYFISH_SHOOT1 =
             registerSoundEvent("arquebus_shoot");
 
-    public static final RegistryObject<SoundEvent> HANDGONNE_SHOOT =
-            registerSoundEvent("handgonne_shoot");
+    public static final RegistryObject<SoundEvent> JELLYFISH_SHOOT2 =
+            registerSoundEvent("jellyfish_shoot2");
 
-    //MELEE
+    public static final RegistryObject<SoundEvent> JELLYFISH_CHARGE =
+            registerSoundEvent("jellyfish_charge");
 
-    public static final RegistryObject<SoundEvent> MORNINGSTAR_HIT =
-            registerSoundEvent("morningstar_hit");
+    public static final RegistryObject<SoundEvent> JELLYFISH_LASERLOOP =
+            registerSoundEvent("jellyfish_laserloop");
 
-    public static final RegistryObject<SoundEvent> EVENINGSTAR_HIT =
-            registerSoundEvent("eveningstar_hit");
+    public static final RegistryObject<SoundEvent> JELLYFISH_HURT =
+            registerSoundEvent("jellyfish_hurt");
 
-    public static final RegistryObject<SoundEvent> THROW_WEAPON =
-            registerSoundEvent("throw_weapon");
-
+    public static final RegistryObject<SoundEvent> JELLYFISH_SUMMON =
+            registerSoundEvent("jellyfish_summon");
 
     public static RegistryObject<SoundEvent> registerSoundEvent(String name){
         return SOUND_EVENTS.register(name, () ->new  SoundEvent(new ResourceLocation(BeyondTheEnd.MODID, name)));

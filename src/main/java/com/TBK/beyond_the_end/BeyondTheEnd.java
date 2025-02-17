@@ -48,7 +48,6 @@ public class BeyondTheEnd
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
         modEventBus.addListener(this::clientSetup);
-        MinecraftForge.EVENT_BUS.addListener(this::serverStart);
         BKEntityType.ENTITY_TYPES.register(modEventBus);
         BKConfigFeatures.FEATURES.register(modEventBus);
         BkBlockEntity.BLOCK_ENTITY_TYPE.register(modEventBus);
@@ -62,15 +61,6 @@ public class BeyondTheEnd
             modEventBus.addListener(this::registerParticleFactories);
             modEventBus.addListener(this::registerRenderers);
         });
-    }
-
-    private void serverStart(LevelEvent.Save event) {
-        if(BeyondTheEnd.bossFight!=null){
-            BeyondTheEnd.bossFight.saveData();
-        }
-        if(BeyondTheEnd.jellyfishFightEvent!=null){
-            BeyondTheEnd.jellyfishFightEvent.saveData();
-        }
     }
 
     @OnlyIn(Dist.CLIENT)

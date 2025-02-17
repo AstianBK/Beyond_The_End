@@ -91,7 +91,6 @@ public class ChargeFollowing extends NormalProjectile{
 
     @Override
     public void tick() {
-
         if(!this.level.isClientSide){
             this.setDeltaMovement(new Vec3(this.targetDeltaX,this.targetDeltaY,this.targetDeltaZ).subtract(this.position()).normalize().scale(0.2F));
 
@@ -103,8 +102,14 @@ public class ChargeFollowing extends NormalProjectile{
                     this.targetDeltaY=target.getEyeY();
                     this.targetDeltaZ=target.getZ();
                 }
+                if(target instanceof Player player && (player.isCreative() || player.isSpectator())){
+                    this.discard();
+                }
+            }else{
+                this.discard();
             }
         }
+
         super.tick();
 
     }

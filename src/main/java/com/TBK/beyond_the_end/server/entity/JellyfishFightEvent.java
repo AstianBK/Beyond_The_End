@@ -2,6 +2,8 @@ package com.TBK.beyond_the_end.server.entity;
 
 import com.TBK.beyond_the_end.BeyondTheEnd;
 import com.TBK.beyond_the_end.common.registry.BKEntityType;
+import com.TBK.beyond_the_end.server.capabilities.PortalPlayer;
+import com.TBK.beyond_the_end.server.capabilities.PortalPlayerCapability;
 import com.google.common.collect.Sets;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -15,8 +17,11 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.TheEndPortalBlockEntity;
 import net.minecraft.world.level.block.state.pattern.BlockInWorld;
 import net.minecraft.world.level.block.state.pattern.BlockPattern;
 import net.minecraft.world.level.block.state.pattern.BlockPatternBuilder;
@@ -24,6 +29,8 @@ import net.minecraft.world.level.block.state.predicate.BlockPredicate;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -32,7 +39,7 @@ import java.util.function.Predicate;
 public class JellyfishFightEvent {
     private static final Predicate<Entity> VALID_PLAYER = EntitySelector.ENTITY_STILL_ALIVE.and(EntitySelector.withinDistance(0.0D, 128.0D, 0.0D, 192.0D));
     private final ServerBossEvent dragonEvent = (ServerBossEvent)(new ServerBossEvent(Component.translatable("entity.beyond_the_end.jellyfish"), BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.PROGRESS)).setPlayBossMusic(true).setCreateWorldFog(false);
-    private final ServerLevel level;
+    public final ServerLevel level;
     private final BlockPattern exitPortalPattern;
     private int ticksSinceDragonSeen;
     private int ticksSinceJellyfishSeen;
@@ -40,7 +47,6 @@ public class JellyfishFightEvent {
     private int ticksSinceLastPlayerScan;
     private boolean dragonKilled;
     private boolean previouslyKilled;
-    public Set<Integer> minions = Sets.newHashSet();
     @Nullable
     private UUID jellyfishUUID;
     private boolean needsStateScanning = true;
@@ -48,11 +54,23 @@ public class JellyfishFightEvent {
     private BlockPos portalLocation;
     @Nullable
     private int respawnTime;
+    public float prevScreenShakeAmount=0.0F;
+    public float screenShakeAmount=0.0F;
+    @OnlyIn(Dist.CLIENT)
+    public JellyfishFightEvent() {
+        this.level = null;
+        this.jellyfishUUID = null;
+        this.dragonKilled = false;
+        this.previouslyKilled = false;
+        this.needsStateScanning = false; // Forge: fix MC-105080
+        this.portalLocation = BlockPos.ZERO;
 
-    public JellyfishFightEvent(ServerLevel p_64078_, long p_64079_, CompoundTag p_64080_) {
+        this.exitPortalPattern = BlockPatternBuilder.start().aisle("       ", "       ", "       ", "   #   ", "       ", "       ", "       ").aisle("       ", "       ", "       ", "   #   ", "       ", "       ", "       ").aisle("       ", "       ", "       ", "   #   ", "       ", "       ", "       ").aisle("  ###  ", " #   # ", "#     #", "#  #  #", "#     #", " #   # ", "  ###  ").aisle("       ", "  ###  ", " ##### ", " ##### ", " ##### ", "  ###  ", "       ").where('#', BlockInWorld.hasState(BlockPredicate.forBlock(Blocks.BEDROCK))).build();
+    }
+    public JellyfishFightEvent(ServerLevel p_64078_, CompoundTag p_64080_) {
         this.level = p_64078_;
-        if (p_64080_.contains("NeedsStateScanning")) {
-            this.needsStateScanning = p_64080_.getBoolean("NeedsStateScanning");
+        if (p_64080_.contains("jellyfishNeedsStateScanning")) {
+            this.needsStateScanning = p_64080_.getBoolean("jellyfishNeedsStateScanning");
         }
 
         if (p_64080_.contains("jellyfishKilled", 99)) {
@@ -60,53 +78,38 @@ public class JellyfishFightEvent {
                 this.jellyfishUUID = p_64080_.getUUID("jellyfish");
             }
 
-            if(p_64080_.contains("minions",10)){
-                ListTag tag = p_64080_.getList("minions",9);
-                for(int i = 0 ; i < tag.size() ; i++){
-                    CompoundTag nbt = tag.getCompound(i);
-                    this.minions.add(nbt.getInt("minion"));
-                }
-            }
 
             this.dragonKilled = p_64080_.getBoolean("jellyfishKilled");
-            this.previouslyKilled = p_64080_.getBoolean("PreviouslyKilled");
-            this.needsStateScanning = !p_64080_.getBoolean("LegacyScanPerformed"); // Forge: fix MC-105080
-
-            if (p_64080_.contains("ExitPortalLocation", 10)) {
-                this.portalLocation = NbtUtils.readBlockPos(p_64080_.getCompound("ExitPortalLocation"));
-            }
+            this.previouslyKilled = p_64080_.getBoolean("jellyfishPreviouslyKilled");
         } else {
-            this.dragonKilled = false;
-            this.previouslyKilled = false;
+            this.dragonKilled = true;
+            this.previouslyKilled = true;
         }
 
         this.exitPortalPattern = BlockPatternBuilder.start().aisle("       ", "       ", "       ", "   #   ", "       ", "       ", "       ").aisle("       ", "       ", "       ", "   #   ", "       ", "       ", "       ").aisle("       ", "       ", "       ", "   #   ", "       ", "       ", "       ").aisle("  ###  ", " #   # ", "#     #", "#  #  #", "#     #", " #   # ", "  ###  ").aisle("       ", "  ###  ", " ##### ", " ##### ", " ##### ", "  ###  ", "       ").where('#', BlockInWorld.hasState(BlockPredicate.forBlock(Blocks.BEDROCK))).build();
     }
 
-    public void saveData() {
+    @OnlyIn(Dist.CLIENT)
+    public void tickClient(){
+        prevScreenShakeAmount = screenShakeAmount;
+
+        if (screenShakeAmount > 0) {
+            screenShakeAmount = Math.max(0, screenShakeAmount - 0.03F);
+        }
+    }
+
+    public CompoundTag saveData() {
         CompoundTag compoundtag = new CompoundTag();
-        compoundtag.putBoolean("NeedsStateScanning", this.needsStateScanning);
+        compoundtag.putBoolean("jellyfishNeedsStateScanning", this.needsStateScanning);
         if (this.jellyfishUUID != null) {
             compoundtag.putUUID("jellyfish", this.jellyfishUUID);
         }
-        ListTag list = new ListTag();
-        if(!this.minions.isEmpty()){
-            for (Integer uuid : this.minions){
-                CompoundTag tag = new CompoundTag();
-                tag.putInt("minion",uuid);
-                list.add(tag);
-            }
-        }
+
 
         compoundtag.putBoolean("jellyfishKilled", this.dragonKilled);
-        compoundtag.putBoolean("PreviouslyKilled", this.previouslyKilled);
-        compoundtag.putBoolean("LegacyScanPerformed", !this.needsStateScanning);
+        compoundtag.putBoolean("jellyfishPreviouslyKilled", this.previouslyKilled);
 
-        if (this.portalLocation != null) {
-            compoundtag.put("ExitPortalLocation", NbtUtils.writeBlockPos(this.portalLocation));
-        }
-
-        compoundtag.put("minions",list);
+        return compoundtag;
     }
 
     public void setPortalLocation(BlockPos pos){
@@ -129,9 +132,6 @@ public class JellyfishFightEvent {
             }
 
             if (!this.dragonKilled) {
-                if(this.jellyfishUUID !=null && flag && this.minionsAlive<=0 && ++this.ticksSinceDragonSeen >= 1200){
-                    this.findMinions();
-                }
 
                 if ((this.jellyfishUUID == null || ++this.ticksSinceDragonSeen >= 1200) && flag) {
                     this.findOrCreateDragon();
@@ -145,23 +145,9 @@ public class JellyfishFightEvent {
         }
     }
 
-    private void findMinions() {
-        List<? extends JellyfishMinionEntity> list = this.level.getEntities(BKEntityType.JELLYFISH_MINION.get(), LivingEntity::isAlive);
-        if (!list.isEmpty()) {
-            for(JellyfishMinionEntity minion : list){
-                this.minions.add(minion.getId());
-            }
-        }
-        this.ticksSinceJellyfishSeen=0;
-    }
-
     private void scanState() {
         boolean flag = this.hasActiveExitPortal();
-        if (flag) {
-            this.previouslyKilled = true;
-        } else {
-            this.previouslyKilled = false;
-        }
+        this.previouslyKilled = flag;
 
         List<? extends JellyfishEntity> list = this.level.getEntities(BKEntityType.JELLYFISH.get(), LivingEntity::isAlive);
         if (list.isEmpty()) {
@@ -182,6 +168,7 @@ public class JellyfishFightEvent {
             this.dragonKilled = false;
         }
     }
+
     public Collection<ServerPlayer> getPlayer(){
         return dragonEvent.getPlayers();
     }
@@ -199,6 +186,17 @@ public class JellyfishFightEvent {
     }
 
     private boolean hasActiveExitPortal() {
+        for(int i = -8; i <= 8; ++i) {
+            for(int j = -8; j <= 8; ++j) {
+                LevelChunk levelchunk = this.level.getChunk(i, j);
+
+                for(BlockEntity blockentity : levelchunk.getBlockEntities().values()) {
+                    if (blockentity instanceof TheEndPortalBlockEntity) {
+                        return false;
+                    }
+                }
+            }
+        }
         return true;
     }
 
@@ -248,23 +246,15 @@ public class JellyfishFightEvent {
         }
 
     }
-    public void resetMinions(){
-        this.minionsAlive=7;
-        this.minions.clear();
-        this.findMinions();
-    }
 
     private JellyfishEntity createNewDragon() {
-        if(this.portalLocation!=null){
-            this.level.getChunkAt(this.portalLocation);
-            JellyfishEntity enderdragon = BKEntityType.JELLYFISH.get().create(this.level);
-            enderdragon.moveTo(this.portalLocation.getX(),this.portalLocation.getY()+40.0D,this.portalLocation.getZ(), this.level.random.nextFloat() * 360.0F, 0.0F);
-            enderdragon.actuallyPhase= JellyfishEntity.PhaseAttack.SPAWN;
-            this.level.addFreshEntity(enderdragon);
-            this.jellyfishUUID = enderdragon.getUUID();
-            return enderdragon;
-        }
-        return null;
+        this.level.getChunkAt(new BlockPos(0,120.0D,0));
+        JellyfishEntity enderdragon = BKEntityType.JELLYFISH.get().create(this.level);
+        enderdragon.moveTo(0,120.0D,0, this.level.random.nextFloat() * 360.0F, 0.0F);
+        enderdragon.actuallyPhase= JellyfishEntity.PhaseAttack.SPAWN;
+        this.level.addFreshEntity(enderdragon);
+        this.jellyfishUUID = enderdragon.getUUID();
+        return enderdragon;
     }
 
     public void updateJellyfish(JellyfishEntity p_64097_) {
@@ -278,19 +268,6 @@ public class JellyfishFightEvent {
 
     }
 
-    public int getMinionsAlive() {
-        return this.minionsAlive;
-    }
-
-    public void onMinionDeath(JellyfishMinionEntity p_64083_, DamageSource p_64084_) {
-        this.minionsAlive--;
-    }
-
-    public boolean hasPreviouslyKilledDragon() {
-        return this.previouslyKilled;
-    }
-
-
     public void addPlayer(ServerPlayer player) {
         this.dragonEvent.addPlayer(player);
     }
@@ -299,5 +276,9 @@ public class JellyfishFightEvent {
         this.dragonEvent.removePlayer(player);
     }
 
+    @OnlyIn(Dist.CLIENT)
+    public float getScreenShakeAmount(float partialTick) {
+        return prevScreenShakeAmount + (screenShakeAmount - prevScreenShakeAmount) * partialTick;
 
+    }
 }

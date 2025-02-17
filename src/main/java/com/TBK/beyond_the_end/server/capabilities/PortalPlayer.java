@@ -23,8 +23,8 @@ public interface PortalPlayer extends INBTSerializable<CompoundTag> {
 
     void onUpdate();
 
-    void setCanSpawnInAether(boolean canSpawnInAether);
-    boolean canSpawnInAether();
+    void setCanSpawnInDimension(boolean canSpawnInDimension);
+    boolean canSpawnInDimension();
 
     void givePortalItem();
     void setCanGetPortal(boolean canGetPortal);

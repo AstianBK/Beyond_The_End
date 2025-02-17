@@ -36,7 +36,7 @@ public class JellyfishRenderer<T extends JellyfishEntity,M extends JellyfishMode
             return 1.0F;
         },JellyfishModel::getEye));
         this.addLayer(new JellyfishEmissiveLayer<>(this,GLOWING,(entity,f1,f2)->{
-            return entity.lazerTimer>0 ? 1.0F : entity.getHeartAnimation(f1);
+            return entity.actuallyPhase==JellyfishEntity.PhaseAttack.LAZER ? entity.getLazerAnim(f1) : entity.getHeartAnimation(f1);
         },JellyfishModel::getBody));
 
 
@@ -44,14 +44,7 @@ public class JellyfishRenderer<T extends JellyfishEntity,M extends JellyfishMode
 
     @Override
     public boolean shouldRender(T livingEntityIn, Frustum camera, double camX, double camY, double camZ) {
-        if (livingEntityIn.lazerTimer<=0) {
-            return super.shouldRender(livingEntityIn, camera, camX, camY, camZ);
-        } else {
-            var hit = Util.raycastForAllEntities(livingEntityIn.level,livingEntityIn,200.0F,true,0.5F).get(0);
-            Vec3 vector3d = livingEntityIn.getEyePosition();
-            Vec3 vector3d1 = hit.getLocation();
-            return camera.isVisible(new AABB(vector3d.x, vector3d.y, vector3d.z, vector3d1.x, vector3d1.y, vector3d1.z));
-        }
+        return true;
     }
 
     @Override
@@ -75,19 +68,7 @@ public class JellyfishRenderer<T extends JellyfishEntity,M extends JellyfishMode
 
     @Override
     protected void setupRotations(T jellyfish, PoseStack p_115318_, float p_115319_, float p_115320_, float p_115321_) {
-        if(jellyfish.startLazerTimer>0 || jellyfish.lazerTimer>0){
-            var hit = Util.internalRaycastForEntity(jellyfish.level, jellyfish,jellyfish.getEyePosition(),jellyfish.directionBlock,true,2F);
-
-            Vec3 vec32 = hit.getLocation().subtract(jellyfish.getEyePosition());
-            double f5 = Math.atan2(vec32.y,Math.sqrt(vec32.x*vec32.x + vec32.z*vec32.z));
-            double f6 = Math.atan2(vec32.z, vec32.x) ;
-
-            p_115318_.mulPose(Vector3f.YP.rotation((float) (f6+1.57F)));
-
-            p_115318_.mulPose(Vector3f.XP.rotation((float) -(f5)));
-
-        }
-        //super.setupRotations(jellyfish, p_115318_, p_115319_, p_115320_, p_115321_);
+        super.setupRotations(jellyfish, p_115318_, p_115319_, p_115320_, p_115321_);
     }
 
     public static void render(PoseStack pMatrixStack, MultiBufferSource pBuffer, JellyfishEntity jellyfish, float pPartialTicks) {
@@ -98,7 +79,7 @@ public class JellyfishRenderer<T extends JellyfishEntity,M extends JellyfishMode
         Vec3 vec32 = hit.getLocation().subtract(jellyfish.getEyePosition());
         double f5 = Math.atan2(vec32.y,Math.sqrt(vec32.x*vec32.x + vec32.z*vec32.z));
         double f6 = Math.atan2(vec32.z, vec32.x) ;
-        float distance = (float) jellyfish.getEyePosition(pPartialTicks).distanceTo(hit.getLocation()) * 0.1F;
+        float distance = (float) jellyfish.getEyePosition(pPartialTicks).distanceTo(hit.getLocation()) * 0.1F + 1.0F;
         pMatrixStack.translate(0.0F, jellyfish.getEyeHeight(),0.0F);
 
         pMatrixStack.mulPose(Vector3f.YP.rotation((float) -(f6-1.57F)));
@@ -106,13 +87,12 @@ public class JellyfishRenderer<T extends JellyfishEntity,M extends JellyfishMode
         pMatrixStack.mulPose(Vector3f.XP.rotation((float) -(f5-1.57F)));
 
 
-
-        //pMatrixStack.translate(0.0F,-1.0F,0.0F);
-        pMatrixStack.scale(10F,10F,10F);
-
         for (int i1 = 1; i1 <= distance; i1++) {
             float[] f1={0.3F,0.1F,0.99F};
+            pMatrixStack.pushPose();
+            pMatrixStack.scale(10F,10F,distance>1.0F ? 10.0F : 10.0F*distance );
             renderBeaconBeam(pMatrixStack,pBuffer, GUARDIAN_BEAM_LOCATION, pPartialTicks, 1.0F, jellyfish.level.getGameTime(), i1, (int) distance,f1, 0.2F, 0.25F);
+            pMatrixStack.popPose();
         }
 
         pMatrixStack.popPose();

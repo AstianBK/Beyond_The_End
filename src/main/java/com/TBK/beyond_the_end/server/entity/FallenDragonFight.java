@@ -79,8 +79,8 @@ public class FallenDragonFight extends EndDragonFight {
     public FallenDragonFight(ServerLevel p_64078_, long p_64079_, CompoundTag p_64080_) {
         super(p_64078_,p_64079_,p_64080_);
         this.level = p_64078_;
-        if (p_64080_.contains("NeedsStateScanning")) {
-            this.needsStateScanning = p_64080_.getBoolean("NeedsStateScanning");
+        if (p_64080_.contains("dragonNeedsStateScanning")) {
+            this.needsStateScanning = p_64080_.getBoolean("dragonNeedsStateScanning");
         }
 
         if (p_64080_.contains("DragonKilled", 99)) {
@@ -90,7 +90,7 @@ public class FallenDragonFight extends EndDragonFight {
 
             this.dragonKilled = p_64080_.getBoolean("DragonKilled");
             this.previouslyKilled = p_64080_.getBoolean("PreviouslyKilled");
-            this.needsStateScanning = !p_64080_.getBoolean("LegacyScanPerformed"); // Forge: fix MC-105080
+            this.needsStateScanning = !p_64080_.getBoolean("dragonLegacyScanPerformed"); // Forge: fix MC-105080
             if (p_64080_.getBoolean("IsRespawning")) {
                 this.respawnStage = DragonRespawnAnimation.START;
             }
@@ -108,14 +108,14 @@ public class FallenDragonFight extends EndDragonFight {
 
     public CompoundTag saveData() {
         CompoundTag compoundtag = new CompoundTag();
-        compoundtag.putBoolean("NeedsStateScanning", this.needsStateScanning);
+        compoundtag.putBoolean("dragonNeedsStateScanning", this.needsStateScanning);
         if (this.dragonUUID != null) {
             compoundtag.putUUID("Dragon", this.dragonUUID);
         }
 
         compoundtag.putBoolean("DragonKilled", this.dragonKilled);
         compoundtag.putBoolean("PreviouslyKilled", this.previouslyKilled);
-        compoundtag.putBoolean("LegacyScanPerformed", !this.needsStateScanning); // Forge: fix MC-105080
+        compoundtag.putBoolean("dragonLegacyScanPerformed", !this.needsStateScanning); // Forge: fix MC-105080
         if (this.portalLocation != null) {
             compoundtag.put("ExitPortalLocation", NbtUtils.writeBlockPos(this.portalLocation));
         }
@@ -136,6 +136,7 @@ public class FallenDragonFight extends EndDragonFight {
         if (!this.dragonEvent.getPlayers().isEmpty()) {
             this.level.getChunkSource().addRegionTicket(TicketType.DRAGON, new ChunkPos(0, 0), 14, Unit.INSTANCE);
             boolean flag = this.isArenaLoaded();
+
             if (this.needsStateScanning && flag) {
                 this.scanState();
                 this.needsStateScanning = false;
@@ -161,11 +162,7 @@ public class FallenDragonFight extends EndDragonFight {
         } else {
             BeyondTheEnd.LOGGER.info("Found that the dragon has not yet been killed in this world.");
             this.previouslyKilled = false;
-            if (this.findExitPortal() == null) {
-                this.spawnExitPortal(false);
-            }
         }
-
         List<? extends FallenDragonEntity> list = this.level.getEntities(BKEntityType.FALLEN_DRAGON.get(), LivingEntity::isAlive);
         if (list.isEmpty()) {
             this.dragonKilled = true;
@@ -174,11 +171,6 @@ public class FallenDragonFight extends EndDragonFight {
             this.dragonUUID = enderdragon.getUUID();
             BeyondTheEnd.LOGGER.info("Found that there's a dragon still alive ({})", (Object)enderdragon);
             this.dragonKilled = false;
-            if (!flag) {
-                BeyondTheEnd.LOGGER.info("But we didn't have a portal, let's remove it.");
-                enderdragon.discard();
-                this.dragonUUID = null;
-            }
         }
 
         if (!this.previouslyKilled && this.dragonKilled) {
@@ -298,20 +290,19 @@ public class FallenDragonFight extends EndDragonFight {
         if (p_64086_.getUUID().equals(this.dragonUUID)) {
             this.dragonEvent.setProgress(0.0F);
             this.dragonEvent.setVisible(false);
-            this.spawnExitPortal(true);
-            this.spawnNewGateway();
 
             this.previouslyKilled = true;
             this.dragonKilled = true;
+            this.spawnNewGateway(new BlockPos(0,50,0));
         }
 
     }
 
-    private void spawnNewGateway() {
 
+    private void spawnNewGateway(BlockPos p_64090_) {
+        this.level.levelEvent(3000, p_64090_, 0);
+        EndFeatures.END_GATEWAY_DELAYED.value().place(this.level, this.level.getChunkSource().getGenerator(), RandomSource.create(), p_64090_);
     }
-
-
 
     private void spawnExitPortal(boolean p_64094_) {
 
@@ -465,10 +456,14 @@ public class FallenDragonFight extends EndDragonFight {
         private final ResourceLocation structure;
         private boolean isPlaced;
         private BlockPos centre;
+        public int tickCount=0;
+        private Vec3i centreOffSet;
         public Structure(ResourceLocation structure, @Nullable BlockPos centre) {
             this.structure = structure;
             this.isPlaced = false;
             this.centre = centre;
+            this.tickCount=0;
+            this.centreOffSet=Vec3i.ZERO;
         }
         public Structure() {
             this(getDefaultStructure(), new BlockPos(0, 50, 0)); // default island structure
@@ -489,6 +484,10 @@ public class FallenDragonFight extends EndDragonFight {
             if (this.centre != null)
                 data.put("Centre", NbtUtils.writeBlockPos(this.centre));
 
+            if(this.centreOffSet!=null){
+                data.put("offset",NbtUtils.writeBlockPos(new BlockPos(this.centreOffSet)));
+            }
+            data.putInt("tick",this.tickCount);
             return data;
         }
 
@@ -499,6 +498,10 @@ public class FallenDragonFight extends EndDragonFight {
             if (data.contains("Centre")) {
                 this.centre = NbtUtils.readBlockPos(data.getCompound("Centre"));
             }
+            if(data.contains("offset")){
+                this.centreOffSet = NbtUtils.readBlockPos(data.getCompound("offset"));
+            }
+            this.tickCount=data.getInt("tick");
         }
 
         public boolean isPlaced() {
@@ -536,7 +539,12 @@ public class FallenDragonFight extends EndDragonFight {
 
             makeInitialIsland(level,start);
 
-            this.isPlaced = true;
+            if(this.tickCount>2){
+                this.isPlaced = true;
+            }else {
+                BeyondTheEnd.LOGGER.debug("Tick :"+this.tickCount);
+                this.tickCount++;
+            }
 
         }
 
@@ -565,27 +573,36 @@ public class FallenDragonFight extends EndDragonFight {
 
         public void makeInitialIsland(ServerLevel level, long start){
             StructurePlaceSettings settings=new StructurePlaceSettings();
+            Vec3i center = this.centreOffSet;
+            if(this.tickCount==0){
+                center=this.placeComponent(start,level,0,50,0,new ResourceLocation(BeyondTheEnd.MODID, "center"),settings);
+                this.placeComponent(start,level,center.getX()+26,50,1,new ResourceLocation(BeyondTheEnd.MODID, "island_east"),settings);
 
-            Vec3i center=this.placeComponent(start,level,0,50,0,new ResourceLocation(BeyondTheEnd.MODID, "center"),settings);
-            this.placeComponent(start,level,center.getX()+26,50,1,new ResourceLocation(BeyondTheEnd.MODID, "island_east"),settings);
-            Vec3i south=this.placeComponent(start,level,0,51,center.getZ()+6,new ResourceLocation(BeyondTheEnd.MODID, "island_south_0"),settings);
-            this.placeComponent(start,level,0,51+south.getY(),center.getZ()+6,new ResourceLocation(BeyondTheEnd.MODID, "island_south_1"),settings);
+                Vec3i south=this.placeComponent(start,level,0,51,center.getZ()+6,new ResourceLocation(BeyondTheEnd.MODID, "island_south_0"),settings);
+                this.placeComponent(start,level,0,51+south.getY(),center.getZ()+6,new ResourceLocation(BeyondTheEnd.MODID, "island_south_1"),settings);
 
-            this.placeComponent(start,level,0,50,-center.getZ()+17,new ResourceLocation(BeyondTheEnd.MODID, "island_north"),settings);
-            Vec3i west=this.placeComponent(start,level,-center.getX()+15,50,0,new ResourceLocation(BeyondTheEnd.MODID, "island_west_0"),settings);
-            this.placeComponent(start,level,-center.getX()+15,50+west.getY(),0,new ResourceLocation(BeyondTheEnd.MODID, "island_west_1"),settings);
+                this.placeComponent(start,level,0,50,-center.getZ()+17,new ResourceLocation(BeyondTheEnd.MODID, "island_north"),settings);
+
+                this.centreOffSet=center;
+            } else if (this.tickCount==1) {
+                Vec3i west=this.placeComponent(start,level,-center.getX()+15,50,0,new ResourceLocation(BeyondTheEnd.MODID, "island_west_0"),settings);
+                this.placeComponent(start,level,-center.getX()+15,50+west.getY(),0,new ResourceLocation(BeyondTheEnd.MODID, "island_west_1"),settings);
+
+                this.placeComponent(start,level,center.getX()+24,50,-center.getZ()+18,new ResourceLocation(BeyondTheEnd.MODID, "island_east_north"),settings);
+
+                Vec3i west_n=this.placeComponent(start,level,-center.getX()+15,50,-center.getZ()+17,new ResourceLocation(BeyondTheEnd.MODID, "west_north_0"),settings);
+                this.placeComponent(start,level,-center.getX()+15,50+west_n.getY(),-center.getZ()+17,new ResourceLocation(BeyondTheEnd.MODID, "west_north_1"),settings);
+
+            }else {
+
+                Vec3i west_s=this.placeComponent(start,level,-center.getX()+15,50,center.getZ()-4,new ResourceLocation(BeyondTheEnd.MODID, "west_south_0"),settings);
+                this.placeComponent(start,level,-center.getX()+15,50+west_s.getY(),center.getZ()-4,new ResourceLocation(BeyondTheEnd.MODID, "west_south_1"),settings);
+
+                Vec3i east_s=this.placeComponent(start,level,center.getX()-11,50,center.getZ()+7,new ResourceLocation(BeyondTheEnd.MODID, "east_south_0"),settings);
+                this.placeComponent(start,level,center.getX()-11,50+east_s.getY(),center.getZ()+7,new ResourceLocation(BeyondTheEnd.MODID, "east_south_1"),settings);
+            }
 
 
-            this.placeComponent(start,level,center.getX()+24,50,-center.getZ()+18,new ResourceLocation(BeyondTheEnd.MODID, "island_east_north"),settings);
-
-            Vec3i west_n=this.placeComponent(start,level,-center.getX()+15,50,-center.getZ()+17,new ResourceLocation(BeyondTheEnd.MODID, "west_north_0"),settings);
-            this.placeComponent(start,level,-center.getX()+15,50+west_n.getY(),-center.getZ()+17,new ResourceLocation(BeyondTheEnd.MODID, "west_north_1"),settings);
-
-            Vec3i west_s=this.placeComponent(start,level,-center.getX()+15,50,center.getZ()-4,new ResourceLocation(BeyondTheEnd.MODID, "west_south_0"),settings);
-            this.placeComponent(start,level,-center.getX()+15,50+west_s.getY(),center.getZ()-4,new ResourceLocation(BeyondTheEnd.MODID, "west_south_1"),settings);
-
-            Vec3i east_s=this.placeComponent(start,level,center.getX()-11,50,center.getZ()+7,new ResourceLocation(BeyondTheEnd.MODID, "east_south_0"),settings);
-            this.placeComponent(start,level,center.getX()-11,50+east_s.getY(),center.getZ()+7,new ResourceLocation(BeyondTheEnd.MODID, "east_south_1"),settings);
 
         }
 

@@ -163,7 +163,7 @@ public class JellyfishMinionModel<T extends JellyfishMinionEntity> extends Hiera
 	}
 
 	public List<ModelPart> getEye(){
-		return List.of(this.Eyes);
+		return List.of(this.truemain);
 	}
 
 	public static LayerDefinition createBodyLayer() {

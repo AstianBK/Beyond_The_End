@@ -9,6 +9,7 @@ import com.TBK.beyond_the_end.server.entity.JellyfishEntity;
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Vector3f;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.HierarchicalModel;
 import net.minecraft.client.model.geom.ModelLayerLocation;
@@ -585,6 +586,9 @@ public class JellyfishModel<T extends JellyfishEntity> extends HierarchicalModel
 
 		this.animate(entity.shootLaser,JellyfishAnim.shootlazer,ageInTicks);
 
+		if(entity.startLazerTimer>0 || entity.lazerTimer>0){
+			this.truemain.xRot = (float) (headPitch*Math.PI/180.0F) + (float)Math.toRadians(3.5F);
+		}
 		this.truemain.y+=40;
 
 		this.animate(entity.spinning,JellyfishAnim.spinning,ageInTicks);

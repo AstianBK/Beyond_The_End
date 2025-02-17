@@ -9,6 +9,7 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.common.capabilities.Capability;
@@ -26,8 +27,8 @@ public class PortalPlayerCapability implements PortalPlayer{
     private float portalAnimTime;
     private boolean isInPortal;
     private int charge;
-    private int time;
-    public int chargePos = 0;
+    public int animTimer0=0;
+    public int animTimer=0;
 
     public void setCharge(int charge){
         this.charge=charge;
@@ -75,12 +76,12 @@ public class PortalPlayerCapability implements PortalPlayer{
     }
 
     @Override
-    public void setCanSpawnInAether(boolean canSpawnInAether) {
+    public void setCanSpawnInDimension(boolean canSpawnInAether) {
 
     }
 
     @Override
-    public boolean canSpawnInAether() {
+    public boolean canSpawnInDimension() {
         return false;
     }
 
@@ -138,12 +139,12 @@ public class PortalPlayerCapability implements PortalPlayer{
         if(this.getCharge()>0){
             this.setCharge(0);
             if(!this.player.level.isClientSide){
-                PacketHandler.sendToPlayer(new PacketSync(0), (ServerPlayer) this.player);
+                PacketHandler.sendToPlayer(new PacketSync(0,this.animTimer), (ServerPlayer) this.player);
             }
 
             return damage+5*this.getCharge();
         }else {
-            return damage;
+            return damage*0.1F;
         }
     }
 
@@ -202,10 +203,10 @@ public class PortalPlayerCapability implements PortalPlayer{
             }
         }
 
-        if(time++>3){
-            time=0;
-            if(chargePos++>1){
-                chargePos=0;
+        if(this.getPlayer().level.isClientSide){
+            this.animTimer0=this.animTimer;
+            if(this.animTimer++>19){
+                this.animTimer=0;
             }
         }
 
@@ -235,6 +236,10 @@ public class PortalPlayerCapability implements PortalPlayer{
                 this.portalTime -= 4;
             }
         }
+    }
+
+    public float getAnim(float partialTicks) {
+        return Math.max((20.0F - Mth.lerp(partialTicks,(float) this.animTimer0,(float)this.animTimer))/ 20.0F,0.1F);
     }
 
     public static class PortalPlayerProvider implements ICapabilityProvider, ICapabilitySerializable<CompoundTag> {

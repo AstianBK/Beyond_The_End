@@ -25,14 +25,15 @@ import net.minecraft.world.item.Items;
 public class ChargeLayer<T extends Player,M extends PlayerModel<T>> extends RenderLayer<T,M> {
     public final ItemRenderer renderer;
     public final ResourceLocation TEXTURE = new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/lightball/lightball.png");
-    public final ResourceLocation[] ADDONS = new ResourceLocation[]{
-            new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/lightball/lightning1.png"),
-            new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/lightball/lightning2.png"),
-            new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/lightball/lightning3.png")
-    };
+    public final ResourceLocation RAY =new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/lightball/lightning3.png");
+    public final ResourceLocation ALPHA = new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/lightball/lighttrans.png");
+    public final LightballModel<T> model;
+
     public ChargeLayer(RenderLayerParent<T, M> p_117346_) {
         super(p_117346_);
         this.renderer= Minecraft.getInstance().getItemRenderer();
+        this.model=new LightballModel<>(Minecraft.getInstance().getEntityModels().bakeLayer(LightballModel.LAYER_LOCATION));
+
     }
 
     @Override
@@ -40,9 +41,10 @@ public class ChargeLayer<T extends Player,M extends PlayerModel<T>> extends Rend
 
         PortalPlayer.get(p_117352_).ifPresent(e->{
             if(e.getCharge()>0){
+                float porcentaje= e.getAnim(p_117354_);
                 for(int i=0;i<e.getCharge();i++){
-                    LightballModel<T> model = new LightballModel<>(Minecraft.getInstance().getEntityModels().bakeLayer(LightballModel.LAYER_LOCATION));
-                    LightballModel<T> model1 = new LightballModel<>(Minecraft.getInstance().getEntityModels().bakeLayer(LightballModel.LAYER_LOCATION));
+                    LightballModel<T> layer1 = new LightballModel<>(Minecraft.getInstance().getEntityModels().bakeLayer(LightballModel.LAYER_LOCATION));
+                    LightballModel<T> layer2 = new LightballModel<>(Minecraft.getInstance().getEntityModels().bakeLayer(LightballModel.LAYER_LOCATION));
 
                     p_117349_.pushPose();
                     float f0 = ((float)(p_117352_.tickCount - 50 * i));
@@ -56,12 +58,11 @@ public class ChargeLayer<T extends Player,M extends PlayerModel<T>> extends Rend
                     rotation.mul(Vector3f.ZP.rotation((float)Math.PI));
                     p_117349_.mulPose(rotation);
 
-                    model.setupAnim(p_117352_,0.0F,0.0F,p_117352_.tickCount+Minecraft.getInstance().getPartialTick(),0.0F,0.0F);
-                    int pos = e.chargePos;
+                    layer2.renderToBuffer(p_117349_,p_117350_.getBuffer(RenderType.dragonExplosionAlpha(ALPHA)),p_117351_,OverlayTexture.NO_OVERLAY,1.0F,1.0F,1.0F,porcentaje);
 
-                    model1.renderToBuffer(p_117349_,p_117350_.getBuffer(RenderType.entityCutoutNoCull(ADDONS[pos])),p_117351_,OverlayTexture.NO_OVERLAY,1.0F,1.0F,1.0F,1.0F);
-                    model.renderToBuffer(p_117349_,p_117350_.getBuffer(RenderType.entityTranslucent(TEXTURE)),p_117351_,OverlayTexture.NO_OVERLAY,1.0F,1.0F,1.0F,1.0F);
+                    layer1.renderToBuffer(p_117349_,p_117350_.getBuffer(RenderType.entityDecal(RAY) ),p_117351_,OverlayTexture.NO_OVERLAY,1.0F,1.0F,1.0F,1.0F);
 
+                    this.model.renderToBuffer(p_117349_,p_117350_.getBuffer(RenderType.entityTranslucentEmissive(TEXTURE,false)),p_117351_,OverlayTexture.NO_OVERLAY,1.0F,1.0F,1.0F,1.0F);
 
                     p_117349_.popPose();
 

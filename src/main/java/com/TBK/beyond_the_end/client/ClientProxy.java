@@ -7,6 +7,8 @@ import net.minecraft.client.renderer.blockentity.TheEndPortalRenderer;
 import net.minecraftforge.common.MinecraftForge;
 
 public class ClientProxy extends CommonProxy {
+    public static int lastTremorTick = -1;
+    public static float[] randomTremorOffsets = new float[3];
 
     public void init(){
         MinecraftForge.EVENT_BUS.register(new ClientEvents());

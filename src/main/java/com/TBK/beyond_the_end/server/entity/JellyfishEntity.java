@@ -3,7 +3,9 @@ package com.TBK.beyond_the_end.server.entity;
 import com.TBK.beyond_the_end.BeyondTheEnd;
 import com.TBK.beyond_the_end.client.particle.BKParticles;
 import com.TBK.beyond_the_end.common.Util;
+import com.TBK.beyond_the_end.common.api.ICamShaker;
 import com.TBK.beyond_the_end.common.registry.BKEntityType;
+import com.TBK.beyond_the_end.server.capabilities.PortalPlayer;
 import com.TBK.beyond_the_end.server.network.PacketHandler;
 import com.TBK.beyond_the_end.server.network.message.PacketFlameParticles;
 import com.TBK.beyond_the_end.server.network.message.PacketNextActionJellyfish;
@@ -15,6 +17,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
@@ -50,7 +53,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Random;
 
-public class JellyfishEntity extends PathfinderMob {
+public class JellyfishEntity extends PathfinderMob implements ICamShaker {
     public int idleTimer = 0;
     public int lazerTimer = 0;
     public int attackTimer = 0;
@@ -61,7 +64,7 @@ public class JellyfishEntity extends PathfinderMob {
     public int progressMine = 0;
     public int deathTimer = 0;
     private final double speed = 1.0F;
-    private final double circleRadius = 100.0D;
+    private final double circleRadius = 300.0D;
     private double circlingAngle = 0.0F;
     private Vec3 circlingPosition;
     public boolean rot=false;
@@ -85,6 +88,9 @@ public class JellyfishEntity extends PathfinderMob {
     private int pulsingAnimation;
 
     private int pulsingAnimationO;
+    private float prevScreenShakeAmount;
+    private float screenShakeAmount;
+
     public JellyfishEntity(EntityType<? extends PathfinderMob> p_21368_, Level p_21369_) {
         super(p_21368_, p_21369_);
         this.moveControl = new FlyingMoveControl(this, 90, true);
@@ -116,24 +122,19 @@ public class JellyfishEntity extends PathfinderMob {
     }
 
     @Override
-    public boolean hurt(DamageSource p_21016_, float p_21017_) {
-        return super.hurt(p_21016_, p_21017_*0.1F);
-    }
-
-    public boolean hurt(DamageSource source,float damage,boolean isChargedAttack){
-        if(isChargedAttack){
+    public boolean hurt(DamageSource source,float damage) {
+        if(this.lazerTimer<=0){
+            if(source.getEntity() instanceof Player player && PortalPlayer.get(player).isPresent()){
+                damage= PortalPlayer.get(player).orElse(null).damageFinal(this,damage);
+            }
             if(!this.level.isClientSide){
                 if(BeyondTheEnd.jellyfishFightEvent!=null){
                     BeyondTheEnd.jellyfishFightEvent.updateJellyfish(this);
                 }
             }
-            if(!this.level.isClientSide){
-                this.level.broadcastEntityEvent(this,(byte) 8);
-            }
-            this.actuallyHurt(source,damage);
-            return true;
         }
-        return false;
+
+        return super.hurt(source,damage);
     }
 
     public void particleHurt() {
@@ -170,8 +171,9 @@ public class JellyfishEntity extends PathfinderMob {
         this.setNoGravity(true);
         if(this.lazerTimer>0){
             this.lazerTimer--;
+
             if(!this.level.isClientSide){
-                List<HitResult> hitResults = Util.internalRaycastForAllEntity(this.level,this,this.getEyePosition(),this.directionBlock,true,2.0F);
+                List<HitResult> hitResults = Util.internalRaycastForAllEntity(this.level,this,this.getEyePosition(),this.directionBlock,true,4.0F);
                 for (HitResult hitResult : hitResults){
                     if(hitResult.getType() == HitResult.Type.BLOCK){
                         Level level = this.level;
@@ -208,10 +210,15 @@ public class JellyfishEntity extends PathfinderMob {
                     }else if(hitResult.getType() == HitResult.Type.ENTITY){
                         Entity entity = ((EntityHitResult)hitResult).getEntity();
                         if(entity instanceof LivingEntity living){
-                            living.hurt(DamageSource.GENERIC,2.0F);
-                            living.hurt(DamageSource.mobAttack(this),5.0F);
+                            living.hurt(DamageSource.GENERIC,4.0F);
+                            living.hurt(DamageSource.mobAttack(this),8.0F);
                         }
                     }
+                }
+            }else {
+                if(this.screenShakeAmount<=0.0F){
+                    this.screenShakeAmount=0.5F;
+                    //this.level.broadcastEntityEvent(this,(byte) 65);
                 }
             }
 
@@ -219,6 +226,7 @@ public class JellyfishEntity extends PathfinderMob {
                 this.directionBlock=Vec3.ZERO;
                 this.actuallyPhase=PhaseAttack.SPIN_AROUND;
                 if(!this.level.isClientSide){
+                    this.level.broadcastEntityEvent(this,(byte) 8);
                     PacketHandler.sendToAllTracking(new PacketNextActionJellyfish(this.getId(),0,0),this);
                 }else {
                     this.shootLaser.stop();
@@ -231,13 +239,13 @@ public class JellyfishEntity extends PathfinderMob {
         }
 
         if(!this.level.isClientSide){
-            if(this.nextTimer>this.maxNextTimer && this.actuallyPhase==PhaseAttack.SPIN_AROUND){
+            if(this.nextTimer>this.maxNextTimer && this.actuallyPhase==PhaseAttack.SPIN_AROUND && this.getTarget()!=null){
                 int time=300 + this.level.random.nextInt(0,5)*this.level.random.nextInt(0,5);
                 this.maxNextTimer=time;
                 this.nextTimer=0;
-                int nextAction=2; //this.level.random.nextInt(0,4);
+                int nextAction=this.level.random.nextInt(0,4);
                 if(nextAction==3){
-                    if(BeyondTheEnd.jellyfishFightEvent!=null && !BeyondTheEnd.jellyfishFightEvent.minions.isEmpty()){
+                    if(!this.canSummonMinions()){
                         nextAction=2;
                     }
                 }
@@ -292,8 +300,10 @@ public class JellyfishEntity extends PathfinderMob {
             if(this.summoningTimer>90){
                 if((90+this.summoningTimer)%130==0 || this.summoningTimer==91){
                     JellyfishMinionEntity minion = new JellyfishMinionEntity(BKEntityType.JELLYFISH_MINION.get(), this.level);
-                    minion.setPos(this.position().add(0.0F,-3.0D,0.0D));
+                    minion.setPos(this.position().add(0.0F,-6.0D,0.0D));
                     minion.actuallyPhase= JellyfishMinionEntity.PhaseAttack.SPAWN;
+                    minion.jellyfish = this;
+                    minion.heightOffset = this.level.random.nextDouble() * 40.0D * this.level.random.nextInt(-1,1);
                     this.level.addFreshEntity(minion);
                     if(this.getTarget()!=null){
                         minion.setTarget(this.getTarget());
@@ -311,9 +321,6 @@ public class JellyfishEntity extends PathfinderMob {
                 }
             }
             if(this.summoningTimer==0){
-                if(BeyondTheEnd.jellyfishFightEvent!=null){
-                    BeyondTheEnd.jellyfishFightEvent.resetMinions();
-                }
                 this.actuallyPhase=PhaseAttack.SPIN_AROUND;
                 if(!this.level.isClientSide){
                     PacketHandler.sendToAllTracking(new PacketNextActionJellyfish(this.getId(),0,0),this);
@@ -345,6 +352,10 @@ public class JellyfishEntity extends PathfinderMob {
 
     public float getHeartAnimation(float p_219470_) {
         return Mth.lerp(p_219470_, (float)this.pulsingAnimationO, (float)this.pulsingAnimation) / 30.0F;
+    }
+
+    public float getLazerAnim(float p_219470_) {
+        return this.lazerTimer>0 ? 1.0F  :(110.0F-Mth.lerp(p_219470_, (float)this.startLazerTimer, (float)this.startLazerTimer)) / 110.0F;
     }
     
     @Override
@@ -388,7 +399,7 @@ public class JellyfishEntity extends PathfinderMob {
     public void spinAround(){
         LivingEntity target = this.getTarget();
         Vec3 direction;
-        if(this.actuallyPhase==PhaseAttack.SPIN_AROUND || this.getTarget()==null){
+        if(this.actuallyPhase==PhaseAttack.SPIN_AROUND ){
             this.circlingAngle += this.rot ? 0.05F : -0.05F;
             offsetX = Math.cos(this.circlingAngle) * this.circleRadius;
             offsetZ = Math.sin(this.circlingAngle) * this.circleRadius;
@@ -411,9 +422,18 @@ public class JellyfishEntity extends PathfinderMob {
             }
         }else {
             this.setPos(this.position());
+            var hit = Util.internalRaycastForEntity(this.level, this,this.getEyePosition(),this.directionBlock,true,2F);
+
+            Vec3 vec32 = hit.getLocation().subtract(this.getEyePosition());
+            double f5 = -Math.toDegrees(Math.atan2(vec32.y,Math.sqrt(vec32.x*vec32.x + vec32.z*vec32.z)));
+            double f6 = Math.toDegrees(Math.atan2(vec32.z, vec32.x)) - 90.0F;
+            this.yHeadRot=(float)f6;
+            this.setYHeadRot((float) f6);
+            this.yBodyRot= (float) (f6);
+            this.setYRot((float) f6);
+            this.setXRot((float) f5);
+            this.setRot(this.getYRot(),this.getXRot());
         }
-
-
     }
 
     private void rotateTowardsTarget(LivingEntity target) {
@@ -491,10 +511,15 @@ public class JellyfishEntity extends PathfinderMob {
         if (this.pulsingAnimation > 0) {
             --this.pulsingAnimation;
         }
+
+        prevScreenShakeAmount = screenShakeAmount;
+
+        if (screenShakeAmount > 0) {
+            screenShakeAmount = Math.max(0, screenShakeAmount - 0.03F);
+        }
     }
 
     private int getPulsingBeatDelay() {
-        float f = 40 / (float) AngerLevel.ANGRY.getMinimumAnger();
         return 50 ;
     }
 
@@ -505,6 +530,8 @@ public class JellyfishEntity extends PathfinderMob {
             this.spinning.start(this.tickCount);
             this.idle.stop();
             this.idleTimer = 300;
+        }else if(p_21375_==8){
+            this.shootLaser.stop();
         }else if(p_21375_==16){
             this.startLazerTimer=110;
             this.startLazer.start(this.tickCount);
@@ -516,6 +543,9 @@ public class JellyfishEntity extends PathfinderMob {
             this.startLazer.stop();
             this.idle.stop();
             this.idleTimer=300;
+            if(BeyondTheEnd.jellyfishFightEvent!=null){
+                BeyondTheEnd.jellyfishFightEvent.screenShakeAmount=1.0F;
+            }
         }else if(p_21375_==48){
             this.startSummoningTimer=101;
             this.startSummoning.start(this.tickCount);
@@ -527,6 +557,8 @@ public class JellyfishEntity extends PathfinderMob {
             this.startSummoning.stop();
             this.idle.stop();
             this.idleTimer=101;
+        }else if(p_21375_==65){
+            this.screenShakeAmount=1.0F;
         }
         super.handleEntityEvent(p_21375_);
     }
@@ -548,12 +580,37 @@ public class JellyfishEntity extends PathfinderMob {
         }
     }
 
-    public double getOffSetX(){
-        return this.offsetX;
+    @Override
+    public float getShakeDistance() {
+        return 20;
     }
-    public double getOffSetZ(){
-        return this.offsetZ;
+
+    @Override
+    public float getScreenShakeAmount(float partialTicks) {
+        return prevScreenShakeAmount + (screenShakeAmount - prevScreenShakeAmount) * partialTicks;
     }
+
+    @Override
+    public boolean canShake(Entity entity) {
+        if(this.distanceTo(entity)>=20.0F){
+            return this.directionBlock.distanceTo(entity.position())<20.0F;
+        }
+        return true;
+    }
+
+    private boolean canSummonMinions() {
+        List<? extends JellyfishMinionEntity> list = ((ServerLevel)this.level).getEntities(BKEntityType.JELLYFISH_MINION.get(), LivingEntity::isAlive);
+        return list.isEmpty();
+    }
+
+    @Override
+    public double getShakeDistanceForEntity(Entity entity) {
+        if(this.directionBlock.distanceTo(entity.position())<20.0F){
+            return this.directionBlock.distanceTo(entity.position());
+        }
+        return this.distanceTo(entity);
+    }
+
 
     static class JellyfishSummoning extends Goal{
         private final JellyfishEntity harpy;
@@ -689,16 +746,13 @@ public class JellyfishEntity extends PathfinderMob {
                     } else if (d0 > 256.0D) {
                         this.ticksUntilNextPathRecalculation += 5;
                     }
-                    Path path=this.mob.getNavigation().createPath(new BlockPos(this.pathedTargetX,this.pathedTargetY,this.pathedTargetZ),3);
+                    this.mob.setDeltaMovement(new Vec3(this.pathedTargetX-this.mob.position().x,this.pathedTargetY-this.mob.position().y,this.pathedTargetZ-this.mob.position().z).normalize().scale(1.5D));
 
-                    if(path!=null){
-                        this.mob.navigation.moveTo(path,1.2F);
-                    }
 
                     this.ticksUntilNextPathRecalculation = this.adjustedTickDelay(this.ticksUntilNextPathRecalculation);
                 }
 
-                if(livingentity.distanceToSqr(this.pathedTargetX, this.pathedTargetY, this.pathedTargetZ) < 10.0D){
+                if(livingentity.distanceToSqr(this.pathedTargetX, this.pathedTargetY, this.pathedTargetZ) < 30.0D){
                     this.upgradePosTarget(livingentity);
                 }
 
@@ -714,7 +768,16 @@ public class JellyfishEntity extends PathfinderMob {
         }
 
         protected void checkAndPerformAttack() {
-            this.mob.level.getEntitiesOfClass(LivingEntity.class,this.mob.getBoundingBox().inflate(15.0D),e->e!=this.mob).forEach(e->e.hurt(DamageSource.mobAttack(this.mob),5.0F));
+            this.mob.level.getEntitiesOfClass(LivingEntity.class,this.mob.getBoundingBox().inflate(25.0D),e->e!=this.mob).forEach(e->{
+                if(e.hurt(DamageSource.mobAttack(this.mob),15.0F)){
+                    double dX=e.getX()-this.mob.getX();
+                    double dZ=e.getZ()-this.mob.getZ();
+                    double d0=dX*dX+dZ*dZ;
+                    if(e.isOnGround()){
+                        e.push(dX/d0,4.0F,dZ/d0);
+                    }
+                }
+            });
         }
 
         protected void resetAttackCooldown() {

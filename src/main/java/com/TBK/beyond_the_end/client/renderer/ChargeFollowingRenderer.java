@@ -17,11 +17,7 @@ import net.minecraft.resources.ResourceLocation;
 
 public class ChargeFollowingRenderer<T extends ChargeFollowing> extends EntityRenderer<T> {
     public final ResourceLocation TEXTURE = new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/lightball/lightball.png");
-    public final ResourceLocation[] ADDONS = new ResourceLocation[]{
-            new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/lightball/lightning1.png"),
-            new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/lightball/lightning2.png"),
-            new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/lightball/lightning3.png")
-    };
+    public final ResourceLocation RAY = new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/lightball/lightning3.png");
     public final ResourceLocation ALPHA = new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/lightball/lighttrans.png");
 
     public final LightballModel<T> model;
@@ -34,6 +30,7 @@ public class ChargeFollowingRenderer<T extends ChargeFollowing> extends EntityRe
     public void render(T pEntity, float pEntityYaw, float pPartialTicks, PoseStack pMatrixStack, MultiBufferSource pBuffer, int pPackedLight) {
         pMatrixStack.pushPose();
         float f0 = ((float)(pEntity.tickCount));
+        pMatrixStack.translate(0.0f,1.7F,0.0F);
         Quaternion rotation = Vector3f.YP.rotation((float)(Math.PI)*f0/100 );
         rotation.mul(Vector3f.ZP.rotation((float)Math.PI));
         pMatrixStack.mulPose(rotation);
@@ -43,9 +40,9 @@ public class ChargeFollowingRenderer<T extends ChargeFollowing> extends EntityRe
         float porcentaje= pEntity.getAnimTimer(pPartialTicks);
         layer2.renderToBuffer(pMatrixStack,pBuffer.getBuffer(RenderType.dragonExplosionAlpha(ALPHA)),pPackedLight,OverlayTexture.NO_OVERLAY,1.0F,1.0F,1.0F,porcentaje);
 
-        layer1.renderToBuffer(pMatrixStack,pBuffer.getBuffer(RenderType.entityDecal(ADDONS[2]) ),pPackedLight,OverlayTexture.NO_OVERLAY,1.0F,1.0F,1.0F,1.0F);
+        layer1.renderToBuffer(pMatrixStack,pBuffer.getBuffer(RenderType.entityDecal(RAY)),pPackedLight,OverlayTexture.NO_OVERLAY,1.0F,1.0F,1.0F,1.0F);
 
-        this.model.renderToBuffer(pMatrixStack,pBuffer.getBuffer(RenderType.entityCutoutNoCull(TEXTURE)),pPackedLight,OverlayTexture.NO_OVERLAY,1.0F,1.0F,1.0F,1.0F);
+        this.model.renderToBuffer(pMatrixStack,pBuffer.getBuffer(RenderType.entityTranslucentEmissive(TEXTURE)),pPackedLight,OverlayTexture.NO_OVERLAY,1.0F,1.0F,1.0F,1.0F);
         pMatrixStack.popPose();
         super.render(pEntity, pEntityYaw, pPartialTicks, pMatrixStack, pBuffer, pPackedLight);
     }

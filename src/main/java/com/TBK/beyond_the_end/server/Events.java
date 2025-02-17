@@ -7,14 +7,13 @@ import com.TBK.beyond_the_end.server.capabilities.BkCapabilities;
 import com.TBK.beyond_the_end.server.capabilities.PortalPlayer;
 import com.TBK.beyond_the_end.server.capabilities.PortalPlayerCapability;
 import com.TBK.beyond_the_end.server.entity.FallenDragonFight;
-import com.TBK.beyond_the_end.server.entity.JellyfishEntity;
 import com.TBK.beyond_the_end.server.entity.JellyfishFightEvent;
 import com.TBK.beyond_the_end.server.network.PacketHandler;
-import com.TBK.beyond_the_end.server.network.message.PacketScreenDirt;
 import com.TBK.beyond_the_end.server.network.message.PacketSync;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -27,22 +26,14 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.dimension.BuiltinDimensionTypes;
-import net.minecraft.world.level.dimension.end.EndDragonFight;
-import net.minecraft.world.level.levelgen.structure.StructureCheck;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.EntityTravelToDimensionEvent;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
-import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.entity.player.SleepingTimeCheckEvent;
@@ -120,28 +111,47 @@ public class Events {
     public static void onWorldTick(TickEvent.LevelTickEvent event) {
         Level level = event.level;
         if (event.side == LogicalSide.SERVER && event.phase == TickEvent.Phase.END) {
-            Vec3i pos=ServerData.get().getStructureManager().getStructure().getCentre();
-            if(BeyondTheEnd.bossFight!=null && !BeyondTheEnd.bossFight.hasKilledDragon()){
-                BeyondTheEnd.bossFight.tick();
-            }else {
-                boolean flag = BeyondTheEnd.bossFight == null || !BeyondTheEnd.bossFight.hasKilledDragon();
-                if(level.getServer()!=null && level.dimensionTypeRegistration().is(BkDimension.BEYOND_END_TYPE) && flag){
-                    long i = level.getServer().getWorldData().worldGenSettings().seed();
-                    BeyondTheEnd.bossFight = new FallenDragonFight((ServerLevel) level, i, level.getServer().getWorldData().endDragonFightData());
-                    BeyondTheEnd.bossFight.setPortalLocation(new BlockPos(pos));
+            ServerData.get().getStructureManager().getStructure().getCentre();
+            if(level.getServer()!=null && ServerData.get().tag()!=null){
+                Vec3i pos=new BlockPos(0, 80, 0);
+
+                CompoundTag nbt = ServerData.get().tag().getCompound("dragonBattle");
+                boolean hasDefeat= nbt.getBoolean("PreviouslyKilled");
+                if(BeyondTheEnd.bossFight!=null){
+                    BeyondTheEnd.bossFight.tick();
+
+                }else {
+                    if(level.dimensionTypeRegistration().is(BkDimension.BEYOND_END_TYPE) && !hasDefeat){
+                        long i = level.getServer().getWorldData().worldGenSettings().seed();
+                        BeyondTheEnd.bossFight = new FallenDragonFight((ServerLevel) level, i, nbt);
+                        BeyondTheEnd.bossFight.setPortalLocation(new BlockPos(pos));
+                    }else {
+                        BeyondTheEnd.bossFight=null;
+                    }
+                }
+                if(hasDefeat){
+                    BeyondTheEnd.bossFight=null;
+                }
+                if(hasDefeat){
+                    CompoundTag tag = ServerData.get().tag().getCompound("jellyfishBattle");
+
+                    if(BeyondTheEnd.jellyfishFightEvent != null && BeyondTheEnd.jellyfishFightEvent.level != null){
+                        BeyondTheEnd.jellyfishFightEvent.tick();
+                    }else {
+                        if(level.dimensionTypeRegistration().is(BkDimension.BEYOND_END_TYPE)){
+                            BeyondTheEnd.jellyfishFightEvent = new JellyfishFightEvent((ServerLevel) level, tag);
+                            BeyondTheEnd.jellyfishFightEvent.setPortalLocation(new BlockPos(pos));
+                        }else {
+                            BeyondTheEnd.jellyfishFightEvent = null;
+                        }
+                    }
                 }
             }
-
-            if(BeyondTheEnd.jellyfishFightEvent!=null && BeyondTheEnd.bossFight!=null && BeyondTheEnd.bossFight.hasKilledDragon()){
-                BeyondTheEnd.jellyfishFightEvent.tick();
-            }else {
-                if(level.getServer()!=null && level.dimensionTypeRegistration().is(BkDimension.BEYOND_END_TYPE)){
-                    long i = level.getServer().getWorldData().worldGenSettings().seed();
-                    BeyondTheEnd.jellyfishFightEvent = new JellyfishFightEvent((ServerLevel) level, i, level.getServer().getWorldData().endDragonFightData());
-                    BeyondTheEnd.jellyfishFightEvent.setPortalLocation(new BlockPos(pos));
-                }else {
-                    BeyondTheEnd.jellyfishFightEvent=null;
-                }
+        }else if(event.side == LogicalSide.CLIENT && event.phase == TickEvent.Phase.END){
+            if(BeyondTheEnd.jellyfishFightEvent!=null){
+                BeyondTheEnd.jellyfishFightEvent.tickClient();
+            } else if(level.dimensionTypeRegistration().is(BkDimension.BEYOND_END_TYPE)){
+                BeyondTheEnd.jellyfishFightEvent = new JellyfishFightEvent();
             }
         }
     }
@@ -196,8 +206,9 @@ public class Events {
             Player player = event.getEntity();
             PortalPlayer.get(player).ifPresent(portalPlayer -> {
                 portalPlayer.setPlayer(player);
-                PacketHandler.sendToAllTracking(new PacketSync(portalPlayer.getCharge()),player);
+                PacketHandler.sendToAllTracking(new PacketSync(portalPlayer.getCharge(),portalPlayer.animTimer),player);
             });
+
         }
     }
 
@@ -215,7 +226,7 @@ public class Events {
             if(event.getEntity() instanceof Player){
                 Player player = (Player) event.getEntity();
                 PortalPlayer.get(player).ifPresent(e->{
-                    PacketHandler.sendToPlayer(new PacketSync(e.getCharge()), (ServerPlayer) player);
+                    PacketHandler.sendToPlayer(new PacketSync(e.getCharge(),e.animTimer), (ServerPlayer) player);
                 });
             }
         }
@@ -232,44 +243,11 @@ public class Events {
 
 
     @SubscribeEvent
-    public static void onPlayerClone(PlayerEvent.Clone event) {
-        Player originalPlayer = event.getOriginal();
-        Player newPlayer = event.getEntity();
-        boolean wasDeath = event.isWasDeath();
-        originalPlayer.reviveCaps();
-        PortalPlayer originalPortalPlayer = PortalPlayer.get(originalPlayer).orElseThrow(() -> new IllegalStateException("Player " + originalPlayer.getName().getContents() + " has no PortalPlayer capability!"));
-        PortalPlayer newPortalPlayer = PortalPlayer.get(newPlayer).orElseThrow(() -> new IllegalStateException("Player " + newPlayer.getName().getContents() + " has no PortalPlayer capability!"));
-        newPortalPlayer.copyFrom(originalPortalPlayer, wasDeath);
-        originalPlayer.invalidateCaps();
-    }
-
-
-    @SubscribeEvent
     public static void onPlayerChangeDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
         Player player = event.getEntity();
         if (!player.level.isClientSide()) {
 
         }
     }
-    
-    
-    @SubscribeEvent
-    public static void onPlayerAttack(LivingAttackEvent event){
-        LivingEntity entity = event.getEntity();
-        if(entity instanceof JellyfishEntity jellyfish && event.getSource().getEntity() instanceof Player player1){
-            PortalPlayer.get(player1).ifPresent(e->{
-                if(e.getCharge() > 0){
-                    event.setCanceled(true);
-                    jellyfish.hurt(event.getSource(),e.damageFinal(jellyfish,event.getAmount()),true);
-                    BeyondTheEnd.LOGGER.debug("Se Golpeo al jellyfish y su phase actual es :" + jellyfish.actuallyPhase);
-                }
-            });
-        }
-
-    }
-
-
-
-
 
 }

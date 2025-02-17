@@ -27,7 +27,7 @@ public class BKEntityType {
     public static final RegistryObject<EntityType<JellyfishEntity>> JELLYFISH =
             ENTITY_TYPES.register("jellyfish",
                     () -> EntityType.Builder.of(JellyfishEntity::new, MobCategory.MONSTER)
-                            .fireImmune().sized(16.0F, 10.0F)
+                            .fireImmune().sized(16.0F, 12.0F)
                             .clientTrackingRange(10)
                             .build(new ResourceLocation(BeyondTheEnd.MODID, "jellyfish").toString()));
 

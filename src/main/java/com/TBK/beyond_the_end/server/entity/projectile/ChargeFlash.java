@@ -9,8 +9,10 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ThrowableProjectile;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 
 public class ChargeFlash extends NormalProjectile{
+    public int tickDiscard = 0;
     public ChargeFlash(EntityType<? extends ThrowableProjectile> p_37466_, Level p_37467_) {
         super(p_37466_, p_37467_);
     }
@@ -25,10 +27,24 @@ public class ChargeFlash extends NormalProjectile{
     }
 
     @Override
+    public void tick() {
+        super.tick();
+        if(this.tickDiscard++>300){
+            this.discard();
+        }
+    }
+
+    @Override
+    protected void onHit(HitResult p_37260_) {
+        super.onHit(p_37260_);
+        this.discard();
+    }
+
+    @Override
     protected void onHitEntity(EntityHitResult p_37259_) {
         if(p_37259_.getEntity() instanceof LivingEntity living ){
             if(!living.isBlocking()){
-                living.hurt(DamageSource.LIGHTNING_BOLT,2.0F);
+                living.hurt(DamageSource.LIGHTNING_BOLT,4.0F);
             }
         }
     }

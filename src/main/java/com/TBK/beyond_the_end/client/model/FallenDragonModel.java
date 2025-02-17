@@ -39,7 +39,7 @@ public class FallenDragonModel<T extends FallenDragonEntity> extends AnimatedGeo
         if(main!=null){
             if(entity.canFly() || entity.isCharging() || entity.chargedAnim>0){
                 float rotY=135;
-                if (entity.isCharging() || entity.chargedAnim>0){
+                if (entity.targetPos!=null && (entity.isCharging() || entity.chargedAnim>0 )){
                     BlockPos pos=entity.targetPos.subtract(new BlockPos(entity.position().x,entity.position().y,entity.position().z));
                     Vec3 sub=new Vec3(pos.getX(),pos.getY(),pos.getZ());
                     double d = sub.horizontalDistance();

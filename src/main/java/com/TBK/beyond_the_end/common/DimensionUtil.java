@@ -3,7 +3,6 @@ package com.TBK.beyond_the_end.common;
 import com.TBK.beyond_the_end.common.blocks.PortalBlock;
 import com.TBK.beyond_the_end.common.blocks.BKPortalForcer;
 import com.TBK.beyond_the_end.common.blocks.PortalShape;
-import com.TBK.beyond_the_end.common.mixin.LevelAccesor;
 import com.TBK.beyond_the_end.common.registry.BkDimension;
 import com.TBK.beyond_the_end.server.capabilities.PortalPlayer;
 import com.TBK.beyond_the_end.server.network.PacketHandler;
@@ -39,15 +38,15 @@ public class DimensionUtil {
 
     public static void startInBEL(Player player) {
         PortalPlayer.get(player).ifPresent(portalPlayer->{
-            if (portalPlayer.canSpawnInAether()) { // Checks if the player has been set to spawn in the Aether.
+            if (portalPlayer.canSpawnInDimension()) {// Checks if the player has been set to spawn in Dimension.
                 if (player instanceof ServerPlayer serverPlayer) {
                     MinecraftServer server = serverPlayer.level.getServer();
                     if (server != null) {
-                        ServerLevel aetherLevel = server.getLevel(BkDimension.BEYOND_END_LEVEL);
-                        if (aetherLevel != null && serverPlayer.level.dimension() != BkDimension.BEYOND_END_LEVEL) {
-                            if (player.changeDimension(aetherLevel, new BKPortalForcer(aetherLevel, false, true)) != null) {
+                        ServerLevel level = server.getLevel(BkDimension.BEYOND_END_LEVEL);
+                        if (level != null && serverPlayer.level.dimension() != BkDimension.BEYOND_END_LEVEL) {
+                            if (player.changeDimension(level, new BKPortalForcer(level, false, true)) != null) {
                                 serverPlayer.setRespawnPosition(BkDimension.BEYOND_END_LEVEL, serverPlayer.blockPosition(), serverPlayer.getYRot(), true, false);
-                                portalPlayer.setCanSpawnInAether(false); // Sets that the player has already spawned in the Aether.
+                                portalPlayer.setCanSpawnInDimension(false); // Sets that the player has already spawned in Dimension.
                             }
                         }
                     }
@@ -117,12 +116,12 @@ public class DimensionUtil {
                     playerLeavingAether = true;
                     PacketHandler.sendToAllTracking(new PacketTravelDimension(true),player);
                     PacketHandler.sendToAllTracking(new PacketLeavingDimension(true),player);
-                } else if (entity.level.dimension() == PortalBlock.returnDimension() && dimension == PortalBlock.destinationDimension()) { // We display the Ascending GUI text to the player if they're about to enter the Aether.
+                } else if (entity.level.dimension() == PortalBlock.returnDimension() && dimension == PortalBlock.destinationDimension()) { // We display the Ascending GUI text to the player if they're about to enter Dimension.
                     displayAetherTravel = true;
                     playerLeavingAether = false;
                     PacketHandler.sendToAllTracking(new PacketTravelDimension(true),player);
                     PacketHandler.sendToAllTracking(new PacketLeavingDimension(false),player);
-                } else { // Don't display any text if not travelling between the Aether and Overworld or vice-versa.
+                } else { // Don't display any text if not travelling between Dimension and Overworld or vice-versa.
                     displayAetherTravel = false;
                     PacketHandler.sendToAllTracking(new PacketTravelDimension(false),player);
                 }

@@ -17,18 +17,22 @@ import java.util.function.Supplier;
 
 public class PacketSync implements Packet<PacketListener> {
     private final int charge;
+    private final int time;
     public PacketSync(FriendlyByteBuf buf) {
         this.charge=buf.readInt();
+        this.time=buf.readInt();
 
     }
 
-    public PacketSync(int charge) {
+    public PacketSync(int charge,int timer) {
         this.charge=charge;
+        this.time = timer;
     }
 
     @Override
     public void write(FriendlyByteBuf buf) {
         buf.writeInt(this.charge);
+        buf.writeInt(this.time);
     }
 
     public void handle(Supplier<NetworkEvent.Context> context) {
@@ -46,6 +50,7 @@ public class PacketSync implements Packet<PacketListener> {
         PortalPlayer.get(mc.player).ifPresent(portalPlayer -> {
             portalPlayer.setPlayer(mc.player);
             portalPlayer.setCharge(this.charge);
+            portalPlayer.animTimer=this.time;
         });
     }
 

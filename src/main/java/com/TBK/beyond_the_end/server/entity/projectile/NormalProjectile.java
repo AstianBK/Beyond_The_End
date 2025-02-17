@@ -64,28 +64,6 @@ public abstract class NormalProjectile extends ThrowableProjectile {
     }
 
     @Override
-    public void handleEntityEvent(byte p_19882_) {
-        super.handleEntityEvent(p_19882_);
-    }
-
-    @Override
-    public void onSyncedDataUpdated(EntityDataAccessor<?> p_20059_) {
-
-        super.onSyncedDataUpdated(p_20059_);
-    }
-
-
-    @Override
-    protected void addAdditionalSaveData(CompoundTag pCompound) {
-        super.addAdditionalSaveData(pCompound);
-    }
-
-    @Override
-    protected void readAdditionalSaveData(CompoundTag pCompound) {
-        super.readAdditionalSaveData(pCompound);
-    }
-
-    @Override
     protected void defineSynchedData() {
     }
 }

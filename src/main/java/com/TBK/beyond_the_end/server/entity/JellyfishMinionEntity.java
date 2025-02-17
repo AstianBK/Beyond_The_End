@@ -147,7 +147,7 @@ public class JellyfishMinionEntity extends PathfinderMob {
             }
 
             if(this.nextTimer>this.maxNextTimer && this.actuallyPhase == PhaseAttack.SPIN_AROUND){
-                int time=30 + this.level.random.nextInt(0,5)*this.level.random.nextInt(0,5);
+                int time= 60 + this.level.random.nextInt(0,5)*this.level.random.nextInt(0,5);
                 this.maxNextTimer=time;
                 this.nextTimer=0;
                 int nextAction=this.level.random.nextInt(0,2);
@@ -161,7 +161,7 @@ public class JellyfishMinionEntity extends PathfinderMob {
             if(this.shootTimer==0){
                 if(!this.level.isClientSide){
                     if(this.getTarget()!=null && this.shootTimer<=0){
-                        if(this.level.random.nextFloat()>0.25F){
+                        if(this.level.random.nextFloat()>0.15F){
                             ChargeFlash ball = new ChargeFlash(this.level,this);
                             ball.setPos(this.getEyePosition());
                             ball.shoot(this.getTarget().getEyePosition().x-this.getEyePosition().x,this.getTarget().getEyePosition().y-this.getEyePosition().y,this.getTarget().getEyePosition().z-this.getEyePosition().z,1.0F,1.0F);

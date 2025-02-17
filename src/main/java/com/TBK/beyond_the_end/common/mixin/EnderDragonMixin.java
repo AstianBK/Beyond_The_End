@@ -22,4 +22,5 @@ public class EnderDragonMixin {
     private static EntityType<? extends Mob> summon(EntityType<? extends Mob> p_21368_,Level level){
         return level.dimension().equals(PortalBlock.destinationDimension()) ? BKEntityType.FALLEN_DRAGON.get() : EntityType.ENDER_DRAGON;
     }
+
 }

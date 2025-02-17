@@ -30,6 +30,7 @@ public abstract class NormalProjectile extends ThrowableProjectile {
                 this.animTimer=0;
             }
         }
+
         if (!this.level.isClientSide()) {
             HitResult result = ProjectileUtil.getHitResult(this, this::canHitEntity);
             if (result.getType() == HitResult.Type.MISS && this.isAlive()) {
@@ -38,6 +39,7 @@ public abstract class NormalProjectile extends ThrowableProjectile {
                     this.onHit(new EntityHitResult(intersecting.get(0)));
             }
         }
+
         this.refreshDimensions();
         Vec3 vec3;
         vec3 = this.getDeltaMovement();

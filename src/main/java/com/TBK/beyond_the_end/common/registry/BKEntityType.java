@@ -41,7 +41,7 @@ public class BKEntityType {
 
     public static final RegistryObject<EntityType<ChargeFollowing>> CHARGE_FOLLOWING = ENTITY_TYPES
             .register("charge_following", () -> EntityType.Builder.<ChargeFollowing>of(ChargeFollowing::new, MobCategory.MISC)
-                    .fireImmune().sized(0.2F, 0.2F).build(BeyondTheEnd.MODID+ "charge_following"));
+                    .fireImmune().sized(1F, 1F).build(BeyondTheEnd.MODID+ "charge_following"));
 
     public static final RegistryObject<EntityType<ChargeFlash>> CHARGE_FLASH = ENTITY_TYPES
             .register("charge_flash", () -> EntityType.Builder.<ChargeFlash>of(ChargeFlash::new, MobCategory.MISC)

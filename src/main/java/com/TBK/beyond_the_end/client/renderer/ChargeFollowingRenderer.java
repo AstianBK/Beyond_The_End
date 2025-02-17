@@ -30,14 +30,20 @@ public class ChargeFollowingRenderer<T extends ChargeFollowing> extends EntityRe
     public void render(T pEntity, float pEntityYaw, float pPartialTicks, PoseStack pMatrixStack, MultiBufferSource pBuffer, int pPackedLight) {
         pMatrixStack.pushPose();
         float f0 = ((float)(pEntity.tickCount));
-        pMatrixStack.translate(0.0f,1.7F,0.0F);
+        pMatrixStack.translate(0.0f,1.5F,0.0F);
+
         Quaternion rotation = Vector3f.YP.rotation((float)(Math.PI)*f0/100 );
+
         rotation.mul(Vector3f.ZP.rotation((float)Math.PI));
+
         pMatrixStack.mulPose(rotation);
+
         LightballModel<T> layer1=new LightballModel<>(Minecraft.getInstance().getEntityModels().bakeLayer(LightballModel.LAYER_LOCATION));
+
         LightballModel<T> layer2=new LightballModel<>(Minecraft.getInstance().getEntityModels().bakeLayer(LightballModel.LAYER_LOCATION));
 
         float porcentaje= pEntity.getAnimTimer(pPartialTicks);
+
         layer2.renderToBuffer(pMatrixStack,pBuffer.getBuffer(RenderType.dragonExplosionAlpha(ALPHA)),pPackedLight,OverlayTexture.NO_OVERLAY,1.0F,1.0F,1.0F,porcentaje);
 
         layer1.renderToBuffer(pMatrixStack,pBuffer.getBuffer(RenderType.entityDecal(RAY)),pPackedLight,OverlayTexture.NO_OVERLAY,1.0F,1.0F,1.0F,1.0F);

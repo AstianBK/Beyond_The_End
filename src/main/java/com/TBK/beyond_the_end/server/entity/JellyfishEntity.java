@@ -5,6 +5,7 @@ import com.TBK.beyond_the_end.client.particle.BKParticles;
 import com.TBK.beyond_the_end.common.Util;
 import com.TBK.beyond_the_end.common.api.ICamShaker;
 import com.TBK.beyond_the_end.common.registry.BKEntityType;
+import com.TBK.beyond_the_end.common.registry.BTESounds;
 import com.TBK.beyond_the_end.server.capabilities.PortalPlayer;
 import com.TBK.beyond_the_end.server.network.PacketHandler;
 import com.TBK.beyond_the_end.server.network.message.PacketFlameParticles;
@@ -48,6 +49,7 @@ import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.*;
+import net.minecraftforge.client.event.sound.SoundEvent;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
@@ -124,18 +126,22 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
 
     @Override
     public boolean hurt(DamageSource source,float damage) {
+        boolean wasHurt = false;
+        float damageOriginal=damage;
         if(this.lazerTimer<=0){
             if(source.getEntity() instanceof Player player && PortalPlayer.get(player).isPresent()){
-                damage= PortalPlayer.get(player).orElse(null).damageFinal(this,damage);
-                if(this.level.isClientSide){
-                    this.particleHurt();
-                }
+                damage = PortalPlayer.get(player).orElse(null).damageFinal(this,damage);
             }
             if(!this.level.isClientSide){
                 if(BeyondTheEnd.jellyfishFightEvent!=null){
                     BeyondTheEnd.jellyfishFightEvent.updateJellyfish(this);
                 }
             }
+        }
+        wasHurt=damageOriginal==damage;
+
+        if(wasHurt && this.level.isClientSide){
+            this.particleHurt();
         }
 
         return super.hurt(source,damage);
@@ -184,32 +190,30 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
                         BlockPos blockpos = ((BlockHitResult)hitResult).getBlockPos();
                         BlockState blockstate = level.getBlockState(blockpos);
                         BlockState oldBlockState = level.getBlockState(this.lastBlockPos);
-                        if(!this.level.isClientSide){
-                            if (blockstate.isFlammable(this.level,blockpos,((BlockHitResult) hitResult).getDirection()) && !CampfireBlock.canLight(blockstate) && !CandleBlock.canLight(blockstate) && !CandleCakeBlock.canLight(blockstate)) {
-                                BlockPos blockpos1 = blockpos.relative(((BlockHitResult) hitResult).getDirection());
-                                if (BaseFireBlock.canBePlacedAt(level, blockpos1, ((BlockHitResult) hitResult).getDirection())) {
-                                    level.playSound(null, blockpos1, SoundEvents.FLINTANDSTEEL_USE, SoundSource.BLOCKS, 1.0F, level.getRandom().nextFloat() * 0.4F + 0.8F);
-                                    BlockState blockstate1 = BaseFireBlock.getState(level, blockpos1);
-                                    level.setBlock(blockpos1, blockstate1, 11);
-                                    level.gameEvent(this, GameEvent.BLOCK_PLACE, blockpos);
+                        if (blockstate.isFlammable(this.level,blockpos,((BlockHitResult) hitResult).getDirection()) && !CampfireBlock.canLight(blockstate) && !CandleBlock.canLight(blockstate) && !CandleCakeBlock.canLight(blockstate)) {
+                            BlockPos blockpos1 = blockpos.relative(((BlockHitResult) hitResult).getDirection());
+                            if (BaseFireBlock.canBePlacedAt(level, blockpos1, ((BlockHitResult) hitResult).getDirection())) {
+                                level.playSound(null, blockpos1, SoundEvents.FLINTANDSTEEL_USE, SoundSource.BLOCKS, 1.0F, level.getRandom().nextFloat() * 0.4F + 0.8F);
+                                BlockState blockstate1 = BaseFireBlock.getState(level, blockpos1);
+                                level.setBlock(blockpos1, blockstate1, 11);
+                                level.gameEvent(this, GameEvent.BLOCK_PLACE, blockpos);
+                            }
+                        }
+                        if(oldBlockState==blockstate){
+                            int hardness = (int) (Math.max(blockstate.getDestroySpeed(this.level, blockpos), 0.2F) * 30F);
+                            int i = (int) ((float) this.progressMine / hardness * 10.0F);
+
+                            if(hardness<75){
+                                this.level.destroyBlockProgress(this.getId(),blockpos,i);
+
+                                if (this.progressMine++ > hardness) {
+                                    this.level.destroyBlock(blockpos, true);
+                                    this.progressMine = 0;
                                 }
                             }
-                            if(oldBlockState==blockstate){
-                                int hardness = (int) (Math.max(blockstate.getDestroySpeed(this.level, blockpos), 0.2F) * 30F);
-                                int i = (int) ((float) this.progressMine / hardness * 10.0F);
-
-                                if(hardness<75){
-                                    this.level.destroyBlockProgress(this.getId(),blockpos,i);
-
-                                    if (this.progressMine++ > hardness) {
-                                        this.level.destroyBlock(blockpos, true);
-                                        this.progressMine = 0;
-                                    }
-                                }
-                            }else {
-                                this.lastBlockPos=blockpos;
-                                this.progressMine=0;
-                            }
+                        }else {
+                            this.lastBlockPos=blockpos;
+                            this.progressMine=0;
                         }
                     }else if(hitResult.getType() == HitResult.Type.ENTITY){
                         Entity entity = ((EntityHitResult)hitResult).getEntity();
@@ -280,7 +284,7 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
                 }
             }
             if(this.startLazerTimer==0){
-                this.lazerTimer=300;
+                this.lazerTimer=180;
                 if(!this.level.isClientSide){
                     this.level.broadcastEntityEvent(this,(byte) 32);
                 }else{
@@ -292,7 +296,7 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
         if(this.startSummoningTimer>0){
             this.startSummoningTimer--;
             if(this.startSummoningTimer==0){
-                this.summoningTimer=1000;
+                this.summoningTimer=500;
                 if(!this.level.isClientSide){
                     this.level.broadcastEntityEvent(this,(byte) 64);
                 }
@@ -301,8 +305,8 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
 
         if(this.summoningTimer>0){
             this.summoningTimer--;
-            if(this.summoningTimer>90){
-                if((90+this.summoningTimer)%130==0 || this.summoningTimer==91){
+            if(this.summoningTimer>45){
+                if((45+this.summoningTimer)%75==0 || this.summoningTimer==46){
                     JellyfishMinionEntity minion = new JellyfishMinionEntity(BKEntityType.JELLYFISH_MINION.get(), this.level);
                     minion.setPos(this.position().add(0.0F,-6.0D,0.0D));
                     minion.actuallyPhase= JellyfishMinionEntity.PhaseAttack.SPAWN;
@@ -324,6 +328,7 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
                     this.level.addParticle(BKParticles.MIST_PARTICLE.get(),x + random.nextInt(-2,2),y,z + random.nextInt(-2,2),random1.nextFloat(-0.5F,0.5F),-0.6F,random1.nextFloat(-0.5F,0.5F));
                 }
             }
+
             if(this.summoningTimer==0){
                 this.actuallyPhase=PhaseAttack.SPIN_AROUND;
                 if(!this.level.isClientSide){
@@ -384,6 +389,7 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
             }
         }
     }
+
     public void tickDeath(){
         this.deathTimer++;
         if(!this.level.isClientSide && this.deathTimer>90){
@@ -524,7 +530,7 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
     }
 
     private int getPulsingBeatDelay() {
-        return 50 ;
+        return 50;
     }
 
     @Override
@@ -541,8 +547,10 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
             this.startLazer.start(this.tickCount);
             this.idle.stop();
             this.idleTimer=110;
+
+            this.level.playSound(null,this, BTESounds.ARQUEBUS_SHOOT.get(),SoundSource.HOSTILE,10.0F,1.0F);
         }else if(p_21375_==32){
-            this.lazerTimer=300;
+            this.lazerTimer=180;
             this.shootLaser.start(this.tickCount);
             this.startLazer.stop();
             this.idle.stop();
@@ -556,7 +564,7 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
             this.idle.stop();
             this.idleTimer=101;
         }else if(p_21375_==64){
-            this.summoningTimer=1000;
+            this.summoningTimer=500;
             this.summoning.start(this.tickCount);
             this.startSummoning.stop();
             this.idle.stop();

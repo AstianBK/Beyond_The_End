@@ -3,6 +3,7 @@ package com.TBK.beyond_the_end.server.entity;
 import com.TBK.beyond_the_end.BeyondTheEnd;
 import com.TBK.beyond_the_end.common.Util;
 import com.TBK.beyond_the_end.common.registry.BKEntityType;
+import com.TBK.beyond_the_end.common.registry.BTESounds;
 import com.TBK.beyond_the_end.server.capabilities.PortalPlayer;
 import com.TBK.beyond_the_end.server.capabilities.PortalPlayerCapability;
 import com.TBK.beyond_the_end.server.entity.projectile.ChargeFlash;
@@ -166,9 +167,10 @@ public class JellyfishMinionEntity extends PathfinderMob {
                             ball.setPos(this.getEyePosition());
                             ball.shoot(this.getTarget().getEyePosition().x-this.getEyePosition().x,this.getTarget().getEyePosition().y-this.getEyePosition().y,this.getTarget().getEyePosition().z-this.getEyePosition().z,1.0F,1.0F);
                             this.level.addFreshEntity(ball);
+                            this.playSound(BTESounds.JELLYFISH_SHOOT1.get(), 2.0F, (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F);
                         }else {
                             this.level.addFreshEntity(new ChargeFollowing(this.level,this,this.getTarget()));
-                            this.playSound(SoundEvents.SHULKER_SHOOT, 2.0F, (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F);
+                            this.playSound(BTESounds.JELLYFISH_SHOOT2.get(), 2.0F, (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F);
                         }
                     }
                     this.setActionForID(0);

@@ -25,6 +25,9 @@ public class BTESounds {
     public static final RegistryObject<SoundEvent> JELLYFISH_LASERLOOP =
             registerSoundEvent("jellyfish_laserloop");
 
+    public static final RegistryObject<SoundEvent> JELLYFISH_EXPLOSION =
+            registerSoundEvent("jellyfish_explosion");
+
     public static final RegistryObject<SoundEvent> JELLYFISH_HURT =
             registerSoundEvent("jellyfish_hurt");
 

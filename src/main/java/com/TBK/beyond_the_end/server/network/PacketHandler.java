@@ -47,6 +47,9 @@ public class PacketHandler {
         channel.registerMessage(index++, PacketNextActionJellyfish.class, PacketNextActionJellyfish::write,
                 PacketNextActionJellyfish::new, PacketNextActionJellyfish::handle);
 
+        channel.registerMessage(index++, PacketPlaySound.class, PacketPlaySound::toBytes,
+                PacketPlaySound::new, PacketPlaySound::handle);
+
 
 
 

@@ -60,6 +60,7 @@ public class BeyondTheEnd
         BkCommonRegistry.BLOCKS.register(modEventBus);
         BkCommonRegistry.ITEMS.register(modEventBus);
         BKParticles.PARTICLE_TYPES.register(modEventBus);
+        BTESounds.SOUND_EVENTS.register(modEventBus);
         BkPoi.POI.register(modEventBus);
         PacketHandler.registerMessages();
         MinecraftForge.EVENT_BUS.register(this);

@@ -62,7 +62,7 @@ public class ChargeLayer<T extends Player,M extends PlayerModel<T>> extends Rend
 
                     layer1.renderToBuffer(p_117349_,p_117350_.getBuffer(RenderType.entityDecal(RAY) ),p_117351_,OverlayTexture.NO_OVERLAY,1.0F,1.0F,1.0F,1.0F);
 
-                    this.model.renderToBuffer(p_117349_,p_117350_.getBuffer(RenderType.entityTranslucentEmissive(TEXTURE,false)),p_117351_,OverlayTexture.NO_OVERLAY,1.0F,1.0F,1.0F,1.0F);
+                    this.model.renderToBuffer(p_117349_,p_117350_.getBuffer(RenderType.entityTranslucent(TEXTURE)),p_117351_,OverlayTexture.NO_OVERLAY,1.0F,1.0F,1.0F,1.0F);
 
                     p_117349_.popPose();
 

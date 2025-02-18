@@ -1,5 +1,6 @@
 package com.TBK.beyond_the_end.client.sounds;
 
+import com.TBK.beyond_the_end.BeyondTheEnd;
 import com.TBK.beyond_the_end.common.Util;
 import com.TBK.beyond_the_end.common.registry.BTESounds;
 import com.TBK.beyond_the_end.server.entity.JellyfishEntity;
@@ -40,7 +41,7 @@ public class LaserSoundInstance extends EntityBoundSoundInstance {
         Vec3 initial = this.end;
         Vec3 direction = this.start.subtract(this.end).normalize();
         float distance = (float) this.end.distanceTo(positionEntity);
-        while (initial.subtract(this.start).length()<1.0F){
+        while (initial.subtract(this.start).length()>1.0F){
             if(distance<20){
                 return (float) Mth.clamp((20.0D-distance)/20.0D,0.0F,1.0F);
             }
@@ -51,10 +52,11 @@ public class LaserSoundInstance extends EntityBoundSoundInstance {
     }
     @Override
     public void tick() {
+        BeyondTheEnd.LOGGER.debug("SoundFuncionando  volumenn actual :"+this.volume);
         if(this.sourceLaser.lazerTimer<=0){
             this.stop();
         }
-        this.volume=10.0F * (getDistanceFinal());
+        this.volume=10.0F * getDistanceFinal();
         super.tick();
     }
 }

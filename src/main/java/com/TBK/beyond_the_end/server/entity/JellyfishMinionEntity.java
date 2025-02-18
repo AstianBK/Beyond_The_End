@@ -18,6 +18,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
@@ -112,6 +113,14 @@ public class JellyfishMinionEntity extends PathfinderMob {
     }
 
     @Override
+    public boolean hurt(DamageSource p_21016_, float p_21017_) {
+        if(this.level.isClientSide){
+            this.level.playLocalSound(this.getX(),this.getY(),this.getZ(),BTESounds.JELLYFISH_HURT.get(), SoundSource.HOSTILE, 2.0F, (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F,false);
+        }
+        return super.hurt(p_21016_, p_21017_);
+    }
+
+    @Override
     public void readAdditionalSaveData(CompoundTag p_21450_) {
         super.readAdditionalSaveData(p_21450_);
         if(p_21450_.contains("x") && p_21450_.contains("y") && p_21450_.contains("z")){
@@ -148,7 +157,7 @@ public class JellyfishMinionEntity extends PathfinderMob {
             }
 
             if(this.nextTimer>this.maxNextTimer && this.actuallyPhase == PhaseAttack.SPIN_AROUND){
-                int time= 60 + this.level.random.nextInt(0,5)*this.level.random.nextInt(0,5);
+                int time= 80 + this.level.random.nextInt(0,15)*this.level.random.nextInt(0,5);
                 this.maxNextTimer=time;
                 this.nextTimer=0;
                 int nextAction=this.level.random.nextInt(0,2);
@@ -167,10 +176,10 @@ public class JellyfishMinionEntity extends PathfinderMob {
                             ball.setPos(this.getEyePosition());
                             ball.shoot(this.getTarget().getEyePosition().x-this.getEyePosition().x,this.getTarget().getEyePosition().y-this.getEyePosition().y,this.getTarget().getEyePosition().z-this.getEyePosition().z,1.0F,1.0F);
                             this.level.addFreshEntity(ball);
-                            this.playSound(BTESounds.JELLYFISH_SHOOT1.get(), 2.0F, (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F);
+                            this.level.broadcastEntityEvent(this,(byte) 8);
                         }else {
                             this.level.addFreshEntity(new ChargeFollowing(this.level,this,this.getTarget()));
-                            this.playSound(BTESounds.JELLYFISH_SHOOT2.get(), 2.0F, (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F);
+                            this.level.broadcastEntityEvent(this,(byte) 9);
                         }
                     }
                     this.setActionForID(0);
@@ -227,18 +236,12 @@ public class JellyfishMinionEntity extends PathfinderMob {
                 this.rotateTowardsTarget(pos);
             }
         }else {
-            this.setPos(this.position());
-            var hit = Util.internalRaycastForEntity(this.level, this,this.getEyePosition(),this.directionBlock,true,2F);
-
-            Vec3 vec32 = hit.getLocation().subtract(this.getEyePosition());
-            double f5 = -Math.toDegrees(Math.atan2(vec32.y,Math.sqrt(vec32.x*vec32.x + vec32.z*vec32.z)));
-            double f6 = Math.toDegrees(Math.atan2(vec32.z, vec32.x)) - 90.0F;
-            this.yHeadRot=(float)f6;
-            this.setYHeadRot((float) f6);
-            this.yBodyRot= (float) (f6);
-            this.setYRot((float) f6);
-            this.setXRot((float) f5);
-            this.setRot(this.getYRot(),this.getXRot());
+            if(target==null){
+                BlockPos pos = new BlockPos(0,this.level.getHeight(Heightmap.Types.WORLD_SURFACE,0,0),0);
+                this.rotateTowardsTarget(pos);
+            }else {
+                this.rotateTowardsTarget(target);
+            }
         }
     }
 
@@ -345,6 +348,10 @@ public class JellyfishMinionEntity extends PathfinderMob {
             this.shoot.start(this.tickCount);
             this.idle.stop();
             this.idleTimer=7;
+        }else if(p_21375_==8){
+            this.level.playLocalSound(this.getX(),this.getY(),this.getZ(),BTESounds.JELLYFISH_SHOOT1.get(),SoundSource.HOSTILE,3.0F,1.0F,false);
+        }else if(p_21375_==9){
+            this.level.playLocalSound(this.getX(),this.getY(),this.getZ(),BTESounds.JELLYFISH_SHOOT2.get(),SoundSource.HOSTILE,3.0F,1.0F,false);
         }
         super.handleEntityEvent(p_21375_);
     }

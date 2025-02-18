@@ -162,6 +162,9 @@ public class Events {
         DimensionUtil.dimensionTravel(entity, dimension);
         if(dimension.equals(BkDimension.BEYOND_END_LEVEL)){
             entity.moveTo(new Vec3(100,80,0));
+            if(BeyondTheEnd.getServer()!=null){
+                BeyondTheEnd.getServer().saveEverything(true,false,false);
+            }
         }
     }
 

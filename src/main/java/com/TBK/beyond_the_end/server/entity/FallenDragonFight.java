@@ -294,6 +294,7 @@ public class FallenDragonFight extends EndDragonFight {
             this.previouslyKilled = true;
             this.dragonKilled = true;
             this.spawnNewGateway(new BlockPos(0,50,0));
+            BeyondTheEnd.getServer().saveEverything(true,false,false);
         }
 
     }

@@ -80,7 +80,7 @@ public class JellyfishRenderer<T extends JellyfishEntity,M extends JellyfishMode
         double f5 = Math.atan2(vec32.y,Math.sqrt(vec32.x*vec32.x + vec32.z*vec32.z));
         double f6 = Math.atan2(vec32.z, vec32.x) ;
         float distance = (float) jellyfish.getEyePosition(pPartialTicks).distanceTo(hit.getLocation()) * 0.1F + 1.0F;
-        pMatrixStack.translate(0.0F, jellyfish.getEyeHeight() + 1.25F,0.0F);
+        pMatrixStack.translate(0.0F, jellyfish.getEyeHeight() - 1.75F,0.0F);
 
         pMatrixStack.mulPose(Vector3f.YP.rotation((float) -(f6-1.57F)));
 

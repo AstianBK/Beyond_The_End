@@ -34,6 +34,12 @@ public class BTESounds {
     public static final RegistryObject<SoundEvent> JELLYFISH_SUMMON =
             registerSoundEvent("jellyfish_summon");
 
+    public static final RegistryObject<SoundEvent> JELLYFISH_LAND =
+            registerSoundEvent("jellyfish_land");
+
+    public static final RegistryObject<SoundEvent> JELLYFISH_JUMP =
+            registerSoundEvent("jellyfish_jump");
+
     public static RegistryObject<SoundEvent> registerSoundEvent(String name){
         return SOUND_EVENTS.register(name, () ->new  SoundEvent(new ResourceLocation(BeyondTheEnd.MODID, name)));
     }

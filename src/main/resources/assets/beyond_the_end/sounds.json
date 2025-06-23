@@ -17,6 +17,18 @@
       "beyond_the_end:jellyfish_laserloop"
     ]
   },
+  "jellyfish_jump": {
+    "subtitle": "sounds.beyond_the_end.jellyfish_jump",
+    "sounds": [
+      "beyond_the_end:jellyfish_jump"
+    ]
+  },
+  "jellyfish_land": {
+    "subtitle": "sounds.beyond_the_end.jellyfish_land",
+    "sounds": [
+      "beyond_the_end:jellyfish_land"
+    ]
+  },
   "jellyfish_summon": {
     "subtitle": "sounds.beyond_the_end.jellyfish_summon",
     "sounds": [

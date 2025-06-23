@@ -22,6 +22,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.TheEndPortalBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.pattern.BlockInWorld;
 import net.minecraft.world.level.block.state.pattern.BlockPattern;
 import net.minecraft.world.level.block.state.pattern.BlockPatternBuilder;
@@ -29,6 +30,7 @@ import net.minecraft.world.level.block.state.predicate.BlockPredicate;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -51,7 +53,8 @@ public class JellyfishFightEvent {
     private UUID jellyfishUUID;
     private boolean needsStateScanning = true;
     @Nullable
-    private BlockPos portalLocation;
+    public BlockPos portalLocation;
+    public Vec3 dragonPosDeath = Vec3.ZERO;
     @Nullable
     private int respawnTime;
     public float prevScreenShakeAmount=0.0F;
@@ -108,7 +111,7 @@ public class JellyfishFightEvent {
 
         compoundtag.putBoolean("jellyfishKilled", this.dragonKilled);
         compoundtag.putBoolean("jellyfishPreviouslyKilled", this.previouslyKilled);
-
+        compoundtag.put("dragonDeathPos",NbtUtils.writeBlockPos(new BlockPos(this.dragonPosDeath)));
         return compoundtag;
     }
 
@@ -251,9 +254,12 @@ public class JellyfishFightEvent {
     private JellyfishEntity createNewDragon() {
         this.level.getChunkAt(new BlockPos(0,120.0D,0));
         JellyfishEntity enderdragon = BKEntityType.JELLYFISH.get().create(this.level);
-        enderdragon.moveTo(0,120.0D,0, this.level.random.nextFloat() * 360.0F, 0.0F);
-        enderdragon.actuallyPhase= JellyfishEntity.PhaseAttack.SPAWN;
+        enderdragon.moveTo(0,80.0D,0, this.level.random.nextFloat() * 360.0F, 0.0F);
+        enderdragon.actuallyPhase = JellyfishEntity.PhaseAttack.SPAWN;
+        enderdragon.shootLaser.start(enderdragon.tickCount);
+        enderdragon.idleTimer = 1000;
         this.level.addFreshEntity(enderdragon);
+        this.level.broadcastEntityEvent(enderdragon,(byte) 66);
         this.jellyfishUUID = enderdragon.getUUID();
         return enderdragon;
     }
@@ -266,17 +272,7 @@ public class JellyfishFightEvent {
                 this.dragonEvent.setName(p_64097_.getDisplayName());
             }
         }
-
     }
-
-    public void addPlayer(ServerPlayer player) {
-        this.dragonEvent.addPlayer(player);
-    }
-
-    public void removePlayer(ServerPlayer player) {
-        this.dragonEvent.removePlayer(player);
-    }
-
     @OnlyIn(Dist.CLIENT)
     public float getScreenShakeAmount(float partialTick) {
         return prevScreenShakeAmount + (screenShakeAmount - prevScreenShakeAmount) * partialTick;

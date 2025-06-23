@@ -2,7 +2,6 @@ package com.TBK.beyond_the_end.server.entity;
 
 import com.TBK.beyond_the_end.BeyondTheEnd;
 import com.TBK.beyond_the_end.client.particle.BKParticles;
-import com.TBK.beyond_the_end.client.sounds.LaserSoundInstance;
 import com.TBK.beyond_the_end.common.Util;
 import com.TBK.beyond_the_end.common.api.ICamShaker;
 import com.TBK.beyond_the_end.common.registry.BKEntityType;
@@ -11,9 +10,9 @@ import com.TBK.beyond_the_end.server.capabilities.PortalPlayer;
 import com.TBK.beyond_the_end.server.network.PacketHandler;
 import com.TBK.beyond_the_end.server.network.message.PacketNextActionJellyfish;
 import com.TBK.beyond_the_end.server.network.message.PacketPlaySound;
-import com.TBK.beyond_the_end.server.network.message.PacketTargetAttack;
-import net.minecraft.client.Minecraft;
+import com.TBK.beyond_the_end.server.network.message.PacketActionDragon;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
@@ -35,15 +34,9 @@ import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BaseFireBlock;
-import net.minecraft.world.level.block.CampfireBlock;
-import net.minecraft.world.level.block.CandleBlock;
-import net.minecraft.world.level.block.CandleCakeBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.*;
-import software.bernie.shadowed.eliotlash.mclib.math.functions.limit.Min;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -52,12 +45,15 @@ import java.util.Random;
 public class JellyfishEntity extends PathfinderMob implements ICamShaker {
     public int idleTimer = 0;
     public int lazerTimer = 0;
-    public int attackTimer = 0;
+    public int spinTimer = 0;
+    public int attackHeadTimer = 0;
     public int startLazerTimer = 0;
     public int startSummoningTimer = 0;
     public int summoningTimer = 0;
     public int shootLaserTimer = 0;
-    public int progressMine = 0;
+    public int maxJumpCount = 0;
+    public int jumpCount = 0;
+    public int waitInGroundTime = 0;
     public int deathTimer = 0;
     private final double speed = 1.0F;
     private final double circleRadius = 300.0D;
@@ -66,31 +62,66 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
     public boolean rot=false;
     public double offsetX=0.0D;
     public double offsetZ=0.0D;
-    public double heightOffset = 0.0D;
-
-    public BlockPos lastBlockPos=BlockPos.ZERO;
     public Vec3 directionBlock=Vec3.ZERO;
-
+    public Vec3 dragonDeath = Vec3.ZERO;
     public PhaseAttack actuallyPhase=PhaseAttack.SPIN_AROUND;
     public AnimationState idle = new AnimationState();
+    public AnimationState idleGround = new AnimationState();
+    public AnimationState idleJump = new AnimationState();
     public AnimationState spinning = new AnimationState();
     public AnimationState startSummoning = new AnimationState();
     public AnimationState summoning = new AnimationState();
     public AnimationState startLazer = new AnimationState();
     public AnimationState shootLaser = new AnimationState();
+    public AnimationState jump = new AnimationState();
+    public AnimationState land = new AnimationState();
+    public AnimationState attackGround = new AnimationState();
+    public int prepareTimer = 0;
     public int timerSpawn=0;
     public int nextTimer=0;
     public int maxNextTimer=300;
     private int pulsingAnimation;
-
+    private int cooldownHeadAttack = 0;
     private int pulsingAnimationO;
     private float prevScreenShakeAmount;
     private float screenShakeAmount;
+    private final JellyfishPartEntity leg0;
+    private final JellyfishPartEntity leg1;
+    private final JellyfishPartEntity leg2;
+    private final JellyfishPartEntity leg3;
+    private final JellyfishPartEntity[] legs;
+    private final BlockPos[] groundPos = new BlockPos[]{
+            new BlockPos(0,90,0),
+            new BlockPos(19,90,30),
+            new BlockPos(100,90,78),
+            new BlockPos(7,90,116),
+            new BlockPos(-76,90,84),
+            new BlockPos(-102,90,35),
+            new BlockPos(-73,90,-51),
+            new BlockPos(-32,90,-114),
+            new BlockPos(59,90,91)
+    };
+    public int positionLastGroundPos = -1;
+    public int positionNextPosIndex = -1;
 
     public JellyfishEntity(EntityType<? extends PathfinderMob> p_21368_, Level p_21369_) {
         super(p_21368_, p_21369_);
         this.moveControl = new FlyingMoveControl(this, 90, true);
         this.lookControl = new SmoothSwimmingLookControl(this,10);
+        this.leg0 = new JellyfishPartEntity(this,"leg0",5.0F,20.0F);
+        this.leg1 = new JellyfishPartEntity(this,"leg1",5.0F,20.0F);
+        this.leg2 = new JellyfishPartEntity(this,"leg2",5.0F,20.0F);
+        this.leg3 = new JellyfishPartEntity(this,"leg3",5.0F,20.0F);
+
+        this.legs = new JellyfishPartEntity[]{this.leg0,this.leg1,this.leg2,this.leg3};
+        this.setId(ENTITY_COUNTER.getAndAdd(this.legs.length + 1) + 1);
+    }
+
+    @Override
+    public void setId(int p_20235_) {
+        super.setId(p_20235_);
+        for (int i = 0; i < this.legs.length; i++) // Forge: Fix MC-158205: Set part ids to successors of parent mob id
+            this.legs[i].setId(p_20235_ + i + 1);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -119,7 +150,6 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
 
     @Override
     public boolean hurt(DamageSource source,float damage) {
-        boolean wasHurt;
         float damageOriginal=damage;
         if(this.lazerTimer<=0){
             if(source.getEntity() instanceof Player player && PortalPlayer.get(player).isPresent()){
@@ -132,6 +162,7 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
                 }
             }
         }
+
 
         if(this.level.isClientSide){
             if(damageOriginal>=damage){
@@ -168,15 +199,29 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
         this.targetSelector.addGoal(4,new NearestAttackableTargetGoal<>(this, Player.class,false));
     }
 
-    @Override
-    public void die(DamageSource p_21014_) {
-        super.die(p_21014_);
-    }
+
 
     @Override
     public void tick() {
+
+        if(this.cooldownHeadAttack>0){
+            this.cooldownHeadAttack--;
+            if(this.cooldownHeadAttack == 0){
+                if(this.actuallyPhase==PhaseAttack.GROUND){
+                    this.actuallyPhase = PhaseAttack.PREPARE_JUMP;
+                    this.prepareTimer = 10;
+                    if(!this.level.isClientSide){
+                        int randomPos = this.level.random.nextInt(0,8);
+                        this.positionNextPosIndex = randomPos;
+                        PacketHandler.sendToAllTracking(new PacketNextActionJellyfish(this.getId(),randomPos,6),this);
+                    }
+                }
+            }
+        }
+
+        this.setNoGravity(this.actuallyPhase != PhaseAttack.JUMP && this.actuallyPhase != PhaseAttack.PREPARE_JUMP);
         super.tick();
-        this.setNoGravity(true);
+
         if(this.lazerTimer>0){
             this.lazerTimer--;
 
@@ -219,20 +264,38 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
                 int time=300 + this.level.random.nextInt(0,5)*this.level.random.nextInt(0,5);
                 this.maxNextTimer=time;
                 this.nextTimer=0;
-                int nextAction=this.level.random.nextInt(0,4);
+                int nextAction=this.level.random.nextInt(0,5);
                 if(nextAction==3){
                     if(!this.canSummonMinions()){
                         nextAction=2;
                     }
+                }
+                if(nextAction==4){
+                    time = this.level.random.nextInt(0,9);
+                    this.positionLastGroundPos = time;
+                    this.maxJumpCount = time % 2 == 0 ? 1 :3;
+                    this.jumpCount = 0;
                 }
                 this.setActionForID(nextAction);
                 PacketHandler.sendToAllTracking(new PacketNextActionJellyfish(this.getId(),time,nextAction),this);
             }
         }
 
-        if(this.attackTimer>0){
-            this.attackTimer--;
-            if(this.attackTimer==0){
+        if(this.attackHeadTimer>0){
+            this.attackHeadTimer--;
+            if(this.attackHeadTimer==8){
+                if(!this.level.isClientSide){
+                    this.level.broadcastEntityEvent(this,(byte) 3);
+                }
+                this.knockBack(this.level.getEntitiesOfClass(Entity.class,this.getBoundingBox().inflate(10.0D).move(0.0D,-30.0D,0.0D),e->e!=this && !this.isAlliedTo(e)));
+            }else if(this.attackHeadTimer == 0){
+                this.cooldownHeadAttack = 150;
+                this.attackGround.stop();
+            }
+        }
+        if(this.spinTimer > 0){
+            this.spinTimer--;
+            if(this.spinTimer == 0){
                 this.actuallyPhase=PhaseAttack.SPIN_AROUND;
                 if(!this.level.isClientSide){
                     PacketHandler.sendToAllTracking(new PacketNextActionJellyfish(this.getId(),0,0),this);
@@ -264,7 +327,7 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
                 Vec3 vec3=new Vec3(this.getTarget().getBlockX(),this.getTarget().getBlockY(),this.getTarget().getBlockZ());
                 this.directionBlock=vec3;
                 if(!this.level.isClientSide){
-                    PacketHandler.sendToAllTracking(new PacketTargetAttack(this.getId(), (int) vec3.x, (int) vec3.y, (int) vec3.z),this);
+                    PacketHandler.sendToAllTracking(new PacketActionDragon(this.getId(), (int) vec3.x, (int) vec3.y, (int) vec3.z),this);
                 }
             }
             if(this.startLazerTimer==0){
@@ -310,12 +373,14 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
                 if(this.summoningTimer%40==0 || this.summoningTimer==500){
                     this.level.playLocalSound(this.getX(), this.getY(), this.getZ(),BTESounds.JELLYFISH_SUMMON.get(), this.getSoundSource(), 5.0F, this.getVoicePitch(), false);
                 }
-                double x = this.getX();
-                double y = this.getY();
-                double z = this.getZ();
-                for (int i=0;i<10;i++){
-                    Random random1 = new Random();
-                    this.level.addParticle(BKParticles.MIST_PARTICLE.get(),x + random.nextInt(-2,2),y,z + random.nextInt(-2,2),random1.nextFloat(-0.5F,0.5F),-0.6F,random1.nextFloat(-0.5F,0.5F));
+                if(this.summoningTimer%5 == 0 ){
+                    double x = this.getX();
+                    double y = this.getY();
+                    double z = this.getZ();
+                    for (int i=0;i<8;i++){
+                        Random random1 = new Random();
+                        this.level.addParticle(BKParticles.MIST_PARTICLE.get(),x + random.nextInt(-2,2),y,z + random.nextInt(-2,2),random1.nextFloat(-0.5F,0.5F),-0.6F,random1.nextFloat(-0.5F,0.5F));
+                    }
                 }
             }
             this.summoningTimer--;
@@ -344,6 +409,51 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
         this.refreshDimensions();
     }
 
+    private void knockBack(List<Entity> p_31132_) {
+        double d0 = (this.getBoundingBox().minX + this.getBoundingBox().maxX) / 2.0D;
+        double d1 = (this.getBoundingBox().minZ + this.getBoundingBox().maxZ) / 2.0D;
+
+        for(Entity entity : p_31132_) {
+            if (entity instanceof LivingEntity) {
+                double d2 = entity.getX() - d0;
+                double d3 = entity.getZ() - d1;
+                double d4 = Math.max(d2 * d2 + d3 * d3, 0.1D);
+                entity.push(d2 / d4 * 16.0D,(double)0.2F, d3 / d4 * 16.0D);
+                entity.hurt(DamageSource.mobAttack(this), 20.0F);
+            }
+        }
+    }
+
+    private void particleChargedPoof() {
+        ParticleOptions particleoptions = BKParticles.FLAME_PARTICLE.get();
+        int i;
+        float f1;
+        i = Mth.ceil((float)Math.PI * 20 * 20);
+        f1 = 20;
+
+        double d2 = this.level.getHeight(Heightmap.Types.WORLD_SURFACE, (int) this.getX(), (int) this.getZ());
+
+        for(int j = 0; j < i; ++j) {
+            float f2 = this.random.nextFloat() * ((float)Math.PI * 2F);
+            float f3 = Mth.sqrt(this.random.nextFloat()) * f1;
+            double d0 = this.getX() + (double)(Mth.cos(f2) * f3);
+            double d4 = this.getZ() + (double)(Mth.sin(f2) * f3);
+
+            Vec3 delta=new Vec3(d0,d2,d4).subtract(this.position()).normalize().scale(2.0D);
+
+            double d5 = delta.x + (0.5D - this.random.nextDouble()) * 0.15D;
+            double d6 = (double)0.01F;
+            double d7 = delta.z + (0.5D - this.random.nextDouble()) * 0.15D;
+
+
+            this.level.addAlwaysVisibleParticle(particleoptions, d0, d2, d4, d5, d6, d7);
+        }
+    }
+
+    private void tickPart(JellyfishPartEntity p_31116_, double p_31117_, double p_31118_, double p_31119_) {
+        p_31116_.setPos(this.getX() + p_31117_, this.getY() + p_31118_, this.getZ() + p_31119_);
+    }
+
     @Override
     public SoundSource getSoundSource() {
         return SoundSource.HOSTILE;
@@ -361,10 +471,169 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
     public float getLazerAnim(float p_219470_) {
         return this.lazerTimer>0 ? 1.0F  :(110.0F-Mth.lerp(p_219470_, (float)this.startLazerTimer, (float)this.startLazerTimer)) / 110.0F;
     }
-    
+    public Vec3 calculateJumpVelocity(BlockPos from, BlockPos to, int ticks) {
+        double g = 0.08; // gravedad aproximada de Minecraft
+
+        double dx = to.getX() + 0.5 - (from.getX() + 0.5); // centrado en el bloque
+        double dy = to.getY() - from.getY();
+        double dz = to.getZ() + 0.5 - (from.getZ() + 0.5);
+
+        double vx = dx / ticks;
+        double vz = dz / ticks;
+        double vy = (dy + 0.5 * g * ticks * ticks) / ticks;
+
+        return new Vec3(vx, vy, vz);
+    }
+
+    @Override
+    public boolean shouldDiscardFriction() {
+        return this.actuallyPhase == PhaseAttack.JUMP || this.actuallyPhase == PhaseAttack.PREPARE_JUMP;
+    }
+
     @Override
     public void aiStep() {
         super.aiStep();
+        if(this.actuallyPhase == PhaseAttack.GROUND){
+            if(this.positionLastGroundPos!=-1){
+
+                this.setPos(Vec3.atCenterOf(this.groundPos[this.positionLastGroundPos]).add(0,5,0));
+                Vec3[] avec3 = new Vec3[this.legs.length];
+
+                for(int j = 0; j < this.legs.length; ++j) {
+                    avec3[j] = new Vec3(this.legs[j].getX(), this.legs[j].getY(), this.legs[j].getZ());
+                }
+
+                // Rotación enY ( horizontal)
+                float yawRad = (float)Math.toRadians(this.getYRot());
+                float sin = (float)Math.sin(yawRad);
+                float cos = (float)Math.cos(yawRad);
+
+                // Pierna 1: adelante derecha
+                double leg0X =  ( 20 * cos) - ( 5 * sin);
+                double leg0Z =  ( 20 * sin) + ( 5 * cos);
+
+                // Pierna 2: atrás izquierda
+                double leg1X =  ( -20 * cos) + ( 5 * sin);
+                double leg1Z =  ( -20 * sin) - ( 5 * cos);
+
+                // Pierna 3: atrás derecha
+                double leg2X =  - ( 20 * cos) - ( 5 * sin);
+                double leg2Z =  - ( 20 * sin) + ( 5 * cos);
+
+
+                double leg3X =  - ( -20 * cos) + ( 5 * sin);
+                double leg3Z =  - ( -20 * sin) - ( 5 * cos);
+
+                this.tickPart(this.leg0,leg0X,-25,leg0Z);
+                this.tickPart(this.leg1,leg1X,-25,leg1Z);
+                this.tickPart(this.leg2,leg2X,-25,leg2Z);
+                this.tickPart(this.leg3,leg3X,-25,leg3Z);
+
+
+                for(int l = 0; l < this.legs.length; ++l) {
+                    this.legs[l].xo = avec3[l].x;
+                    this.legs[l].yo = avec3[l].y;
+                    this.legs[l].zo = avec3[l].z;
+                    this.legs[l].xOld = avec3[l].x;
+                    this.legs[l].yOld = avec3[l].y;
+                    this.legs[l].zOld = avec3[l].z;
+                }
+                if(this.waitInGroundTime++>500){
+                    if(this.jumpCount<this.maxJumpCount){
+                        this.actuallyPhase = PhaseAttack.PREPARE_JUMP;
+                        this.prepareTimer = 10;
+                        if(!this.level.isClientSide){
+                            int randomPos = this.level.random.nextInt(0,8);
+                            this.positionNextPosIndex = randomPos;
+                            PacketHandler.sendToAllTracking(new PacketNextActionJellyfish(this.getId(),randomPos,6),this);
+                        }
+                        this.cooldownHeadAttack=0;
+                        this.waitInGroundTime=0;
+                        this.jumpCount++;
+                    }else {
+                        this.setActionForID(0);
+                        if(!this.level.isClientSide){
+                            PacketHandler.sendToAllTracking(new PacketNextActionJellyfish(this.getId(),100,0),this);
+                        }
+                        this.jumpCount = 0;
+                    }
+                }
+            }
+            if(this.getTarget()!=null && this.cooldownHeadAttack<=0 && this.attackHeadTimer <=0){
+                double d0 = this.distanceTo(this.getTarget());
+                if(d0<30){
+                    if(!this.level.isClientSide){
+                        this.attackHeadTimer = 34;
+                        this.level.broadcastEntityEvent(this,(byte) 1);
+                    }
+                }
+            }
+        }
+
+        if(this.actuallyPhase == PhaseAttack.PREPARE_JUMP){
+            this.prepareTimer--;
+            if(this.prepareTimer==2){
+                if(this.positionNextPosIndex != -1){
+                    BlockPos start = this.blockPosition();
+                    BlockPos end = this.groundPos[this.positionNextPosIndex];
+                    Vec3 velocity = this.calculateJumpVelocity(start, end, 70);
+
+                    this.setDeltaMovement(velocity);
+                }
+            }
+            if(this.prepareTimer==0){
+                this.setActionForID(7);
+                if (!this.level.isClientSide) {
+                    PacketHandler.sendToAllTracking(new PacketNextActionJellyfish(this.getId(), 0, 7), this);
+                }
+            }
+
+            if(this.prepareTimer>2){
+                if(this.positionLastGroundPos != -1){
+                    this.setPos(Vec3.atCenterOf(this.groundPos[this.positionLastGroundPos]).add(0,5,0));
+                }
+            }
+        }
+
+        if(this.actuallyPhase == PhaseAttack.JUMP){
+            if(this.positionNextPosIndex!=-1){
+                BlockPos nextPos = this.groundPos[this.positionNextPosIndex];
+                if(nextPos.distSqr(this.blockPosition())<20 || this.onGround){
+                    this.setActionForID(4);
+                    this.positionLastGroundPos = this.positionNextPosIndex;
+                    if(!this.level.isClientSide){
+                        PacketHandler.sendToAllTracking(new PacketNextActionJellyfish(this.getId(),this.positionNextPosIndex,4),this);
+                    }
+                }
+            }
+        }
+
+        if(this.actuallyPhase == PhaseAttack.LAND && this.positionLastGroundPos!=-1){
+            Vec3 direction = Vec3.atCenterOf(this.groundPos[this.positionLastGroundPos]).subtract(this.position()).normalize().scale(0.6F);
+            this.setDeltaMovement(direction);
+            if(this.distanceToSqr(Vec3.atCenterOf(this.groundPos[this.positionLastGroundPos]))<21){
+                this.actuallyPhase = PhaseAttack.GROUND;
+                this.setPos(Vec3.atCenterOf(this.groundPos[this.positionLastGroundPos]).add(0,10,0));
+                this.setActionForID(5);
+                if(!this.level.isClientSide){
+                    PacketHandler.sendToAllTracking(new PacketNextActionJellyfish(this.getId(),0,5),this);
+                }
+            }
+        }
+
+        if(this.actuallyPhase == PhaseAttack.GROUND){
+            for (JellyfishPartEntity leg : this.legs) {
+                leg.tick();
+                leg.setSize(leg.size0);
+            }
+        }else{
+            for (JellyfishPartEntity leg : this.legs) {
+                leg.tick();
+                leg.setSize(EntityDimensions.scalable(0, 0));
+            }
+        }
+
+
         if(!this.level.isClientSide){
             if(this.actuallyPhase!=PhaseAttack.ATTACK  || this.getTarget()==null){
                 this.spinAround();
@@ -377,12 +646,17 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
 
     public void tickSpawn(){
         this.timerSpawn++;
-        if(this.timerSpawn>90){
-            this.actuallyPhase=PhaseAttack.SPIN_AROUND;
-            if(!this.level.isClientSide){
-                PacketHandler.sendToAllTracking(new PacketNextActionJellyfish(this.getId(),0,0),this);
-            }
-        }
+        this.setDeltaMovement(Vec3.atCenterOf(this.groundPos[0]).subtract(this.position()).normalize().scale(0.5));
+
+        Vec3 vec32 = this.dragonDeath.subtract(this.getEyePosition());
+        double f5 = -Math.toDegrees(Math.atan2(vec32.y,Math.sqrt(vec32.x*vec32.x + vec32.z*vec32.z)));
+        double f6 = Math.toDegrees(Math.atan2(vec32.z, vec32.x)) - 90.0F;
+        this.yHeadRot=(float)f6;
+        this.setYHeadRot((float) f6);
+        this.yBodyRot= (float) (f6);
+        this.setYRot((float) f6);
+        this.setXRot((float) f5);
+        this.setRot(this.getYRot(),this.getXRot());
     }
 
     public void tickDeath(){
@@ -491,12 +765,31 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
     }
 
 
+    @Override
+    public net.minecraftforge.entity.PartEntity<?>[] getParts() {
+        return this.legs;
+    }
 
     public void clientAnim(){
-        if(this.idleTimer<=0 && this.attackTimer<=0){
-            this.idleTimer = 100;
-            this.idle.start(this.tickCount);
-            this.attackTimer = 0;
+        if(this.idleTimer<=0 && this.spinTimer <=0){
+            if(this.actuallyPhase == PhaseAttack.GROUND){
+                this.jump.stop();
+                this.idleTimer = 80;
+                this.idle.stop();
+                this.idleJump.stop();
+                this.idleGround.start(this.tickCount);
+            }else if(this.actuallyPhase == PhaseAttack.JUMP){
+                this.idleTimer = 20;
+                this.idle.stop();
+                this.idleGround.stop();
+                this.idleJump.start(this.tickCount);
+            }else {
+                this.idleTimer = 100;
+                this.idleJump.stop();
+                this.idleGround.stop();
+                this.idle.start(this.tickCount);
+            }
+            this.spinTimer = 0;
             this.lazerTimer = 0;
             this.shootLaserTimer = 0;
             this.startSummoningTimer = 0;
@@ -531,10 +824,21 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
     @Override
     public void handleEntityEvent(byte p_21375_) {
         if(p_21375_==4){
-            this.attackTimer=300;
+            this.spinTimer =300;
             this.spinning.start(this.tickCount);
             this.idle.stop();
             this.idleTimer = 300;
+        }else if(p_21375_==1){
+            this.attackHeadTimer =34;
+            this.attackGround.start(this.tickCount);
+            this.idleGround.stop();
+            this.idle.stop();
+            this.idleTimer = 34;
+        }else if(p_21375_==3){
+            this.particleChargedPoof();
+            if(BeyondTheEnd.jellyfishFightEvent!=null){
+                BeyondTheEnd.jellyfishFightEvent.screenShakeAmount=1.0F;
+            }
         }else if(p_21375_==8){
             this.shootLaser.stop();
         }else if(p_21375_==16){
@@ -562,6 +866,9 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
             this.startSummoning.stop();
             this.idle.stop();
             this.idleTimer=500;
+        }else if(p_21375_ == 66){
+            this.shootLaser.start(this.tickCount);
+            this.idleTimer=1000;
         }
         super.handleEntityEvent(p_21375_);
     }
@@ -570,6 +877,7 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
         switch (idAction){
             case 0 ->{
                 this.actuallyPhase=PhaseAttack.SPIN_AROUND;
+                this.jumpCount = 0;
             }
             case 1 ->{
                 this.actuallyPhase=PhaseAttack.ATTACK;
@@ -580,7 +888,35 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
             case 3 ->{
                 this.actuallyPhase=PhaseAttack.SUMMONING;
             }
+            case 4 ->{
+                this.actuallyPhase = PhaseAttack.LAND;
+            }
+            case 5 ->{
+                this.actuallyPhase = PhaseAttack.GROUND;
+            }
+            case 6 ->{
+                this.actuallyPhase = PhaseAttack.PREPARE_JUMP;
+            }
+            case 7 ->{
+                this.actuallyPhase = PhaseAttack.JUMP;
+            }
         }
+    }
+
+    public void recreateFromPacket(ClientboundAddEntityPacket p_218825_) {
+        super.recreateFromPacket(p_218825_);
+        if (true) return; // Forge: Fix MC-158205: Moved into setId()
+        JellyfishPartEntity[] aenderdragonpart = this.legs;
+
+        for(int i = 0; i < aenderdragonpart.length; ++i) {
+            aenderdragonpart[i].setId(i + p_218825_.getId());
+        }
+
+    }
+
+    @Override
+    public boolean isMultipartEntity() {
+        return true;
     }
 
     @Override
@@ -786,8 +1122,8 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
         }
 
         protected void resetAttackCooldown() {
-            if(this.mob.attackTimer<=0){
-                this.mob.attackTimer=300;
+            if(this.mob.spinTimer <=0){
+                this.mob.spinTimer =300;
                 this.mob.level.broadcastEntityEvent(this.mob,(byte) 4);
             }
         }
@@ -801,6 +1137,10 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
         SUMMONING,
         LAZER,
         SPIN_AROUND,
+        LAND,
+        GROUND,
+        PREPARE_JUMP,
+        JUMP,
         DEATH;
     }
 }

@@ -1,7 +1,9 @@
 package com.TBK.beyond_the_end.client.renderer;
 
 import com.TBK.beyond_the_end.BeyondTheEnd;
+import com.TBK.beyond_the_end.client.layer.DragonGlowingLayer;
 import com.TBK.beyond_the_end.client.model.FallenDragonModel;
+import com.TBK.beyond_the_end.client.model.JellyfishModel;
 import com.TBK.beyond_the_end.server.entity.FallenDragonEntity;
 import com.TBK.beyond_the_end.server.entity.phase.RespawnPhase;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -15,6 +17,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
@@ -23,7 +26,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.Pose;
-import net.minecraftforge.fml.ModList;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib3.compat.PatchouliCompat;
 import software.bernie.geckolib3.core.event.predicate.AnimationEvent;
@@ -39,11 +41,11 @@ import java.util.Collections;
 
 public class FallenDragonRenderer<T extends FallenDragonEntity> extends GeoEntityRenderer<T> {
     private static final ResourceLocation DRAGON_EXPLODING_LOCATION = new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/degra.png");
-
     private static final float HALF_SQRT_3 = (float)(Math.sqrt(3.0D) / 2.0D);
 
     public FallenDragonRenderer(EntityRendererProvider.Context renderManager) {
         super(renderManager, new FallenDragonModel<>());
+        this.addLayer(new DragonGlowingLayer<>(this));
     }
 
     @Override
@@ -159,41 +161,7 @@ public class FallenDragonRenderer<T extends FallenDragonEntity> extends GeoEntit
 
         }
 
-        if(animatable.dragonDeathTime>0){
-            float porcent=(float) animatable.dragonDeathTime/200.0F;
-            render(model, animatable, partialTick, RenderType.dragonExplosionAlpha(DRAGON_EXPLODING_LOCATION), poseStack, bufferSource, bufferSource.getBuffer(RenderType.dragonExplosionAlpha(DRAGON_EXPLODING_LOCATION)),
-                    packedLight, LivingEntityRenderer.getOverlayCoords(animatable, 0), 1, 1,1, porcent);
-            float f7 = Math.min(porcent > 0.8F ? (porcent - 0.8F) / 0.2F : 0.0F, 1.0F);
-            RandomSource randomsource = RandomSource.create(432L);
-            VertexConsumer vertexconsumer2 = bufferSource.getBuffer(RenderType.lightning());
-            poseStack.pushPose();
-            poseStack.translate(0.0D, -1.0D, -2.0D);
 
-            for(int i = 0; (float)i < (porcent + porcent * porcent) / 2.0F * 60.0F; ++i) {
-                poseStack.mulPose(Vector3f.XP.rotationDegrees(randomsource.nextFloat() * 360.0F));
-                poseStack.mulPose(Vector3f.YP.rotationDegrees(randomsource.nextFloat() * 360.0F));
-                poseStack.mulPose(Vector3f.ZP.rotationDegrees(randomsource.nextFloat() * 360.0F));
-                poseStack.mulPose(Vector3f.XP.rotationDegrees(randomsource.nextFloat() * 360.0F));
-                poseStack.mulPose(Vector3f.YP.rotationDegrees(randomsource.nextFloat() * 360.0F));
-                poseStack.mulPose(Vector3f.ZP.rotationDegrees(randomsource.nextFloat() * 360.0F + porcent * 90.0F));
-                float f3 = randomsource.nextFloat() * 20.0F + 5.0F + f7 * 10.0F;
-                float f4 = randomsource.nextFloat() * 2.0F + 1.0F + f7 * 2.0F;
-                Matrix4f matrix4f = poseStack.last().pose();
-                int j = (int)(255.0F * (1.0F - f7));
-                vertex01(vertexconsumer2, matrix4f, j);
-                vertex2(vertexconsumer2, matrix4f, f3, f4);
-                vertex3(vertexconsumer2, matrix4f, f3, f4);
-                vertex01(vertexconsumer2, matrix4f, j);
-                vertex3(vertexconsumer2, matrix4f, f3, f4);
-                vertex4(vertexconsumer2, matrix4f, f3, f4);
-                vertex01(vertexconsumer2, matrix4f, j);
-                vertex4(vertexconsumer2, matrix4f, f3, f4);
-                vertex2(vertexconsumer2, matrix4f, f3, f4);
-            }
-
-            poseStack.popPose();
-
-        }
 
 
         if (!animatable.isInvisibleTo(Minecraft.getInstance().player)) {
@@ -216,8 +184,6 @@ public class FallenDragonRenderer<T extends FallenDragonEntity> extends GeoEntit
             }
         }
 
-        if (ModList.get().isLoaded("patchouli"))
-            PatchouliCompat.patchouliLoaded(poseStack);
 
         poseStack.popPose();
 

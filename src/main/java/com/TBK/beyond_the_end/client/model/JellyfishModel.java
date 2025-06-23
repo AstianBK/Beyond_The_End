@@ -578,11 +578,20 @@ public class JellyfishModel<T extends JellyfishEntity> extends HierarchicalModel
 		this.reset();
 
 		this.animate(entity.idle, JellyfishAnim.idle,ageInTicks);
+
+		this.animate(entity.idleGround, JellyfishAnim.idleground,ageInTicks);
+
+		this.animate(entity.idleJump, JellyfishAnim.air,ageInTicks);
+
+		this.animate(entity.jump, JellyfishAnim.jump,ageInTicks);
+
 		this.animate(entity.startSummoning,JellyfishAnim.startsummon,ageInTicks);
 
 		this.animate(entity.summoning,JellyfishAnim.summoning,ageInTicks);
 
 		this.animate(entity.startLazer,JellyfishAnim.startlazer,ageInTicks);
+
+		this.animate(entity.attackGround,JellyfishAnim.attackhead,ageInTicks);
 
 		this.animate(entity.shootLaser,JellyfishAnim.shootlazer,ageInTicks);
 

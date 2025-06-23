@@ -54,9 +54,21 @@ public class PacketNextActionJellyfish implements Packet<PacketListener> {
         if(dragon instanceof JellyfishEntity jellyfish){
             jellyfish.setActionForID(this.idAction);
             jellyfish.nextTimer=0;
-            if(this.idAction!=0){
-                jellyfish.maxNextTimer=timeForNextAction;
+            if(this.idAction==4){
+                jellyfish.positionLastGroundPos = timeForNextAction;
+                jellyfish.maxJumpCount = timeForNextAction % 2 == 0 ? 1 :3;
+            }else if(this.idAction==5){
+                jellyfish.idleTimer = 0;
+            }else if(this.idAction==6){
+                jellyfish.prepareTimer=10;
+                jellyfish.positionNextPosIndex = timeForNextAction;
+                jellyfish.jump.start(jellyfish.tickCount);
+            }else if(this.idAction==7){
+                jellyfish.idleTimer = 0;
+            }else if(this.idAction!=0){
+                jellyfish.maxNextTimer = timeForNextAction;
             }
+
         }else if(dragon instanceof JellyfishMinionEntity minion){
             minion.setActionForID(this.idAction);
             minion.nextTimer=0;

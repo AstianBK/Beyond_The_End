@@ -227,7 +227,7 @@ public class JellyfishMinionEntity extends PathfinderMob {
 
                 this.rotateTowardsTarget(target);
             }else {
-                BlockPos pos = new BlockPos(0,this.level.getHeight(Heightmap.Types.WORLD_SURFACE,0,0),0);
+                BlockPos pos = new BlockPos(this.circlingPosition);
                 double heightOffset = this.calculateHeightOffset(pos);
                 this.circlingPosition = new Vec3(pos.getX() + offsetX, pos.getY() + heightOffset, pos.getZ() + offsetZ);
                 direction = this.circlingPosition.subtract(this.position()).normalize();
@@ -370,6 +370,7 @@ public class JellyfishMinionEntity extends PathfinderMob {
             case 3 ->{
                 this.actuallyPhase= PhaseAttack.SPAWN;
             }
+
         }
     }
 

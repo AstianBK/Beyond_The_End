@@ -35,8 +35,8 @@ public class PacketHandler {
 
         channel.registerMessage(index++, PacketTargetDragon.class, PacketTargetDragon::write,
                 PacketTargetDragon::new, PacketTargetDragon::handle);
-        channel.registerMessage(index++, PacketTargetAttack.class, PacketTargetAttack::write,
-                PacketTargetAttack::new, PacketTargetAttack::handle);
+        channel.registerMessage(index++, PacketActionDragon.class, PacketActionDragon::write,
+                PacketActionDragon::new, PacketActionDragon::handle);
 
         channel.registerMessage(index++, PacketScreenDirt.class, PacketScreenDirt::write,
                 PacketScreenDirt::new, PacketScreenDirt::handle);

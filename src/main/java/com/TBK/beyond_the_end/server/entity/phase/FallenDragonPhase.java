@@ -14,7 +14,6 @@ public class FallenDragonPhase<T extends FallenDragonInstance> {
     public static final FallenDragonPhase<SkyFallAttack> SKYFALL = create(SkyFallAttack.class, "SkyFall");
     public static final FallenDragonPhase<FlameDragonAttackPhase> FLAME = create(FlameDragonAttackPhase.class, "Flame");
 
-    public static final FallenDragonPhase<ChargingPhase> CHARGING = create(ChargingPhase.class, "Charging");
     public static final FallenDragonPhase<FallenDragonHoverPhase> HOVERING = create(FallenDragonHoverPhase.class, "Hover");
     public static final FallenDragonPhase<ContraAttack> CONTRA_ATTACK = create(ContraAttack.class, "ContraAttack");
 

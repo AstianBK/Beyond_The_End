@@ -126,7 +126,7 @@ public class FallenDragonHoldingPatternPhase extends AbstractDragonPhaseInstance
 
             double d2;
             do {
-                d2 = (double)((float)vec3i.getY() + this.dragon.getRandom().nextFloat() * 20.0F);
+                d2 = (double)((float)vec3i.getY() + this.dragon.getRandom().nextFloat() * 5.0F);
             } while(d2 < (double)vec3i.getY());
 
             this.targetLocation = new Vec3(d0, d2, d1);

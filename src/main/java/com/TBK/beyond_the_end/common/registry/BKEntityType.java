@@ -2,6 +2,7 @@ package com.TBK.beyond_the_end.common.registry;
 
 import com.TBK.beyond_the_end.BeyondTheEnd;
 import com.TBK.beyond_the_end.server.entity.FallenDragonEntity;
+import com.TBK.beyond_the_end.server.entity.FallenDragonFakeEntity;
 import com.TBK.beyond_the_end.server.entity.JellyfishEntity;
 import com.TBK.beyond_the_end.server.entity.JellyfishMinionEntity;
 import com.TBK.beyond_the_end.server.entity.projectile.ChargeFlash;
@@ -21,14 +22,20 @@ public class BKEntityType {
             ENTITY_TYPES.register("fallen_dragon",
                     () -> EntityType.Builder.of(FallenDragonEntity::new, MobCategory.MONSTER)
                             .fireImmune().sized(4.0F, 8.0F)
-                            .clientTrackingRange(10)
+                            .clientTrackingRange(30)
                             .build(new ResourceLocation(BeyondTheEnd.MODID, "fallen_dragon").toString()));
+    public static final RegistryObject<EntityType<FallenDragonFakeEntity>> FALLEN_DRAGON_FAKE =
+            ENTITY_TYPES.register("fallen_dragon_fake",
+                    () -> EntityType.Builder.of(FallenDragonFakeEntity::new, MobCategory.MONSTER)
+                            .fireImmune().sized(1.0F, 1.0F)
+                            .clientTrackingRange(30)
+                            .build(new ResourceLocation(BeyondTheEnd.MODID, "fallen_dragon_fake").toString()));
 
     public static final RegistryObject<EntityType<JellyfishEntity>> JELLYFISH =
             ENTITY_TYPES.register("jellyfish",
                     () -> EntityType.Builder.of(JellyfishEntity::new, MobCategory.MONSTER)
                             .fireImmune().sized(16.0F, 12.0F)
-                            .clientTrackingRange(10)
+                            .clientTrackingRange(30)
                             .build(new ResourceLocation(BeyondTheEnd.MODID, "jellyfish").toString()));
 
 
@@ -36,7 +43,7 @@ public class BKEntityType {
             ENTITY_TYPES.register("jellyfish_minion",
                     () -> EntityType.Builder.of(JellyfishMinionEntity::new, MobCategory.MONSTER)
                             .fireImmune().sized(2.0F, 2.0F)
-                            .clientTrackingRange(10)
+                            .clientTrackingRange(30)
                             .build(new ResourceLocation(BeyondTheEnd.MODID, "jellyfish_minion").toString()));
 
     public static final RegistryObject<EntityType<ChargeFollowing>> CHARGE_FOLLOWING = ENTITY_TYPES

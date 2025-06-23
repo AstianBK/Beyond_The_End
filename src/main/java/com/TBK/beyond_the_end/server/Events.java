@@ -2,6 +2,7 @@ package com.TBK.beyond_the_end.server;
 
 import com.TBK.beyond_the_end.BeyondTheEnd;
 import com.TBK.beyond_the_end.common.DimensionUtil;
+import com.TBK.beyond_the_end.common.blocks.BKPortalForcer;
 import com.TBK.beyond_the_end.common.registry.BkDimension;
 import com.TBK.beyond_the_end.server.capabilities.BkCapabilities;
 import com.TBK.beyond_the_end.server.capabilities.PortalPlayer;
@@ -14,6 +15,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -22,6 +24,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
@@ -58,9 +61,34 @@ public class Events {
     @SubscribeEvent
     public static void onUseItem(PlayerInteractEvent.RightClickItem event) {
         Player player = (Player) event.getEntity();
-        if(event.getItemStack().is(Items.STICK)){
-            PortalPlayer.get(player).ifPresent(PortalPlayerCapability::addCharge);
-            event.getItemStack().shrink(1);
+        if(!event.getLevel().isClientSide){
+            if(event.getItemStack().is(Items.STICK) && !player.isShiftKeyDown()){
+                BeyondTheEnd.LOGGER.debug("El valor anterior de x :"+BeyondTheEnd.x);
+                BeyondTheEnd.x+=1;
+                BeyondTheEnd.LOGGER.debug("El valor actual de x :"+BeyondTheEnd.x);
+
+            }else if(event.getItemStack().is(Items.STICK) ){
+                BeyondTheEnd.LOGGER.debug("El valor anterior de z :"+BeyondTheEnd.z);
+                BeyondTheEnd.z+=5;
+                BeyondTheEnd.LOGGER.debug("El valor actual de z :"+BeyondTheEnd.z);
+            }
+
+            if(event.getItemStack().is(Items.BLAZE_ROD) && !player.isShiftKeyDown()){
+                BeyondTheEnd.LOGGER.debug("El valor anterior de x :"+BeyondTheEnd.x);
+                BeyondTheEnd.x-=1;
+                BeyondTheEnd.LOGGER.debug("El valor actual de x :"+BeyondTheEnd.x);
+
+            }else if(event.getItemStack().is(Items.BLAZE_ROD) && player.isShiftKeyDown()){
+                BeyondTheEnd.LOGGER.debug("El valor anterior de z :"+BeyondTheEnd.z);
+                BeyondTheEnd.z-=5;
+                BeyondTheEnd.LOGGER.debug("El valor actual de z :"+BeyondTheEnd.z);
+            }
+
+            if(event.getItemStack().is(Items.HEART_OF_THE_SEA)){
+                BeyondTheEnd.LOGGER.debug("El valor de x :"+BeyondTheEnd.x);
+                BeyondTheEnd.LOGGER.debug("El valor de z :"+BeyondTheEnd.z);
+
+            }
         }
     }
 
@@ -110,7 +138,7 @@ public class Events {
     @SubscribeEvent
     public static void onWorldTick(TickEvent.LevelTickEvent event) {
         Level level = event.level;
-        if (event.side == LogicalSide.SERVER && event.phase == TickEvent.Phase.END) {
+        if (event.side == LogicalSide.SERVER && event.phase == TickEvent.Phase.END && BeyondTheEnd.getServer().getLevel(BkDimension.BEYOND_END_LEVEL)!=null) {
             ServerData.get().getStructureManager().getStructure().getCentre();
             if(level.getServer()!=null && ServerData.get().tag()!=null){
                 Vec3i pos=new BlockPos(0, 80, 0);
@@ -119,7 +147,6 @@ public class Events {
                 boolean hasDefeat= nbt.getBoolean("PreviouslyKilled");
                 if(BeyondTheEnd.bossFight!=null){
                     BeyondTheEnd.bossFight.tick();
-
                 }else {
                     if(level.dimensionTypeRegistration().is(BkDimension.BEYOND_END_TYPE) && !hasDefeat){
                         long i = level.getServer().getWorldData().worldGenSettings().seed();
@@ -129,20 +156,20 @@ public class Events {
                         BeyondTheEnd.bossFight = null;
                     }
                 }
-
-                    if(hasDefeat){
-                        CompoundTag tag = ServerData.get().tag().getCompound("jellyfishBattle");
-                        if(BeyondTheEnd.jellyfishFightEvent != null && BeyondTheEnd.jellyfishFightEvent.level != null){
-                            BeyondTheEnd.jellyfishFightEvent.tick();
+                if(hasDefeat){
+                    CompoundTag tag = ServerData.get().tag().getCompound("jellyfishBattle");
+                    if(BeyondTheEnd.jellyfishFightEvent != null && BeyondTheEnd.jellyfishFightEvent.level != null){
+                        BeyondTheEnd.jellyfishFightEvent.tick();
+                    }else {
+                        if(level.dimensionTypeRegistration().is(BkDimension.BEYOND_END_TYPE)){
+                            BeyondTheEnd.jellyfishFightEvent = new JellyfishFightEvent((ServerLevel) level, tag);
+                            BeyondTheEnd.jellyfishFightEvent.setPortalLocation(new BlockPos(pos));
                         }else {
-                            if(level.dimensionTypeRegistration().is(BkDimension.BEYOND_END_TYPE)){
-                                BeyondTheEnd.jellyfishFightEvent = new JellyfishFightEvent((ServerLevel) level, tag);
-                                BeyondTheEnd.jellyfishFightEvent.setPortalLocation(new BlockPos(pos));
-                            }else {
-                                BeyondTheEnd.jellyfishFightEvent = null;
-                            }
+                            BeyondTheEnd.jellyfishFightEvent = null;
                         }
                     }
+                }
+
             }
 
         }else if(event.side == LogicalSide.CLIENT && event.phase == TickEvent.Phase.END){
@@ -226,6 +253,7 @@ public class Events {
         if(!event.getLevel().isClientSide){
             if(event.getEntity() instanceof Player){
                 Player player = (Player) event.getEntity();
+                ServerLevel level = (ServerLevel) player.level;
                 PortalPlayer.get(player).ifPresent(e->{
                     PacketHandler.sendToPlayer(new PacketSync(e.getCharge(),e.animTimer), (ServerPlayer) player);
                 });

@@ -35,6 +35,7 @@ import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 
@@ -57,7 +58,7 @@ public class SkyFallAttack extends AbstractDragonPhaseInstance {
 
     @Override
     public float getFlySpeed() {
-        return this.dragon.isFlame ? 3.0F : 8.0F;
+        return this.dragon.isFlame ? 2.0F : 8.0F;
     }
 
     public void doServerTick() {
@@ -78,7 +79,7 @@ public class SkyFallAttack extends AbstractDragonPhaseInstance {
 
             Vec3 pos=new Vec3(this.dragon.getX(),this.dragon.level.getHeight(Heightmap.Types.WORLD_SURFACE, (int) this.dragon.getX(), (int) this.dragon.getZ()),this.dragon.getZ());
 
-            if (this.dragon.getY() > this.attackTarget.getY()+5.0D && this.dragon.getY() < this.attackTarget.getY()+14.0D) {
+            if (this.dragon.getY() > this.attackTarget.getY()+8.0D && this.dragon.getY() < this.attackTarget.getY()+14.0D) {
                 this.flameTime++;
                 if (this.dragon.hasLineOfSight(this.attackTarget)) {
                     this.fireballCharge++;
@@ -86,7 +87,7 @@ public class SkyFallAttack extends AbstractDragonPhaseInstance {
                         this.fireballCharge=0;
                         this.spawnAreaDamage(new BlockPos(pos));
                     }
-                    List<HitResult> results=SkyFallAttack.raycastForEntity(this.dragon.level,this.dragon,100,true,3);
+                    List<HitResult> results=SkyFallAttack.raycastForEntity(this.dragon.level,this.dragon,200,true,3);
                     for (HitResult result:results){
                         if(result.getType().equals(HitResult.Type.ENTITY)){
                             ((EntityHitResult)result).getEntity().hurt(DamageSource.indirectMagic(this.dragon,null),3F);
@@ -118,18 +119,19 @@ public class SkyFallAttack extends AbstractDragonPhaseInstance {
 
         }
     }
+
     public void spawnAreaDamage(BlockPos pos){
-        AreaEffectCloud areaeffectcloud = new AreaEffectCloud(this.dragon.level, this.dragon.getX(), this.dragon.getY(),this.dragon.getZ());
+        AreaEffectCloud areaeffectcloud = new AreaEffectCloud(this.dragon.level, pos.getX(),pos.getY(),pos.getZ());
         areaeffectcloud.setOwner(this.dragon);
 
-        areaeffectcloud.setParticle(ParticleTypes.DRAGON_BREATH);
+        areaeffectcloud.setParticle(BKParticles.FLAME_PARTICLE.get());
         areaeffectcloud.setRadius(8.0F);
         areaeffectcloud.setDuration(100);
         areaeffectcloud.setRadiusPerTick((7.0F - areaeffectcloud.getRadius()) / (float)areaeffectcloud.getDuration());
         areaeffectcloud.addEffect(new MobEffectInstance(MobEffects.HARM, 1, 1));
-        areaeffectcloud.setPos(pos.getX(),pos.getY(),pos.getZ());
         this.dragon.level.addFreshEntity(areaeffectcloud);
     }
+
 
     private void findNewTarget() {
         if (this.currentPath == null || this.currentPath.isDone()) {
@@ -230,9 +232,22 @@ public class SkyFallAttack extends AbstractDragonPhaseInstance {
 
     public static List<HitResult> raycastForEntity(Level level, FallenDragonEntity originEntity, float distance, boolean checkForBlocks, float bbInflation) {
         Vec3 start = originEntity.head.position();
-        Vec3 end = originEntity.getLookAngle().add(Math.cos((float)originEntity.tickCount*0.1F)*0.523599F,-0.785398,Math.cos((float)originEntity.tickCount*0.1F)*0.523599F).multiply(-1.0F,1.0F,-1.0F).normalize().scale(distance).add(start.x,level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, (int) start.x, (int) start.z),start.z);
+        Vec3 end = originEntity.head.position();
+        Vec3 d0 = originEntity
+                .getLookAngle()
+                .add(Math.cos((float)originEntity.tickCount*0.1F)*0.523599F,-0.785398,Math.cos((float)originEntity.tickCount*0.1F)*0.523599F)
+                .multiply(-1.0F,1.0F,-1.0F)
+                .normalize();
 
-        return internalRaycastForEntity(level, originEntity, start, end, checkForBlocks, 10.0F);
+        int i = 0;
+        while (i<distance){
+            end = end.add(d0);
+            if(!level.isEmptyBlock(new BlockPos(end))){
+                break;
+            }
+            i++;
+        }
+        return internalRaycastForEntity(level, originEntity, start, end, checkForBlocks, 30.0F);
     }
 
     private static List<HitResult> internalRaycastForEntity(Level level, FallenDragonEntity originEntity, Vec3 start, Vec3 end, boolean checkForBlocks, float bbInflation) {
@@ -249,7 +264,7 @@ public class SkyFallAttack extends AbstractDragonPhaseInstance {
         }
 
         List<HitResult> hits = new ArrayList<>();
-        List<? extends Entity> entities = level.getEntities(originEntity, range, e-> e instanceof LivingEntity entity);
+        List<? extends Entity> entities = level.getEntities(originEntity, range, e-> e instanceof LivingEntity);
         for (Entity target : entities) {
             HitResult hit = checkEntityIntersecting(target, start, end, bbInflation);
             if (hit.getType() != HitResult.Type.MISS)
@@ -257,7 +272,7 @@ public class SkyFallAttack extends AbstractDragonPhaseInstance {
         }
 
         if (!hits.isEmpty()) {
-            hits.sort((o1, o2) -> (int) o1.getLocation().distanceToSqr(start));
+            hits.sort(Comparator.comparingDouble(o -> o.getLocation().distanceToSqr(start)));
             return hits;
         } else if (checkForBlocks) {
             return List.of(blockHitResult);

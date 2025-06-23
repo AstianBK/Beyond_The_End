@@ -40,7 +40,6 @@ import org.slf4j.Logger;
 public class BeyondTheEnd
 {
     public static FallenDragonFight bossFight = null;
-    public static ServerData serverData;
     public static JellyfishFightEvent jellyfishFightEvent = null;
     public static final String MODID = "beyond_the_end";
     public static final Logger LOGGER = LogUtils.getLogger();
@@ -48,6 +47,8 @@ public class BeyondTheEnd
     public static final TicketType<Unit> JELLY = TicketType.create("jelly", (p_9460_, p_9461_) -> {
         return 0;
     });
+    public static int z=5;
+    public static int x=1;
 
     public BeyondTheEnd()
     {
@@ -73,6 +74,7 @@ public class BeyondTheEnd
     @OnlyIn(Dist.CLIENT)
     public void registerRenderers(FMLCommonSetupEvent event){
         EntityRenderers.register(BKEntityType.FALLEN_DRAGON.get(), FallenDragonRenderer::new);
+        EntityRenderers.register(BKEntityType.FALLEN_DRAGON_FAKE.get(), FallenDragonFakeRenderer::new);
         EntityRenderers.register(BKEntityType.JELLYFISH.get(), JellyfishRenderer::new);
         EntityRenderers.register(BKEntityType.JELLYFISH_MINION.get(), JellyfishMinionRenderer::new);
         EntityRenderers.register(BKEntityType.CHARGE_FOLLOWING.get(), ChargeFollowingRenderer::new);

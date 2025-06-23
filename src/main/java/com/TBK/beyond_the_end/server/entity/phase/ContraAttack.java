@@ -1,5 +1,6 @@
 package com.TBK.beyond_the_end.server.entity.phase;
 
+import com.TBK.beyond_the_end.BeyondTheEnd;
 import com.TBK.beyond_the_end.server.entity.FallenDragonEntity;
 import com.TBK.beyond_the_end.server.network.PacketHandler;
 import com.TBK.beyond_the_end.server.network.message.PacketTargetDragon;
@@ -58,13 +59,14 @@ public class ContraAttack extends AbstractDragonPhaseInstance{
 
     private void strafePlayer(Player p_31237_) {
         if(this.dragon.canFly()){
-            this.dragon.phaseManager.setPhase(FallenDragonPhase.CHARGING);
-            this.dragon.phaseManager.getPhase(FallenDragonPhase.CHARGING).setTarget(p_31237_);
-            PacketHandler.sendToAllTracking(new PacketTargetDragon(this.dragon.getId(),p_31237_.getId(),1),this.dragon);
+            this.dragon.phaseManager.setPhase(FallenDragonPhase.SKYFALL);
+            this.dragon.phaseManager.getPhase(FallenDragonPhase.SKYFALL).setTarget(p_31237_);
+            PacketHandler.sendToAllTracking(new PacketTargetDragon(this.dragon.getId(),p_31237_.getId(),0),this.dragon);
         }
     }
 
     private void findNewTarget() {
+
         int i = this.dragon.findClosestNode();
         Vec3 vec3 = this.dragon.getHeadLookVector(1.0F);
         int j = this.dragon.findClosestNode(-vec3.x * 40.0D, 70.0D, -vec3.z * 40.0D);

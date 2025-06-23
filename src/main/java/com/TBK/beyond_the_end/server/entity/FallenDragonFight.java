@@ -6,8 +6,6 @@ import com.TBK.beyond_the_end.common.registry.BKEntityType;
 import com.TBK.beyond_the_end.common.registry.BkDimension;
 import com.TBK.beyond_the_end.server.entity.phase.FallenDragonPhase;
 import com.google.common.collect.*;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
@@ -17,7 +15,6 @@ import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.*;
-import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.Unit;
 import net.minecraft.world.BossEvent;
@@ -26,10 +23,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
-import net.minecraft.world.entity.boss.enderdragon.phases.EnderDragonPhase;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -45,12 +39,10 @@ import net.minecraft.world.level.dimension.end.DragonRespawnAnimation;
 import net.minecraft.world.level.dimension.end.EndDragonFight;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.feature.EndPodiumFeature;
-import net.minecraft.world.level.levelgen.feature.SpikeFeature;
-import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
-import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -75,6 +67,7 @@ public class FallenDragonFight extends EndDragonFight {
     @Nullable
     private DragonRespawnAnimation respawnStage;
     private int respawnTime;
+    private Vec3 positionDragon = Vec3.ZERO;
 
     public FallenDragonFight(ServerLevel p_64078_, long p_64079_, CompoundTag p_64080_) {
         super(p_64078_,p_64079_,p_64080_);
@@ -119,6 +112,7 @@ public class FallenDragonFight extends EndDragonFight {
         if (this.portalLocation != null) {
             compoundtag.put("ExitPortalLocation", NbtUtils.writeBlockPos(this.portalLocation));
         }
+        compoundtag.put("dragonPosition",NbtUtils.writeBlockPos(new BlockPos(this.positionDragon)));
         return compoundtag;
     }
 
@@ -315,7 +309,7 @@ public class FallenDragonFight extends EndDragonFight {
             FallenDragonEntity enderdragon = BKEntityType.FALLEN_DRAGON.get().create(this.level);
             enderdragon.moveTo(this.portalLocation.getX(),this.portalLocation.getY()+40.0D,this.portalLocation.getZ(), this.level.random.nextFloat() * 360.0F, 0.0F);
             enderdragon.phaseManager.setPhase(FallenDragonPhase.RESPAWN);
-            enderdragon.level.broadcastEntityEvent(enderdragon,(byte) 66);
+            enderdragon.level.broadcastEntityEvent(enderdragon,(byte) 65);
             this.level.addFreshEntity(enderdragon);
             this.dragonUUID = enderdragon.getUUID();
             return enderdragon;
@@ -452,75 +446,64 @@ public class FallenDragonFight extends EndDragonFight {
         }
     }
 
-    
+
     public static class Structure implements Savable {
         private final ResourceLocation structure;
         private boolean isPlaced;
         private BlockPos centre;
-        public int tickCount=0;
+        private int stepIndex = 0;
         private Vec3i centreOffSet;
+
         public Structure(ResourceLocation structure, @Nullable BlockPos centre) {
             this.structure = structure;
             this.isPlaced = false;
             this.centre = centre;
-            this.tickCount=0;
-            this.centreOffSet=Vec3i.ZERO;
+            this.stepIndex = 0;
+            this.centreOffSet = Vec3i.ZERO;
         }
+
         public Structure() {
-            this(getDefaultStructure(), new BlockPos(0, 50, 0)); // default island structure
+            this(getDefaultStructure(), new BlockPos(0, 50, 0));
         }
+
         public Structure(CompoundTag data) {
             this.structure = new ResourceLocation(data.getString("structure"));
-
             this.deserialise(data);
         }
 
         @Override
         public CompoundTag serialise() {
             CompoundTag data = new CompoundTag();
-
             data.putString("structure", this.structure.toString());
-
             data.putBoolean("isPlaced", this.isPlaced);
             if (this.centre != null)
                 data.put("Centre", NbtUtils.writeBlockPos(this.centre));
-
-            if(this.centreOffSet!=null){
-                data.put("offset",NbtUtils.writeBlockPos(new BlockPos(this.centreOffSet)));
-            }
-            data.putInt("tick",this.tickCount);
+            if (this.centreOffSet != null)
+                data.put("offset", NbtUtils.writeBlockPos(new BlockPos(this.centreOffSet)));
+            data.putInt("stepIndex", this.stepIndex);
             return data;
         }
 
         @Override
         public void deserialise(CompoundTag data) {
             this.isPlaced = data.getBoolean("isPlaced");
-
-            if (data.contains("Centre")) {
+            if (data.contains("Centre"))
                 this.centre = NbtUtils.readBlockPos(data.getCompound("Centre"));
-            }
-            if(data.contains("offset")){
+            if (data.contains("offset"))
                 this.centreOffSet = NbtUtils.readBlockPos(data.getCompound("offset"));
-            }
-            this.tickCount=data.getInt("tick");
-        }
-
-        public boolean isPlaced() {
-            return this.isPlaced;
+            this.stepIndex = data.getInt("stepIndex");
         }
 
         private static ResourceLocation getDefaultStructure() {
             return new ResourceLocation(BeyondTheEnd.MODID, "center");
         }
+
         private Optional<StructureTemplate> findStructure(ResourceLocation structure) {
             return BeyondTheEnd.getServer().getStructureManager().get(structure);
         }
 
-        /**
-         * places the structure if it is not already placed
-         */
         public void verify() {
-            if (!this.isPlaced()) {
+            if (!this.isPlaced) {
                 this.place();
             }
         }
@@ -531,101 +514,79 @@ public class FallenDragonFight extends EndDragonFight {
 
         private void place(ServerLevel level, boolean inform) {
             long start = System.currentTimeMillis();
-
-
-            if (this.isPlaced() && level!=null && level.getRandom()!=null) {
-                BeyondTheEnd.LOGGER.warn("Tried to place realm structure twice");
-                return;
-            }
-
-            makeInitialIsland(level,start);
-
-            if(this.tickCount>2){
-                this.isPlaced = true;
-            }else {
-                BeyondTheEnd.LOGGER.debug("Tick :"+this.tickCount);
-                this.tickCount++;
-            }
-
+            if (this.isPlaced || level == null || level.getRandom() == null) return;
+            this.makeInitialIsland(level, start);
         }
 
-        public Vec3i placeComponent(long start, ServerLevel level, int addX, int height, int addZ, ResourceLocation location, StructurePlaceSettings settings){
+        public Vec3i placeComponent(long start, ServerLevel level, int addX, int height, int addZ, ResourceLocation location, StructurePlaceSettings settings) {
             StructureTemplate component = this.findStructure(location).orElse(null);
-
-            if (component == null || level==null) {
-                BeyondTheEnd.LOGGER.error("Could not find island component :" + location.toString());
+            if (component == null || level == null) {
+                BeyondTheEnd.LOGGER.error("Could not find island component :" + location);
                 return Vec3i.ZERO;
             }
             Vec3i size = component.getSize();
-            BlockPos offset = new BlockPos(-size.getX() / 2+addX, height, -size.getZ() / 2 +addZ);
-
-
-            component.placeInWorld(
-                    level,
-                    offset,
-                    offset,
-                    settings,
-                    level.getRandom(),
-                    Block.UPDATE_KNOWN_SHAPE
-            );
+            BlockPos offset = new BlockPos(-size.getX() / 2 + addX, height, -size.getZ() / 2 + addZ);
+            component.placeInWorld(level, offset, offset, settings, level.getRandom(), Block.UPDATE_KNOWN_SHAPE);
             BeyondTheEnd.LOGGER.info("Placed " + component + " at " + offset + " in " + (System.currentTimeMillis() - start) + "ms");
             return size;
         }
 
-        public void makeInitialIsland(ServerLevel level, long start){
-            StructurePlaceSettings settings=new StructurePlaceSettings();
+        public void makeInitialIsland(ServerLevel level, long start) {
+            StructurePlaceSettings settings = new StructurePlaceSettings();
             Vec3i center = this.centreOffSet;
-            if(this.tickCount==0){
-                center=this.placeComponent(start,level,0,50,0,new ResourceLocation(BeyondTheEnd.MODID, "center"),settings);
-                this.placeComponent(start,level,center.getX()+26,50,1,new ResourceLocation(BeyondTheEnd.MODID, "island_east"),settings);
 
-                Vec3i south=this.placeComponent(start,level,0,51,center.getZ()+6,new ResourceLocation(BeyondTheEnd.MODID, "island_south_0"),settings);
-                this.placeComponent(start,level,0,51+south.getY(),center.getZ()+6,new ResourceLocation(BeyondTheEnd.MODID, "island_south_1"),settings);
-
-                this.placeComponent(start,level,0,50,-center.getZ()+17,new ResourceLocation(BeyondTheEnd.MODID, "island_north"),settings);
-
-                this.centreOffSet=center;
-            } else if (this.tickCount==1) {
-                Vec3i west=this.placeComponent(start,level,-center.getX()+15,50,0,new ResourceLocation(BeyondTheEnd.MODID, "island_west_0"),settings);
-                this.placeComponent(start,level,-center.getX()+15,50+west.getY(),0,new ResourceLocation(BeyondTheEnd.MODID, "island_west_1"),settings);
-
-                this.placeComponent(start,level,center.getX()+24,50,-center.getZ()+18,new ResourceLocation(BeyondTheEnd.MODID, "island_east_north"),settings);
-
-                Vec3i west_n=this.placeComponent(start,level,-center.getX()+15,50,-center.getZ()+17,new ResourceLocation(BeyondTheEnd.MODID, "west_north_0"),settings);
-                this.placeComponent(start,level,-center.getX()+15,50+west_n.getY(),-center.getZ()+17,new ResourceLocation(BeyondTheEnd.MODID, "west_north_1"),settings);
-
-            }else {
-
-                Vec3i west_s=this.placeComponent(start,level,-center.getX()+15,50,center.getZ()-4,new ResourceLocation(BeyondTheEnd.MODID, "west_south_0"),settings);
-                this.placeComponent(start,level,-center.getX()+15,50+west_s.getY(),center.getZ()-4,new ResourceLocation(BeyondTheEnd.MODID, "west_south_1"),settings);
-
-                Vec3i east_s=this.placeComponent(start,level,center.getX()-11,50,center.getZ()+7,new ResourceLocation(BeyondTheEnd.MODID, "east_south_0"),settings);
-                this.placeComponent(start,level,center.getX()-11,50+east_s.getY(),center.getZ()+7,new ResourceLocation(BeyondTheEnd.MODID, "east_south_1"),settings);
+            switch (this.stepIndex) {
+                case 0 -> {
+                    center = this.placeComponent(start, level, 0, 50, 0, new ResourceLocation(BeyondTheEnd.MODID, "center"), settings);
+                    this.centreOffSet = center;
+                }
+                case 1 -> this.placeComponent(start, level, center.getX() + 26, 50, 1, new ResourceLocation(BeyondTheEnd.MODID, "island_east"), settings);
+                case 2 -> {
+                    Vec3i south = this.placeComponent(start, level, 0, 51, center.getZ() + 6, new ResourceLocation(BeyondTheEnd.MODID, "island_south_0"), settings);
+                    this.placeComponent(start, level, 0, 51 + south.getY(), center.getZ() + 6, new ResourceLocation(BeyondTheEnd.MODID, "island_south_1"), settings);
+                }
+                case 3 -> this.placeComponent(start, level, 0, 50, -center.getZ() + 17, new ResourceLocation(BeyondTheEnd.MODID, "island_north"), settings);
+                case 4 -> {
+                    Vec3i west = this.placeComponent(start, level, -center.getX() + 15, 50, 0, new ResourceLocation(BeyondTheEnd.MODID, "island_west_0"), settings);
+                    this.placeComponent(start, level, -center.getX() + 15, 50 + west.getY(), 0, new ResourceLocation(BeyondTheEnd.MODID, "island_west_1"), settings);
+                }
+                case 5 -> this.placeComponent(start, level, center.getX() + 24, 50, -center.getZ() + 18, new ResourceLocation(BeyondTheEnd.MODID, "island_east_north"), settings);
+                case 6 -> {
+                    Vec3i westN = this.placeComponent(start, level, -center.getX() + 15, 50, -center.getZ() + 17, new ResourceLocation(BeyondTheEnd.MODID, "west_north_0"), settings);
+                    this.placeComponent(start, level, -center.getX() + 15, 50 + westN.getY(), -center.getZ() + 17, new ResourceLocation(BeyondTheEnd.MODID, "west_north_1"), settings);
+                }
+                case 7 -> {
+                    Vec3i westS = this.placeComponent(start, level, -center.getX() + 15, 50, center.getZ() - 4, new ResourceLocation(BeyondTheEnd.MODID, "west_south_0"), settings);
+                    this.placeComponent(start, level, -center.getX() + 15, 50 + westS.getY(), center.getZ() - 4, new ResourceLocation(BeyondTheEnd.MODID, "west_south_1"), settings);
+                }
+                case 8 -> {
+                    Vec3i eastS = this.placeComponent(start, level, center.getX() - 11, 50, center.getZ() + 7, new ResourceLocation(BeyondTheEnd.MODID, "east_south_0"), settings);
+                    this.placeComponent(start, level, center.getX() - 11, 50 + eastS.getY(), center.getZ() + 7, new ResourceLocation(BeyondTheEnd.MODID, "east_south_1"), settings);
+                }
+                default -> {
+                    this.isPlaced = true;
+                    return;
+                }
             }
-
-
-
+            this.stepIndex++;
         }
 
         public BlockPos getCentre() {
             this.verify();
-
             if (this.centre != null) return this.centre;
-
-
             this.centre = new BlockPos(0, 80, 0);
-
             return this.centre;
         }
 
         @Override
         public String toString() {
             return "RealmStructure{" +
-                    "structure=" + structure+
+                    "structure=" + structure +
                     ", isPlaced=" + isPlaced +
                     ", centre=" + centre +
                     '}';
         }
     }
+
 
 }

@@ -1,5 +1,6 @@
 package com.TBK.beyond_the_end.server.entity.phase;
 
+import com.TBK.beyond_the_end.BeyondTheEnd;
 import com.TBK.beyond_the_end.server.entity.FallenDragonEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -30,9 +31,10 @@ public class DiyingPhase extends AbstractDragonPhaseInstance {
     }
 
     public void doServerTick() {
+        BeyondTheEnd.LOGGER.debug("Esta muerto tiempo muerto :"+this.time);
         ++this.time;
         if (this.targetLocation == null) {
-            this.targetLocation = this.dragon.position();
+            this.targetLocation = new Vec3(0,100,0);
         }
 
         double d0 = this.targetLocation.distanceToSqr(this.dragon.getX(), this.dragon.getY(), this.dragon.getZ());
@@ -50,7 +52,7 @@ public class DiyingPhase extends AbstractDragonPhaseInstance {
     }
 
     public float getFlySpeed() {
-        return 3.0F;
+        return 0.2F;
     }
 
     @Nullable

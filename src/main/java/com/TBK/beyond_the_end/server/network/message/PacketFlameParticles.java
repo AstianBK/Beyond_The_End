@@ -74,15 +74,15 @@ public class PacketFlameParticles implements Packet<PacketListener> {
         Vec3 end=new Vec3(this.xEnd,this.yEnd,this.zEnd);
         Vec3 start=new Vec3(this.xInitial,this.yInitial,this.zInitial);
         Vec3 line=end.subtract(start).normalize().scale(6.5F);
-        for (int i=0;i<300;i++){
+        for (int i=0;i<150;i++){
             Random r=new Random();
             double d9 =  line.x;
             double d10 =  line.y;
             double d11 =  line.z;
             Particle particle= mc.particleEngine.createParticle(BKParticles.FLAME_PARTICLE.get(), start.x, start.y, start.z,
-                    d9*0.4D+r.nextDouble(-1.2D,1.2D),
+                    d9*0.5D+r.nextDouble(-0.5D,0.5D),
                     d10*0.1D+r.nextDouble(-0.1D,0.1D),
-                    d11*0.4D+r.nextDouble(-1.2D,1.2D));
+                    d11*0.5D+r.nextDouble(-0.5D,0.5D));
         }
     }
 

@@ -12,6 +12,7 @@ import net.minecraft.world.entity.boss.enderdragon.phases.DragonStrafePlayerPhas
 import net.minecraft.world.entity.boss.enderdragon.phases.EnderDragonPhase;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.DragonFireball;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
@@ -41,9 +42,7 @@ public class FlameDragonAttackPhase extends AbstractDragonPhaseInstance {
     public void doServerTick() {
         if (this.attackTarget == null || (this.attackTarget instanceof Player player && player.isCreative())) {
             this.dragon.phaseManager.setPhase(FallenDragonPhase.HOLDING_PATTERN);
-            if(!this.dragon.canFly()){
-                this.dragon.initFall();
-            }
+
         } else {
             Vec3 vec31 = (new Vec3(this.attackTarget.getX() - this.dragon.getX(), 0.0D, this.attackTarget.getZ() - this.dragon.getZ())).normalize();
             Vec3 vec3 = (new Vec3((double) Mth.sin(this.dragon.getYRot() * ((float)Math.PI / 180F)), 0.0D, (double)(-Mth.cos(this.dragon.getYRot() * ((float)Math.PI / 180F))))).normalize();
@@ -62,9 +61,9 @@ public class FlameDragonAttackPhase extends AbstractDragonPhaseInstance {
                 ++this.fireballCharge;
                 if (this.fireballCharge >= 15) {
                     Vec3 vec32 = this.dragon.getViewVector(1.0F);
-                    double d6 = this.dragon.head.getX();
-                    double d7 = this.dragon.head.getY(0.5D) + 0.5D;
-                    double d8 = this.dragon.head.getZ();
+                    double d6 = this.dragon.head.getX() + vec32.x;
+                    double d7 = this.dragon.head.getY(0.5D) + 1.5D;
+                    double d8 = this.dragon.head.getZ() + vec32.z;
                     Vec3 deltaTarget = this.attackTarget.getDeltaMovement();
                     double d9 = this.attackTarget.getX() - d6 + deltaTarget.x;
                     double d10 = this.attackTarget.getY(0.5D) - d7;
@@ -85,17 +84,8 @@ public class FlameDragonAttackPhase extends AbstractDragonPhaseInstance {
                     }
                     this.countFireball++;
                     if(this.countFireball>this.maxCountFireball-1){
-                        if(!this.isFlyMode){
-                            this.dragon.initFall();
-                        }else {
-                            if(this.dragon.level.random.nextFloat()<0.4F){
-                                this.dragon.phaseManager.setPhase(FallenDragonPhase.CHARGING);
-                                this.dragon.phaseManager.getPhase(FallenDragonPhase.CHARGING).setTarget(this.attackTarget);
-                                PacketHandler.sendToAllTracking(new PacketTargetDragon(this.dragon.getId(),this.attackTarget.getId(),1),this.dragon);
-                            }else {
-                                this.dragon.phaseManager.setPhase(FallenDragonPhase.HOLDING_PATTERN);
-                            }
-                        }
+                        this.dragon.phaseManager.setPhase(FallenDragonPhase.HOLDING_PATTERN);
+                        this.dragon.setModeFly(false);
                     }
                 }
             }else {
@@ -104,16 +94,7 @@ public class FlameDragonAttackPhase extends AbstractDragonPhaseInstance {
             }
 
             if(this.waitTime>300){
-                if(!this.isFlyMode){
-                    this.dragon.initFall();
-                }
-                if(this.dragon.level.random.nextFloat()<0.4F){
-                    this.dragon.phaseManager.setPhase(FallenDragonPhase.CHARGING);
-                    this.dragon.phaseManager.getPhase(FallenDragonPhase.CHARGING).setTarget(this.attackTarget);
-                    PacketHandler.sendToAllTracking(new PacketTargetDragon(this.dragon.getId(),this.attackTarget.getId(),1),this.dragon);
-                }else {
-                    this.dragon.phaseManager.setPhase(FallenDragonPhase.HOLDING_PATTERN);
-                }
+                this.dragon.setModeFly(false);
             }
         }
     }

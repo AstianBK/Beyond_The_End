@@ -12,6 +12,7 @@ import net.minecraft.world.phys.*;
 import net.minecraftforge.entity.PartEntity;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class Util {
@@ -47,7 +48,7 @@ public class Util {
         }
 
         if (!hits.isEmpty()) {
-            hits.sort((o1, o2) -> o1.getLocation().distanceToSqr(start) < o2.getLocation().distanceToSqr(start) ? -1 : 1);
+            hits.sort(Comparator.comparingDouble(o -> o.getLocation().distanceToSqr(start)));
             return hits;
         } else if (checkForBlocks) {
             for (BlockPos pos :BlockPos.betweenClosed(blockHitResult.getBlockPos().offset(-1,0,0),blockHitResult.getBlockPos().offset(0,0,-1))){
@@ -78,7 +79,7 @@ public class Util {
         }
 
         if (!hits.isEmpty()) {
-            hits.sort((o1, o2) -> o1.getLocation().distanceToSqr(start) < o2.getLocation().distanceToSqr(start) ? -1 : 1);
+            hits.sort(Comparator.comparingDouble(o -> o.getLocation().distanceToSqr(start)));
             return hits.get(0);
         } else if (checkForBlocks) {
             return blockHitResult;
@@ -92,7 +93,7 @@ public class Util {
             return BlockHitResult.miss(end, Direction.UP, new BlockPos(end));
         }
         if (entity.isMultipartEntity()) {
-            for (PartEntity p : entity.getParts()) {
+            for (PartEntity<?> p : entity.getParts()) {
                 var hit = p.getBoundingBox().inflate(bbInflation).clip(start, end).orElse(null);
                 if (hit != null) {
                     hitPos = hit;

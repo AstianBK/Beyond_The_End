@@ -2,14 +2,12 @@ package com.TBK.beyond_the_end.server.network.message;
 
 import com.TBK.beyond_the_end.server.entity.FallenDragonEntity;
 import com.TBK.beyond_the_end.server.entity.JellyfishEntity;
-import com.TBK.beyond_the_end.server.entity.phase.FallenDragonPhase;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.PacketListener;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -18,20 +16,20 @@ import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
 
-public class PacketTargetAttack implements Packet<PacketListener> {
+public class PacketActionDragon implements Packet<PacketListener> {
     private final int x;
     private final int y;
     private final int z;
 
     private final int idDragon;
-    public PacketTargetAttack(FriendlyByteBuf buf) {
+    public PacketActionDragon(FriendlyByteBuf buf) {
         this.x=buf.readInt();
         this.y=buf.readInt();
         this.z=buf.readInt();
         this.idDragon = buf.readInt();
     }
 
-    public PacketTargetAttack(int idDragon, int x,int y,int z) {
+    public PacketActionDragon(int idDragon, int x, int y, int z) {
         this.x=x;
         this.y=y;
         this.z=z;

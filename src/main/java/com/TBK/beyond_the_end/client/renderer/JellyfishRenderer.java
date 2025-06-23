@@ -24,7 +24,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 public class JellyfishRenderer<T extends JellyfishEntity,M extends JellyfishModel<T>> extends MobRenderer<T,M> {
-    public final ResourceLocation TEXTURE = new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/jellyfish/jellyfish.png");
+    public static final ResourceLocation TEXTURE = new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/jellyfish/jellyfish.png");
     private static final ResourceLocation GUARDIAN_BEAM_LOCATION = new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/beacon_beam.png");
     public final ResourceLocation GLOWING = new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/jellyfish/jellyfish_glowing.png");
     public final ResourceLocation EYE = new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/jellyfish/jellyfish_eyes.png");
@@ -49,7 +49,6 @@ public class JellyfishRenderer<T extends JellyfishEntity,M extends JellyfishMode
 
     @Override
     protected void scale(T p_115314_, PoseStack p_115315_, float p_115316_) {
-        super.scale(p_115314_, p_115315_, p_115316_);
         p_115315_.scale(10.0F,10.0F,10.0F);
     }
 

@@ -2,6 +2,9 @@ package com.TBK.beyond_the_end.server.entity;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
@@ -11,7 +14,7 @@ import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 public class FallenPartEntity extends net.minecraftforge.entity.PartEntity<FallenDragonEntity>{
     public final FallenDragonEntity parentMob;
     public final String name;
-    private final EntityDimensions size;
+    private EntityDimensions size;
 
     public FallenPartEntity(FallenDragonEntity p_31014_, String p_31015_, float p_31016_, float p_31017_) {
         super(p_31014_);
@@ -19,6 +22,13 @@ public class FallenPartEntity extends net.minecraftforge.entity.PartEntity<Falle
         this.refreshDimensions();
         this.parentMob = p_31014_;
         this.name = p_31015_;
+    }
+
+
+    @Override
+    public void onSyncedDataUpdated(EntityDataAccessor<?> p_20059_) {
+        super.onSyncedDataUpdated(p_20059_);
+        this.setSize(this.size);
     }
 
     protected void defineSynchedData() {
@@ -48,6 +58,11 @@ public class FallenPartEntity extends net.minecraftforge.entity.PartEntity<Falle
 
     public EntityDimensions getDimensions(Pose p_31023_) {
         return this.size;
+    }
+
+    public void setSize(EntityDimensions dimensions){
+        this.size = dimensions;
+        this.refreshDimensions();
     }
 
     public boolean shouldBeSaved() {

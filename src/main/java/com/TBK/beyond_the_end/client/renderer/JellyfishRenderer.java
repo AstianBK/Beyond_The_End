@@ -47,6 +47,7 @@ public class JellyfishRenderer<T extends JellyfishEntity,M extends JellyfishMode
 
     }
 
+
     @Override
     public boolean shouldRender(T livingEntityIn, Frustum camera, double camX, double camY, double camZ) {
         return true;

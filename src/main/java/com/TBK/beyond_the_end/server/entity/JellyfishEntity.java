@@ -940,6 +940,11 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
         }
     }
 
+    @Override
+    public boolean isInvisible() {
+        return this.actuallyPhase == PhaseAttack.SPAWN;
+    }
+
     public void setActionForID(int idAction) {
         switch (idAction){
             case 0 ->{

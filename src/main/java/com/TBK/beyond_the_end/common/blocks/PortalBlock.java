@@ -80,7 +80,7 @@ public class PortalBlock extends BaseEntityBlock {
 
     private void handleTeleportation(Entity entity) {
         MinecraftServer server = entity.level.getServer();
-        ResourceKey<Level> destinationKey = entity.level.dimension() ==destinationDimension() ? returnDimension() : destinationDimension();
+        ResourceKey<Level> destinationKey = entity.level.dimension() == destinationDimension() ? returnDimension() : destinationDimension();
         if (server != null) {
             ServerLevel destinationLevel = server.getLevel(destinationKey);
             if (destinationLevel != null && !entity.isPassenger()) {
@@ -151,6 +151,6 @@ public class PortalBlock extends BaseEntityBlock {
 
 
     public static ResourceKey<Level> returnDimension() {
-        return ResourceKey.create(Registry.DIMENSION_REGISTRY, new ResourceLocation(Level.END.location().toString()));
+        return ResourceKey.create(Registry.DIMENSION_REGISTRY, new ResourceLocation(Level.OVERWORLD.location().toString()));
     }
 }

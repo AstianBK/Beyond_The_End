@@ -33,10 +33,15 @@ public class ChargeFollowingRenderer<T extends ChargeFollowing,M extends Lightba
     public final ResourceLocation ALPHA = new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/lightball/lighttrans.png");
 
     public final LightballModel<T> model;
+    public final LightballModel<T> layer1;
+    public final LightballModel<T> layer2;
     private DrawSelector<T, M> drawSelector;
 
     public ChargeFollowingRenderer(EntityRendererProvider.Context p_174008_) {
         super(p_174008_);
+        layer1=new LightballModel<>(Minecraft.getInstance().getEntityModels().bakeLayer(LightballModel.LAYER_LOCATION));
+        layer2=new LightballModel<>(Minecraft.getInstance().getEntityModels().bakeLayer(LightballModel.LAYER_LOCATION));
+
         this.model=new LightballModel<>(Minecraft.getInstance().getEntityModels().bakeLayer(LightballModel.LAYER_LOCATION));
     }
 
@@ -52,9 +57,6 @@ public class ChargeFollowingRenderer<T extends ChargeFollowing,M extends Lightba
 
         pMatrixStack.mulPose(rotation);
 
-        LightballModel<T> layer1=new LightballModel<>(Minecraft.getInstance().getEntityModels().bakeLayer(LightballModel.LAYER_LOCATION));
-
-        LightballModel<T> layer2=new LightballModel<>(Minecraft.getInstance().getEntityModels().bakeLayer(LightballModel.LAYER_LOCATION));
 
         float porcentaje= pEntity.getAnimTimer(pPartialTicks);
 

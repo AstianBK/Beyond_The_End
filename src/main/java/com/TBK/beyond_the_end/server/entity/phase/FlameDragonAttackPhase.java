@@ -85,6 +85,7 @@ public class FlameDragonAttackPhase extends AbstractDragonPhaseInstance {
                     this.countFireball++;
                     if(this.countFireball>this.maxCountFireball-1){
                         this.dragon.phaseManager.setPhase(FallenDragonPhase.HOLDING_PATTERN);
+                        this.dragon.teleportTo(0,80,0);
                         this.dragon.setModeFly(false);
                     }
                 }

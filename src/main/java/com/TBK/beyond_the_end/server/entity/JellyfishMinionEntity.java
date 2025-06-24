@@ -184,7 +184,6 @@ public class JellyfishMinionEntity extends PathfinderMob {
                     }
                     this.setActionForID(0);
                     PacketHandler.sendToAllTracking(new PacketNextActionJellyfish(this.getId(),0,0),this);
-
                 }
             }
         }

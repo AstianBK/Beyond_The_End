@@ -1,6 +1,7 @@
 package com.TBK.beyond_the_end.server.network.message;
 
 import com.TBK.beyond_the_end.BeyondTheEnd;
+import com.TBK.beyond_the_end.common.registry.BTESounds;
 import com.TBK.beyond_the_end.server.entity.JellyfishEntity;
 import com.TBK.beyond_the_end.server.entity.JellyfishMinionEntity;
 import net.minecraft.client.Minecraft;
@@ -55,6 +56,8 @@ public class PacketNextActionJellyfish implements Packet<PacketListener> {
             jellyfish.setActionForID(this.idAction);
             jellyfish.nextTimer=0;
             if(this.idAction==4){
+                jellyfish.shootLaser.stop();
+                jellyfish.playSound(BTESounds.JELLYFISH_LAND.get(),2.0F,1.0F);
                 jellyfish.positionLastGroundPos = timeForNextAction;
                 jellyfish.maxJumpCount = timeForNextAction % 2 == 0 ? 1 :3;
             }else if(this.idAction==5){
@@ -64,7 +67,11 @@ public class PacketNextActionJellyfish implements Packet<PacketListener> {
                 jellyfish.positionNextPosIndex = timeForNextAction;
                 jellyfish.jump.start(jellyfish.tickCount);
             }else if(this.idAction==7){
+                jellyfish.playSound(BTESounds.JELLYFISH_JUMP.get(),2.0F,1.0F);
                 jellyfish.idleTimer = 0;
+            }else if(this.idAction==8){
+                jellyfish.maxTimerInAir = timeForNextAction;
+                jellyfish.timerInAir = 0;
             }else if(this.idAction!=0){
                 jellyfish.maxNextTimer = timeForNextAction;
             }
@@ -79,7 +86,5 @@ public class PacketNextActionJellyfish implements Packet<PacketListener> {
     }
 
     @Override
-    public void handle(PacketListener p_131342_) {
-
-    }
+    public void handle(PacketListener p_131342_) {}
 }

@@ -52,7 +52,6 @@ public class LaserSoundInstance extends EntityBoundSoundInstance {
     }
     @Override
     public void tick() {
-        BeyondTheEnd.LOGGER.debug("SoundFuncionando  volumenn actual :"+this.volume);
         if(this.sourceLaser.lazerTimer<=0){
             this.stop();
         }

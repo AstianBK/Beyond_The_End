@@ -5,6 +5,7 @@ import com.TBK.beyond_the_end.client.layer.JellyfishEmissiveLayer;
 import com.TBK.beyond_the_end.client.model.JellyfishModel;
 import com.TBK.beyond_the_end.common.Util;
 import com.TBK.beyond_the_end.server.entity.JellyfishEntity;
+import com.TBK.beyond_the_end.server.entity.phase.RespawnPhase;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Matrix3f;
@@ -14,10 +15,12 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -28,6 +31,8 @@ public class JellyfishRenderer<T extends JellyfishEntity,M extends JellyfishMode
     private static final ResourceLocation GUARDIAN_BEAM_LOCATION = new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/beacon_beam.png");
     public final ResourceLocation GLOWING = new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/jellyfish/jellyfish_glowing.png");
     public final ResourceLocation EYE = new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/jellyfish/jellyfish_eyes.png");
+    public final ResourceLocation DECA = new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/jellyfish/jellyfish_trans.png");
+    private static final RenderType DECAL = RenderType.entityDecal(TEXTURE);
 
     public JellyfishRenderer(EntityRendererProvider.Context p_174304_) {
         super(p_174304_, (M) new JellyfishModel<>(p_174304_.bakeLayer(JellyfishModel.LAYER_LOCATION)), 0.0F);
@@ -42,6 +47,7 @@ public class JellyfishRenderer<T extends JellyfishEntity,M extends JellyfishMode
 
     }
 
+
     @Override
     public boolean shouldRender(T livingEntityIn, Frustum camera, double camX, double camY, double camZ) {
         return true;
@@ -53,22 +59,43 @@ public class JellyfishRenderer<T extends JellyfishEntity,M extends JellyfishMode
     }
 
     @Override
-    public void render(T p_115455_, float p_115456_, float p_115457_, PoseStack p_115458_, MultiBufferSource p_115459_, int p_115460_) {
-        super.render(p_115455_, p_115456_, p_115457_, p_115458_, p_115459_, p_115460_);
-        if(p_115455_.lazerTimer>0){
-            render(p_115458_,p_115459_,p_115455_,p_115456_);
+    public void render(T animatable, float partialTick, float p_115457_, PoseStack poseStack, MultiBufferSource bufferSource, int p_115460_) {
+        if(animatable.actuallyPhase == JellyfishEntity.PhaseAttack.SPAWN){
+            poseStack.pushPose();
+            float porcent=1.0F-((float) animatable.timerSpawn /20.0F);
+            this.model.renderToBuffer(poseStack,bufferSource.getBuffer(RenderType.dragonExplosionAlpha(DECA)),p_115460_,OverlayTexture.NO_OVERLAY,1.0F,1.0F,1.0F,porcent);
+            // VertexConsumer vertexconsumer2 = bufferSource.getBuffer(RenderType.lightning());
+
+            poseStack.popPose();
+            /*for(int i = 0; (float)i < (porcent + porcent * porcent) / 2.0F * 60.0F; ++i) {
+                poseStack.mulPose(Vector3f.XP.rotationDegrees(randomsource.nextFloat() * 360.0F));
+                poseStack.mulPose(Vector3f.YP.rotationDegrees(randomsource.nextFloat() * 360.0F));
+                poseStack.mulPose(Vector3f.ZP.rotationDegrees(randomsource.nextFloat() * 360.0F));
+                poseStack.mulPose(Vector3f.XP.rotationDegrees(randomsource.nextFloat() * 360.0F));
+                poseStack.mulPose(Vector3f.YP.rotationDegrees(randomsource.nextFloat() * 360.0F));
+                poseStack.mulPose(Vector3f.ZP.rotationDegrees(randomsource.nextFloat() * 360.0F + porcent * 90.0F));
+                float f3 = randomsource.nextFloat() * 20.0F + 5.0F + f7 * 10.0F;
+                float f4 = randomsource.nextFloat() * 2.0F + 1.0F + f7 * 2.0F;
+                Matrix4f matrix4f = poseStack.last().pose();
+                int j = (int)(255.0F * (1.0F - f7));
+                vertex01(vertexconsumer2, matrix4f, j);
+                vertex2(vertexconsumer2, matrix4f, f3, f4);
+                vertex3(vertexconsumer2, matrix4f, f3, f4);
+                vertex01(vertexconsumer2, matrix4f, j);
+                vertex3(vertexconsumer2, matrix4f, f3, f4);
+                vertex4(vertexconsumer2, matrix4f, f3, f4);
+                vertex01(vertexconsumer2, matrix4f, j);
+                vertex4(vertexconsumer2, matrix4f, f3, f4);
+                vertex2(vertexconsumer2, matrix4f, f3, f4);
+            }*/
         }
+        super.render(animatable, partialTick, p_115457_, poseStack, bufferSource, p_115460_);
+        if(animatable.lazerTimer>0){
+            render(poseStack,bufferSource,animatable,partialTick);
+        }
+
     }
 
-    @Override
-    public Vec3 getRenderOffset(T p_114483_, float p_114484_) {
-        return super.getRenderOffset(p_114483_, p_114484_);
-    }
-
-    @Override
-    protected void setupRotations(T jellyfish, PoseStack p_115318_, float p_115319_, float p_115320_, float p_115321_) {
-        super.setupRotations(jellyfish, p_115318_, p_115319_, p_115320_, p_115321_);
-    }
 
     public static void render(PoseStack pMatrixStack, MultiBufferSource pBuffer, JellyfishEntity jellyfish, float pPartialTicks) {
 
@@ -146,6 +173,11 @@ public class JellyfishRenderer<T extends JellyfishEntity,M extends JellyfishMode
         p_253894_.vertex(p_253955_, p_254451_, (float)p_254357_, p_254240_).color(p_253871_, p_253841_, p_254568_, p_254361_).uv(p_254117_, p_253698_).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(15728880).normal(p_253713_, 0.0F, 1.0F, 0.0F).endVertex();
     }
 
+    @Nullable
+    @Override
+    protected RenderType getRenderType(T p_115322_, boolean p_115323_, boolean p_115324_, boolean p_115325_) {
+        return p_115322_.actuallyPhase == JellyfishEntity.PhaseAttack.SPAWN ? DECAL : super.getRenderType(p_115322_, p_115323_, p_115324_, p_115325_);
+    }
 
     @Override
     public ResourceLocation getTextureLocation(T p_114482_) {

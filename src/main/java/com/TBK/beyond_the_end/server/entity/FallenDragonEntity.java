@@ -146,24 +146,25 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 500.0D)
-                .add(Attributes.FOLLOW_RANGE,100.0D)
+                .add(Attributes.FOLLOW_RANGE,1000.0D)
+                .add(Attributes.ATTACK_DAMAGE,10.0D)
                 .add(Attributes.MOVEMENT_SPEED,0.25D)
                 .add(Attributes.KNOCKBACK_RESISTANCE,1.0F);
     }
-
 
     @Override
     protected void registerGoals() {
         super.registerGoals();
         this.targetSelector.addGoal(3,new HurtByTargetGoal(this));
         this.targetSelector.addGoal(9,new NearestAttackableTargetGoal<>(this, LivingEntity.class,false));
-        this.goalSelector.addGoal(2,new AttackGoal(this,1,false));
+        this.goalSelector.addGoal(2,new AttackGoal(this,1.2F,false));
 
     }
 
     public boolean canAttack(LivingEntity p_149576_) {
         return p_149576_.canBeSeenAsEnemy();
     }
+
     public boolean canFly(){
         return this.hasModeFly();
     }
@@ -171,11 +172,6 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
     @Override
     public void tick() {
         super.tick();
-        if(!this.canFly()){
-            for (FallenPartEntity partEntity : this.subEntities){
-                partEntity.setSize(EntityDimensions.scalable(0,0));
-            }
-        }
         if(this.isCharging()){
             if(this.getTarget()!=null){
                 this.rotateToTarget();
@@ -188,8 +184,11 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
                         if(!this.isBlocking()){
                             this.setCharging(false);
                             this.attackMelee=45;
-                            this.level.broadcastEntityEvent(this,(byte) 8);
-                            PacketHandler.sendToAllTracking(new PacketTargetDragon(this.getId(),-1,1),this);
+                            if(!this.level.isClientSide){
+                                PacketHandler.sendToAllTracking(new PacketTargetDragon(this.getId(),-1,1),this);
+                                this.level.broadcastEntityEvent(this,(byte) 8);
+                                entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN,100,4));
+                            }
                         }else {
                             if(entity instanceof Player player){
                                 player.disableShield(true);
@@ -213,9 +212,9 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
                     float yawRad = (float)Math.toRadians(this.getYRot());
                     float sin = (float)Math.sin(yawRad);
                     float cos = (float)Math.cos(yawRad);
-                    double d6 = this.getX() - 2.25D*sin;
+                    double d6 = this.getX() - 6.25D*sin;
                     double d7 = this.getY() + 1.5D;
-                    double d8 = this.getZ() + 2.25D*cos;
+                    double d8 = this.getZ() + 6.25D*cos;
                     double d9 = this.getTarget().getX() - d6;
                     double d10 = this.getTarget().getY() - d7;
                     double d11 = this.getTarget().getZ() - d8;
@@ -223,7 +222,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
                         this.level.levelEvent((Player)null, 1017, this.blockPosition(), 0);
                     }
 
-                    DragonFireball dragonfireball = new DragonFireball(this.level, this, d9 * 3, d10 * 3 , d11 * 3);
+                    DragonFireball dragonfireball = new DragonFireball(this.level, this, d9 * 5, d10 * 5 , d11 * 5);
                     dragonfireball.setOwner(this);
                     dragonfireball.moveTo(d6, d7, d8, 0.0F, 0.0F);
                     this.level.addFreshEntity(dragonfireball);
@@ -248,7 +247,8 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
                         this.knockBack(this.level.getEntities(this, this.getBoundingBox().inflate(8.0D, 4.0D, 8.0D).move(0.0D, -2.0D, 0.0D), EntitySelector.NO_CREATIVE_OR_SPECTATOR),false);
                     }else {
                         if(this.getTarget()!=null && this.getTarget().distanceTo(this)<10){
-                            this.bite(this.level.getEntities(this, this.getTarget().getBoundingBox().inflate(32,3,2) , EntitySelector.NO_CREATIVE_OR_SPECTATOR));
+                            this.clawAttack = true;
+                            this.bite(this.level.getEntities(this, this.getTarget().getBoundingBox().inflate(3,2,3) , EntitySelector.NO_CREATIVE_OR_SPECTATOR));
                             this.particlePoof(3,this.getTarget().blockPosition());
                         }
                     }
@@ -319,36 +319,8 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
         }
 
         ++this.dragonDeathTime;
-        if (this.dragonDeathTime >= 180 && this.dragonDeathTime <= 200) {
-            float f = (this.random.nextFloat() - 0.5F) * 8.0F;
-            float f1 = (this.random.nextFloat() - 0.5F) * 4.0F;
-            float f2 = (this.random.nextFloat() - 0.5F) * 8.0F;
-            this.level.addParticle(ParticleTypes.EXPLOSION_EMITTER, this.getX() + (double)f, this.getY() + 2.0D + (double)f1, this.getZ() + (double)f2, 0.0D, 0.0D, 0.0D);
-        }
 
-        boolean flag = this.level.getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT);
-        int i = 500;
-        if (this.dragonFight != null && !this.dragonFight.hasPreviouslyKilledDragon()) {
-            i = 12000;
-        }
-
-        if (this.level instanceof ServerLevel) {
-            if (this.dragonDeathTime > 150 && this.dragonDeathTime % 5 == 0 && flag) {
-                int award =  Mth.floor((float)i * 0.08F);
-                ExperienceOrb.award((ServerLevel)this.level, this.position(), award);
-            }
-
-            if (this.dragonDeathTime == 1 && !this.isSilent()) {
-                this.level.globalLevelEvent(1028, this.blockPosition(), 0);
-            }
-        }
         if(this.dragonDeathTime == 10 && this.level instanceof ServerLevel ){
-            if (flag) {
-                int award = Mth.floor((float)i * 0.2F);
-                ExperienceOrb.award((ServerLevel)this.level, this.position(), award);
-            }
-
-
             FallenDragonFakeEntity fake = BKEntityType.FALLEN_DRAGON_FAKE.get().create(this.level);
             fake.moveTo(this.position());
             this.level.addFreshEntity(fake);
@@ -365,9 +337,6 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
                 entity.hurt(DamageSource.GENERIC, 20.0F);
                 if(entity instanceof  Player player){
                     player.disableShield(true);
-                }
-                if(!this.level.isClientSide){
-                    this.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN,100,3));
                 }
             }
         }

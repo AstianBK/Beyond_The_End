@@ -14,10 +14,10 @@ public class BTESounds {
 
     //ENTITY
     public static final RegistryObject<SoundEvent> JELLYFISH_SHOOT1 =
-            registerSoundEvent("arquebus_shoot");
+            registerSoundEvent("jellyminion_shoot1");
 
     public static final RegistryObject<SoundEvent> JELLYFISH_SHOOT2 =
-            registerSoundEvent("jellyfish_shoot2");
+            registerSoundEvent("jellyminion_shoot2");
 
     public static final RegistryObject<SoundEvent> JELLYFISH_CHARGE =
             registerSoundEvent("jellyfish_charge");

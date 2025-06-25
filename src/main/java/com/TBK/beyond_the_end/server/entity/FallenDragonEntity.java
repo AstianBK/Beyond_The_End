@@ -30,6 +30,8 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.boss.enderdragon.phases.EnderDragonPhase;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.DragonFireball;
@@ -40,9 +42,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.level.pathfinder.BinaryHeap;
-import net.minecraft.world.level.pathfinder.Node;
-import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.level.pathfinder.*;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 import software.bernie.geckolib3.core.IAnimatable;
@@ -98,6 +98,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
 
     public FallenDragonEntity(EntityType<? extends FallenDragonEntity> p_31096_, Level p_31097_) {
         super(p_31096_, p_31097_);
+        this.navigation = new DragonGroundNavigation(this, this.level);
         this.head = new FallenPartEntity(this, "head", 1.0F, 1.0F);
         this.neck = new FallenPartEntity(this, "neck", 3.0F, 3.0F);
         this.body = new FallenPartEntity(this, "body", 5.0F, 3.0F);
@@ -116,6 +117,11 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
         this.subEntities = new FallenPartEntity[]{this.head, this.neck, this.body, this.tail1, this.tail2, this.tail3, this.wing1, this.wing2};
 
         this.setId(ENTITY_COUNTER.getAndAdd(this.subEntities.length + 1) + 1);
+    }
+
+    @Override
+    public PathNavigation getNavigation() {
+        return this.navigation;
     }
 
     @Override
@@ -140,7 +146,6 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
         if (this.level.isClientSide && !this.isSilent()) {
             this.level.playLocalSound(this.getX(), this.getY(), this.getZ(), SoundEvents.ENDER_DRAGON_FLAP, this.getSoundSource(), 5.0F, 0.8F + this.random.nextFloat() * 0.3F, false);
         }
-
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -157,7 +162,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
         super.registerGoals();
         this.targetSelector.addGoal(3,new HurtByTargetGoal(this));
         this.targetSelector.addGoal(9,new NearestAttackableTargetGoal<>(this, LivingEntity.class,false));
-        this.goalSelector.addGoal(2,new AttackGoal(this,1.2F,false));
+        this.goalSelector.addGoal(2,new AttackGoal(this,1.75F,false));
 
     }
 
@@ -174,31 +179,22 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
         super.tick();
         if(this.isCharging()){
             if(this.getTarget()!=null){
-                this.rotateToTarget();
-                for (LivingEntity entity : this.level.getEntitiesOfClass(LivingEntity.class,this.getBoundingBox().inflate(2.0D),e->e!=this)){
-                    if(entity!=this.getTarget()){
-                        this.doHurtTarget(entity);
-                        Vec3 direction = entity.position().subtract(this.position()).add(0,5,0).normalize().scale(0.5D);
-                        entity.push(direction.x,direction.y,direction.z);
-                    }else {
-                        if(!this.isBlocking()){
-                            this.setCharging(false);
-                            this.attackMelee=45;
-                            if(!this.level.isClientSide){
-                                PacketHandler.sendToAllTracking(new PacketTargetDragon(this.getId(),-1,1),this);
-                                this.level.broadcastEntityEvent(this,(byte) 8);
-                                entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN,100,4));
-                            }
-                        }else {
-                            if(entity instanceof Player player){
-                                player.disableShield(true);
-                            }
-                        }
-                    }
-                }
 
-                if(this.getNavigation().isDone()){
-                    this.getNavigation().moveTo(this.getTarget(),2.8D);
+                Vec3 dir = this.getTarget().position().subtract(this.position()).normalize();
+                double speed = 2.3D; // velocidad de carga (ajustable)
+
+                // Movimiento directo
+                this.setDeltaMovement(dir.scale(speed));
+                this.hasImpulse = true;
+
+                this.rotateToTarget(this.getTarget().position());
+                // Si colisiona con jugador, detener carga
+                if (this.getBoundingBox().intersects(this.getTarget().getBoundingBox())) {
+                    this.setCharging(false);
+                    this.attackMelee = 45; // activar golpe
+                    this.level.broadcastEntityEvent(this, (byte) 8);
+                    this.getTarget().addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 100, 4));
+                    PacketHandler.sendToAllTracking(new PacketTargetDragon(this.getId(), -1, 1), this);
                 }
 
             }
@@ -207,7 +203,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
             this.getNavigation().stop();
             this.shootTime--;
             if(this.getTarget()!=null){
-                this.rotateToTarget();
+                this.rotateToTarget(this.getTarget().getEyePosition());
                 if(this.shootTime==6){
                     float yawRad = (float)Math.toRadians(this.getYRot());
                     float sin = (float)Math.sin(yawRad);
@@ -233,7 +229,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
 
         if(this.attackMelee>0){
             if(this.getTarget()!=null){
-                this.rotateToTarget();
+                this.rotateToTarget(this.getTarget().position());
             }
             this.getNavigation().stop();
             this.attackMelee--;
@@ -259,18 +255,17 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
         this.refreshDimensions();
     }
 
-    private void rotateToTarget() {
+    private void rotateToTarget(Vec3 pos) {
         if(!this.level.isClientSide ){
-            Vec3 vec32 = this.getTarget().getEyePosition().subtract(this.getEyePosition());
+            Vec3 vec32 = pos.subtract(this.getEyePosition());
             double f5 = -Math.toDegrees(Math.atan2(vec32.y,Math.sqrt(vec32.x*vec32.x + vec32.z*vec32.z)));
             double f6 = Math.toDegrees(Math.atan2(vec32.z, vec32.x)) - 90.0F;
-            this.yHeadRot=(float)f6;
-            this.setYHeadRot((float) f6);
-            this.yBodyRot = (float) (f6);
-            this.setYRot((float) f6);
-            this.setXRot((float) f5);
-            this.setRot(this.getYRot(),this.getXRot());
-        }
+            float maxTurn = 10.0F; // velocidad máxima de giro por tick
+
+            this.yBodyRot = Mth.approachDegrees(this.yBodyRot, (float) f6, maxTurn);
+            this.setYRot(this.yBodyRot);
+            this.setYHeadRot(this.yBodyRot);
+            this.setXRot(Mth.approachDegrees(this.getXRot(), (float) f5, maxTurn));        }
     }
 
     @Override
@@ -320,16 +315,6 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
 
         ++this.dragonDeathTime;
 
-        if(this.dragonDeathTime == 10 && this.level instanceof ServerLevel ){
-            FallenDragonFakeEntity fake = BKEntityType.FALLEN_DRAGON_FAKE.get().create(this.level);
-            fake.moveTo(this.position());
-            this.level.addFreshEntity(fake);
-            if (this.dragonFight != null) {
-                this.dragonFight.setDragonKilled(this);
-            }
-            this.remove(Entity.RemovalReason.KILLED);
-            this.gameEvent(GameEvent.ENTITY_DIE);
-        }
     }
     private void bite(List<Entity> p_31132_) {
         for(Entity entity : p_31132_) {
@@ -374,7 +359,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
         }
 
         this.oFlapTime = this.flapTime;
-        if (this.isRespawn() || this.dragonDeathTime>0) {
+        if (this.isRespawn()) {
             FallenDragonInstance dragonphaseinstance = this.phaseManager.getCurrentPhase();
 
             if(dragonphaseinstance!=null){
@@ -391,7 +376,6 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
         } else {
             if(canFly()){
                 this.noPhysics=true;
-                this.getNavigation().stop();
                 FallenDragonInstance dragonphaseinstance = this.phaseManager.getCurrentPhase();
 
                 if(dragonphaseinstance!=null){
@@ -601,35 +585,43 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
             return false;
         }
         boolean damage=attackDetermination(p_31122_);
-        if (!damage) {
-            return false;
-        } else {
-            p_31123_ = this.phaseManager.getCurrentPhase().onHurt(p_31122_, p_31123_);
-            if (p_31121_ != this.head) {
-                p_31123_ = p_31123_ / 4.0F + Math.min(p_31123_, 1.0F);
-            }
-
-            if (p_31123_ < 0.01F) {
+        if(!this.level.isClientSide){
+            if (!damage) {
                 return false;
             } else {
-                if (p_31122_.getEntity() instanceof Player || p_31122_.isExplosion()) {
-                    this.reallyHurt(p_31122_, p_31123_);
-                    if (this.isDeadOrDying()) {
-                        this.setModeFly(true);
-                        this.setHealth(1.0F);
-                        this.phaseManager.setPhase(FallenDragonPhase.DEATH);
-                    }
+                p_31123_ = this.phaseManager.getCurrentPhase().onHurt(p_31122_, p_31123_);
+                if (p_31121_ != this.head) {
+                    p_31123_ = p_31123_ / 4.0F + Math.min(p_31123_, 1.0F);
                 }
-                return true;
+
+                if (p_31123_ < 0.01F) {
+                    return false;
+                } else {
+                    if (p_31122_.getEntity() instanceof Player || p_31122_.isExplosion()) {
+                        this.reallyHurt(p_31122_, p_31123_);
+                        if(this.isDeadOrDying()){
+                            FallenDragonFakeEntity fake = BKEntityType.FALLEN_DRAGON_FAKE.get().create(this.level);
+                            fake.moveTo(this.position());
+                            this.level.addFreshEntity(fake);
+                            if (this.dragonFight != null) {
+                                this.dragonFight.setDragonKilled(this);
+                            }
+                            this.remove(Entity.RemovalReason.KILLED);
+                            this.gameEvent(GameEvent.ENTITY_DIE);
+                        }
+                    }
+                    return true;
+                }
             }
         }
+        return false;
     }
     protected void reallyHurt(DamageSource p_31162_, float p_31163_) {
         super.hurt(p_31162_, p_31163_);
     }
     @Override
     public boolean hurt(DamageSource p_31113_, float p_31114_) {
-        return !this.level.isClientSide && this.hurt(this.body, p_31113_, p_31114_);
+        return this.hurt(this.body, p_31113_, p_31114_);
     }
 
     public boolean attackDetermination(DamageSource p_21016_) {
@@ -668,7 +660,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
                     this.setDeltaMovement(Vec3.ZERO);
                     this.getNavigation().stop();
                     for (FallenPartEntity partEntity : this.subEntities){
-                        partEntity.setSize(EntityDimensions.scalable(0,0));
+                        partEntity.discard();
                     }
                 }
             }
@@ -1213,6 +1205,45 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
         return this.factory;
     }
 
+    public static class DragonGroundNavigation extends GroundPathNavigation {
+
+        public final Level level;
+        public DragonGroundNavigation(Mob mob, Level level) {
+            super(mob, level);
+            this.level = level;
+        }
+
+        @Override
+        protected PathFinder createPathFinder(int maxVisitedNodes) {
+            WalkNodeEvaluator nodeEvaluator = new WalkNodeEvaluator();
+            nodeEvaluator.setCanPassDoors(true);        // Puede pasar por puertas
+            nodeEvaluator.setCanOpenDoors(true);        // Puede abrirlas si tiene AI
+            nodeEvaluator.setCanFloat(true);            // Puede pasar por agua poco profunda
+            return new PathFinder(nodeEvaluator, maxVisitedNodes);
+        }
+
+        @Override
+        protected boolean canUpdatePath() {
+            // Evita recalcular cada tick
+            return super.canUpdatePath();
+        }
+
+        @Override
+        protected boolean canMoveDirectly(Vec3 p_186133_, Vec3 p_186134_) {
+            return false;
+        }
+
+        @Override
+        public boolean isStableDestination(BlockPos pos) {
+            return this.level.getBlockState(pos.below()).getMaterial().isSolid();
+        }
+
+        @Override
+        public void tick() {
+            super.tick();
+        }
+    }
+
 
     static class AttackGoal extends Goal {
         public Strat strat = Strat.NORMAL;
@@ -1293,11 +1324,13 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
         }
 
         public void start() {
-            this.mob.getNavigation().moveTo(this.path, this.speedModifier);
+            if (this.path != null) {
+                this.mob.getNavigation().moveTo(this.path, this.speedModifier);
+            }
             this.mob.setAggressive(true);
             this.ticksUntilNextPathRecalculation = 0;
             this.ticksUntilNextAttack = 0;
-            this.probability=0.0F;
+            this.probability = 0.0F;
         }
 
         public void stop() {
@@ -1315,93 +1348,109 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
         }
 
         public void tick() {
-            LivingEntity livingentity = this.mob.getTarget();
+            LivingEntity target = this.mob.getTarget();
             Strat current = this.strat;
-            if (livingentity != null) {
+
+            if (target != null) {
                 this.timeSelectNewStrat++;
-                double d0 = this.mob.distanceToSqr(livingentity.getX(), livingentity.getY(), livingentity.getZ());
-                if(this.strat == Strat.NORMAL){
+                double distSqr = this.mob.distanceToSqr(target.getX(), target.getY(), target.getZ());
+
+                if (this.strat == Strat.NORMAL) {
                     this.ticksUntilNextPathRecalculation = Math.max(this.ticksUntilNextPathRecalculation - 1, 0);
-                    if ((this.followingTargetEvenIfNotSeen || this.mob.getSensing().hasLineOfSight(livingentity)) && this.ticksUntilNextPathRecalculation <= 0 && (this.pathedTargetX == 0.0D && this.pathedTargetY == 0.0D && this.pathedTargetZ == 0.0D || livingentity.distanceToSqr(this.pathedTargetX, this.pathedTargetY, this.pathedTargetZ) >= 1.0D || this.mob.getRandom().nextFloat() < 0.05F)) {
-                        this.pathedTargetX = livingentity.getX();
-                        this.pathedTargetY = livingentity.getY();
-                        this.pathedTargetZ = livingentity.getZ();
-                        this.ticksUntilNextPathRecalculation = 4 + this.mob.getRandom().nextInt(7);
+
+                    boolean shouldRepath = (this.pathedTargetX == 0.0D && this.pathedTargetY == 0.0D && this.pathedTargetZ == 0.0D)
+                            || target.distanceToSqr(this.pathedTargetX, this.pathedTargetY, this.pathedTargetZ) >= 4.0D;
+
+                    if ((this.followingTargetEvenIfNotSeen || this.mob.getSensing().hasLineOfSight(target)) &&
+                            this.ticksUntilNextPathRecalculation <= 0 &&
+                            (shouldRepath || this.mob.getRandom().nextFloat() < 0.05F)) {
+
+                        this.pathedTargetX = target.getX();
+                        this.pathedTargetY = target.getY();
+                        this.pathedTargetZ = target.getZ();
+
+                        this.ticksUntilNextPathRecalculation = 20 + this.mob.getRandom().nextInt(20); // más estable
+
                         if (this.canPenalize) {
                             this.ticksUntilNextPathRecalculation += failedPathFindingPenalty;
+
                             if (this.mob.getNavigation().getPath() != null) {
-                                net.minecraft.world.level.pathfinder.Node finalPathPoint = this.mob.getNavigation().getPath().getEndNode();
-                                if (finalPathPoint != null && livingentity.distanceToSqr(finalPathPoint.x, finalPathPoint.y, finalPathPoint.z) < 1)
+                                var finalNode = this.mob.getNavigation().getPath().getEndNode();
+                                if (finalNode != null && target.distanceToSqr(finalNode.x, finalNode.y, finalNode.z) < 1) {
                                     failedPathFindingPenalty = 0;
-                                else
+                                } else {
                                     failedPathFindingPenalty += 10;
+                                }
                             } else {
                                 failedPathFindingPenalty += 10;
                             }
                         }
-                        if (d0 > 1024.0D) {
-                            this.ticksUntilNextPathRecalculation += 10;
-                        } else if (d0 > 256.0D) {
+
+                        if (distSqr > 1024.0D) {
+                            this.ticksUntilNextPathRecalculation += 15;
+                        } else if (distSqr > 256.0D) {
                             this.ticksUntilNextPathRecalculation += 5;
                         }
 
-                        if (!this.mob.getNavigation().moveTo(livingentity, this.speedModifier)) {
-                            this.ticksUntilNextPathRecalculation += 15;
-                        }
-
+                        this.mob.getNavigation().moveTo(target, this.speedModifier);
                         this.ticksUntilNextPathRecalculation = this.adjustedTickDelay(this.ticksUntilNextPathRecalculation);
                     }
-                }else if(this.strat==Strat.SHOOT){
-                    this.tickShooting(livingentity,d0);
-                    if(this.mob.shootTime == 0){
+
+                } else if (this.strat == Strat.SHOOT) {
+                    this.tickShooting(target, distSqr);
+                    if (this.mob.shootTime == 0) {
                         this.strat = Strat.NORMAL;
                     }
-                }else if(this.strat==Strat.SHOOT_RUN){
-                    this.tickShooting(livingentity,d0);
-                    if(this.mob.shootTime == 0){
+
+                } else if (this.strat == Strat.SHOOT_RUN) {
+                    this.tickShooting(target, distSqr);
+                    if (this.mob.shootTime == 0) {
                         this.strat = Strat.RUN;
                         this.mob.setCharging(true);
-                        this.mob.getNavigation().stop();
                     }
                 }
 
-                if(this.timeSelectNewStrat > 200){
-                    this.selectNextStrat(livingentity,d0);
+                if (this.timeSelectNewStrat > 100 && this.strat==Strat.NORMAL) {
+                    this.selectNextStrat(target, distSqr);
                     this.timeSelectNewStrat = 0;
                 }
-                if(this.strat == current){
+
+                if (this.strat == current) {
                     this.ticksUntilNextAttack = Math.max(this.ticksUntilNextAttack - 1, 0);
-                    this.checkAndPerformAttack(livingentity, d0);
+                    this.checkAndPerformAttack(target, distSqr);
                 }
             }
         }
 
-        public void tickShooting(LivingEntity livingentity,double d0){
-            boolean flag = this.mob.getSensing().hasLineOfSight(livingentity);
-            boolean flag1 = this.seeTime > 0;
-            if (flag != flag1) {
+        public void tickShooting(LivingEntity target, double distSqr) {
+            boolean canSee = this.mob.getSensing().hasLineOfSight(target);
+            boolean wasSeeing = this.seeTime > 0;
+
+            if (canSee != wasSeeing) {
                 this.seeTime = 0;
             }
 
-            if (flag) {
+            if (canSee) {
                 ++this.seeTime;
             } else {
                 --this.seeTime;
             }
-            if (!(d0 > (double)1024) && this.seeTime >= 20) {
+
+            if (distSqr <= 1024 && this.seeTime >= 20) {
                 this.mob.getNavigation().stop();
-            } else {
-                this.mob.getNavigation().moveTo(livingentity, this.speedModifier);
+            } else if (this.mob.getNavigation().isDone() && this.seeTime >= 0) {
+                this.mob.getNavigation().moveTo(target, this.speedModifier);
             }
-            if (this.mob.shootTime <= -1 && this.countShoot<=0 && this.seeTime >= -60) {
+
+            if (this.mob.shootTime <= -1 && this.countShoot <= 0 && this.seeTime >= -60) {
                 this.countShoot++;
                 this.mob.shootTime = 33;
-                PacketHandler.sendToAllTracking(new PacketTargetDragon(this.mob.getId(),-1,3),this.mob);
+                PacketHandler.sendToAllTracking(new PacketTargetDragon(this.mob.getId(), -1, 3), this.mob);
             }
         }
         private void selectNextStrat(LivingEntity livingentity, double distance) {
             boolean hasShield = entityHasShield(livingentity);
-            if(distance > 516.0D){
+            if(distance > 516.0D || this.mob.level.random.nextFloat()<0.4F){
                 if(hasShield){
                     this.strat = Strat.RUN;
                     this.mob.setCharging(true);

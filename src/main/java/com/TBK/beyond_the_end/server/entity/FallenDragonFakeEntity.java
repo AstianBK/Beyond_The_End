@@ -60,7 +60,7 @@ public class FallenDragonFakeEntity extends PathfinderMob implements IAnimatable
         JellyfishEntity jellyfish = this.level.getNearestEntity(JellyfishEntity.class, TargetingConditions.forNonCombat(),this,this.getX(),this.getY(),this.getZ(),this.getBoundingBox().inflate(1000));
         if(jellyfish!=null){
             Vec3 vec32 = this.position().subtract(jellyfish.getEyePosition());
-            this.setDeltaMovement(vec32.multiply(-1,-1,-1).normalize().scale(0.5D));
+            this.setDeltaMovement(vec32.multiply(-1,-1,-1).normalize().scale(0.35D));
             jellyfish.dragonDeath=this.position();
             jellyfish.setTarget(this);
 
@@ -82,8 +82,6 @@ public class FallenDragonFakeEntity extends PathfinderMob implements IAnimatable
                 }
                 this.discard();
             }
-        }else {
-            BeyondTheEnd.LOGGER.debug("Entro");
         }
         super.tick();
     }

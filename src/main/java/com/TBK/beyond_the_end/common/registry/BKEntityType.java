@@ -21,7 +21,7 @@ public class BKEntityType {
     public static final RegistryObject<EntityType<FallenDragonEntity>> FALLEN_DRAGON =
             ENTITY_TYPES.register("fallen_dragon",
                     () -> EntityType.Builder.of(FallenDragonEntity::new, MobCategory.MONSTER)
-                            .fireImmune().sized(4.0F, 8.0F)
+                            .fireImmune().sized(3.0F, 5.0F)
                             .clientTrackingRange(30)
                             .build(new ResourceLocation(BeyondTheEnd.MODID, "fallen_dragon").toString()));
     public static final RegistryObject<EntityType<FallenDragonFakeEntity>> FALLEN_DRAGON_FAKE =
@@ -43,7 +43,6 @@ public class BKEntityType {
             ENTITY_TYPES.register("jellyfish_minion",
                     () -> EntityType.Builder.of(JellyfishMinionEntity::new, MobCategory.MONSTER)
                             .fireImmune().sized(2.0F, 2.0F)
-                            .clientTrackingRange(30)
                             .build(new ResourceLocation(BeyondTheEnd.MODID, "jellyfish_minion").toString()));
 
     public static final RegistryObject<EntityType<ChargeFollowing>> CHARGE_FOLLOWING = ENTITY_TYPES

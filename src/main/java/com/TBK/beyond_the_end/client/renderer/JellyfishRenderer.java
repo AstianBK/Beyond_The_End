@@ -2,6 +2,7 @@ package com.TBK.beyond_the_end.client.renderer;
 
 import com.TBK.beyond_the_end.BeyondTheEnd;
 import com.TBK.beyond_the_end.client.layer.JellyfishEmissiveLayer;
+import com.TBK.beyond_the_end.client.layer.RespawnLayer;
 import com.TBK.beyond_the_end.client.model.JellyfishModel;
 import com.TBK.beyond_the_end.common.Util;
 import com.TBK.beyond_the_end.server.entity.JellyfishEntity;
@@ -31,12 +32,10 @@ public class JellyfishRenderer<T extends JellyfishEntity,M extends JellyfishMode
     private static final ResourceLocation GUARDIAN_BEAM_LOCATION = new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/beacon_beam.png");
     public final ResourceLocation GLOWING = new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/jellyfish/jellyfish_glowing.png");
     public final ResourceLocation EYE = new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/jellyfish/jellyfish_eyes.png");
-    public final ResourceLocation DECA = new ResourceLocation(BeyondTheEnd.MODID,"textures/entity/jellyfish/jellyfish_trans.png");
-    private static final RenderType DECAL = RenderType.entityDecal(TEXTURE);
 
     public JellyfishRenderer(EntityRendererProvider.Context p_174304_) {
         super(p_174304_, (M) new JellyfishModel<>(p_174304_.bakeLayer(JellyfishModel.LAYER_LOCATION)), 0.0F);
-
+        this.addLayer(new RespawnLayer<>(this));
         this.addLayer(new JellyfishEmissiveLayer<>(this,EYE,(entity,f1,f2)->{
             return 1.0F;
         },JellyfishModel::getEye));
@@ -46,8 +45,6 @@ public class JellyfishRenderer<T extends JellyfishEntity,M extends JellyfishMode
 
 
     }
-
-
     @Override
     public boolean shouldRender(T livingEntityIn, Frustum camera, double camX, double camY, double camZ) {
         return true;
@@ -60,35 +57,6 @@ public class JellyfishRenderer<T extends JellyfishEntity,M extends JellyfishMode
 
     @Override
     public void render(T animatable, float partialTick, float p_115457_, PoseStack poseStack, MultiBufferSource bufferSource, int p_115460_) {
-        if(animatable.actuallyPhase == JellyfishEntity.PhaseAttack.SPAWN){
-            poseStack.pushPose();
-            float porcent=1.0F-((float) animatable.timerSpawn /20.0F);
-            this.model.renderToBuffer(poseStack,bufferSource.getBuffer(RenderType.dragonExplosionAlpha(DECA)),p_115460_,OverlayTexture.NO_OVERLAY,1.0F,1.0F,1.0F,porcent);
-            // VertexConsumer vertexconsumer2 = bufferSource.getBuffer(RenderType.lightning());
-
-            poseStack.popPose();
-            /*for(int i = 0; (float)i < (porcent + porcent * porcent) / 2.0F * 60.0F; ++i) {
-                poseStack.mulPose(Vector3f.XP.rotationDegrees(randomsource.nextFloat() * 360.0F));
-                poseStack.mulPose(Vector3f.YP.rotationDegrees(randomsource.nextFloat() * 360.0F));
-                poseStack.mulPose(Vector3f.ZP.rotationDegrees(randomsource.nextFloat() * 360.0F));
-                poseStack.mulPose(Vector3f.XP.rotationDegrees(randomsource.nextFloat() * 360.0F));
-                poseStack.mulPose(Vector3f.YP.rotationDegrees(randomsource.nextFloat() * 360.0F));
-                poseStack.mulPose(Vector3f.ZP.rotationDegrees(randomsource.nextFloat() * 360.0F + porcent * 90.0F));
-                float f3 = randomsource.nextFloat() * 20.0F + 5.0F + f7 * 10.0F;
-                float f4 = randomsource.nextFloat() * 2.0F + 1.0F + f7 * 2.0F;
-                Matrix4f matrix4f = poseStack.last().pose();
-                int j = (int)(255.0F * (1.0F - f7));
-                vertex01(vertexconsumer2, matrix4f, j);
-                vertex2(vertexconsumer2, matrix4f, f3, f4);
-                vertex3(vertexconsumer2, matrix4f, f3, f4);
-                vertex01(vertexconsumer2, matrix4f, j);
-                vertex3(vertexconsumer2, matrix4f, f3, f4);
-                vertex4(vertexconsumer2, matrix4f, f3, f4);
-                vertex01(vertexconsumer2, matrix4f, j);
-                vertex4(vertexconsumer2, matrix4f, f3, f4);
-                vertex2(vertexconsumer2, matrix4f, f3, f4);
-            }*/
-        }
         super.render(animatable, partialTick, p_115457_, poseStack, bufferSource, p_115460_);
         if(animatable.lazerTimer>0){
             render(poseStack,bufferSource,animatable,partialTick);
@@ -176,7 +144,7 @@ public class JellyfishRenderer<T extends JellyfishEntity,M extends JellyfishMode
     @Nullable
     @Override
     protected RenderType getRenderType(T p_115322_, boolean p_115323_, boolean p_115324_, boolean p_115325_) {
-        return p_115322_.actuallyPhase == JellyfishEntity.PhaseAttack.SPAWN ? DECAL : super.getRenderType(p_115322_, p_115323_, p_115324_, p_115325_);
+        return p_115322_.actuallyPhase == JellyfishEntity.PhaseAttack.SPAWN  ? null :  super.getRenderType(p_115322_, p_115323_, p_115324_, p_115325_);
     }
 
     @Override

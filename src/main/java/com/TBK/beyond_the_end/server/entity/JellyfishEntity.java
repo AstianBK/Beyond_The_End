@@ -661,7 +661,7 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
     }
 
     public void tickSpawn(){
-        if(this.timerSpawn<20){
+        if(this.timerSpawn<200){
             this.timerSpawn++;
         }
         this.setDeltaMovement(Vec3.atCenterOf(this.groundPos[0]).subtract(this.position()).normalize().scale(0.05));
@@ -837,6 +837,44 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
         if (screenShakeAmount > 0) {
             screenShakeAmount = Math.max(0, screenShakeAmount - 0.03F);
         }
+
+        if(this.actuallyPhase == PhaseAttack.SPAWN){
+            int points = 36;
+            double radius = 5.5;
+
+            Vec3 vec3 = this.dragonDeath.subtract(this.position());
+            Vec3 direction = vec3.normalize(); // dirección del "tubo" de anillos
+            int distance = Mth.ceil(vec3.length());
+            Vec3 up = new Vec3(0, 1, 0);
+            if (Math.abs(direction.dot(up)) > 0.99) {
+                up = new Vec3(1, 0, 0); // si apunta hacia arriba, evitamos degeneración
+            }
+            Vec3 right = direction.cross(up).normalize();  // eje X local
+            Vec3 forward = right.cross(direction).normalize(); // eje Y local
+
+            for (int i1 = 0; i1 < distance; i1 += 10) {
+                double px = this.getX() + direction.x * i1;
+                double py = this.getY() + 1.0 + direction.y * i1;
+                double pz = this.getZ() + direction.z * i1;
+
+                for (int i = 0; i < points; i++) {
+                    double angle = 2 * Math.PI * i / points;
+
+                    // Punto en círculo vertical (en el plano XY local del anillo)
+                    double x = radius * Math.cos(angle);
+                    double y = radius * Math.sin(angle);
+
+                    // Transformar a coordenadas globales usando la base
+                    Vec3 offset = right.scale(x).add(forward.scale(y));
+
+                    double fx = px + offset.x;
+                    double fy = py + offset.y;
+                    double fz = pz + offset.z;
+
+                    level.addParticle(BKParticles.FLAME_PARTICLE.get(), fx, fy, fz, 0, 0, 0);
+                }
+            }
+        }
     }
 
     private int getPulsingBeatDelay() {
@@ -891,60 +929,10 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
         }else if(p_21375_ == 66){
             this.actuallyPhase = JellyfishEntity.PhaseAttack.SPAWN;
             this.shootLaser.start(this.tickCount);
-        }else if (p_21375_ == 67){
-            int points = 36;
-            double radius = 5.0;
-
-            double yaw = -Math.toRadians(this.getYRot());   // Yaw (horizontal), invertido
-            double pitch = -Math.toRadians(this.getXRot()); // Pitch (vertical), invertido
-            Vec3 vec3 = this.dragonDeath.subtract(this.position());
-            int distance = Mth.ceil(vec3.length());
-            Vec3 direction = vec3.normalize();
-            for (int i1 = 0;i1<distance;i1+=10){
-                double px = this.getX() + direction.x*i1;
-                double py = this.getY() + 1.0 + direction.y*i1; // Puedes ajustar altura
-                double pz = this.getZ() + direction.z*i1;
-
-                for (int i = 0; i < points; i++) {
-                    double angle = 2 * Math.PI * i / points;
-
-                    // Anillo vertical inicial en el plano YZ
-                    double x = 0;
-                    double y = radius * Math.cos(angle);
-                    double z = radius * Math.sin(angle);
-
-                    // Rotar en pitch (eje X)
-                    double y1 = y * Math.cos(pitch) - z * Math.sin(pitch);
-                    double z1 = y * Math.sin(pitch) + z * Math.cos(pitch);
-                    y = y1;
-                    z = z1;
-
-                    // Rotar en yaw (eje Y)
-                    double x1 = x * Math.cos(yaw) + z * Math.sin(yaw);
-                    double z2 = -x * Math.sin(yaw) + z * Math.cos(yaw);
-                    x = x1;
-                    z = z2;
-
-                    // Posición final
-                    double fx = px + x;
-                    double fy = py + y;
-                    double fz = pz + z;
-
-                    // Mostrar partícula
-                    level.addParticle(BKParticles.FLAME_PARTICLE.get(), fx, fy, fz , 0, 0, 0);
-                }
-
-            }
         }else {
             super.handleEntityEvent(p_21375_);
         }
     }
-
-    @Override
-    public boolean isInvisible() {
-        return this.actuallyPhase == PhaseAttack.SPAWN;
-    }
-
     public void setActionForID(int idAction) {
         switch (idAction){
             case 0 ->{

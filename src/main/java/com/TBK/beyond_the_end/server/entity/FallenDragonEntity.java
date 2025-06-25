@@ -141,8 +141,9 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
 
     @Override
     public float getStepHeight() {
-        return 3.0F;
+        return 1.5F; // suficiente para terreno irregular, sin causar tanto escaneo
     }
+
 
     public boolean isFlapping() {
         float f = Mth.cos(this.flapTime * ((float)Math.PI * 2F));

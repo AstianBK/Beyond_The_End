@@ -27,6 +27,7 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.control.LookControl;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
@@ -84,6 +85,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
     public float oFlapTime;
     public float flapTime;
     public boolean inWall;
+    public int delayCharge = 0;
     public int dragonDeathTime;
     public float yRotA;
     private final Node[] nodes = new Node[24];
@@ -116,6 +118,12 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
         this.phaseManager=new FallenDragonPhaseManager(this);
         this.subEntities = new FallenPartEntity[]{this.head, this.neck, this.body, this.tail1, this.tail2, this.tail3, this.wing1, this.wing2};
 
+        this.lookControl = new LookControl(this) {
+            @Override
+            public void tick() {
+                // No hacer nada → ahorro de CPU
+            }
+        };
         this.setId(ENTITY_COUNTER.getAndAdd(this.subEntities.length + 1) + 1);
     }
 
@@ -177,51 +185,33 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
     @Override
     public void tick() {
         super.tick();
-        if(this.isCharging()){
-            if(this.getTarget()!=null){
-
-                Vec3 dir = this.getTarget().position().subtract(this.position()).normalize();
-                double speed = 2.3D; // velocidad de carga (ajustable)
-
-                // Movimiento directo
-                this.setDeltaMovement(dir.scale(speed));
-                this.hasImpulse = true;
-
-                this.rotateToTarget(this.getTarget().position());
-                // Si colisiona con jugador, detener carga
-                if (this.getBoundingBox().intersects(this.getTarget().getBoundingBox())) {
-                    this.setCharging(false);
-                    this.attackMelee = 45; // activar golpe
-                    this.level.broadcastEntityEvent(this, (byte) 8);
-                    this.getTarget().addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 100, 4));
-                    PacketHandler.sendToAllTracking(new PacketTargetDragon(this.getId(), -1, 1), this);
-                }
-
-            }
-        }
         if(this.shootTime>0){
             this.getNavigation().stop();
             this.shootTime--;
             if(this.getTarget()!=null){
-                this.rotateToTarget(this.getTarget().getEyePosition());
-                if(this.shootTime==6){
-                    float yawRad = (float)Math.toRadians(this.getYRot());
-                    float sin = (float)Math.sin(yawRad);
-                    float cos = (float)Math.cos(yawRad);
-                    double d6 = this.getX() - 6.25D*sin;
-                    double d7 = this.getY() + 1.5D;
-                    double d8 = this.getZ() + 6.25D*cos;
-                    double d9 = this.getTarget().getX() - d6;
-                    double d10 = this.getTarget().getY() - d7;
-                    double d11 = this.getTarget().getZ() - d8;
-                    if (!this.isSilent()) {
-                        this.level.levelEvent((Player)null, 1017, this.blockPosition(), 0);
+                if(!this.level.isClientSide){
+                    if(this.shootTime%4==0){
+                        this.rotateToTarget(this.getTarget().getEyePosition());
                     }
+                    if(this.shootTime==6){
+                        float yawRad = (float)Math.toRadians(this.getYRot());
+                        float sin = (float)Math.sin(yawRad);
+                        float cos = (float)Math.cos(yawRad);
+                        double d6 = this.getX() - 6.25D*sin;
+                        double d7 = this.getY() + 1.5D;
+                        double d8 = this.getZ() + 6.25D*cos;
+                        double d9 = this.getTarget().getX() - d6;
+                        double d10 = this.getTarget().getY() - d7;
+                        double d11 = this.getTarget().getZ() - d8;
+                        if (!this.isSilent()) {
+                            this.level.levelEvent((Player)null, 1017, this.blockPosition(), 0);
+                        }
 
-                    DragonFireball dragonfireball = new DragonFireball(this.level, this, d9 * 5, d10 * 5 , d11 * 5);
-                    dragonfireball.setOwner(this);
-                    dragonfireball.moveTo(d6, d7, d8, 0.0F, 0.0F);
-                    this.level.addFreshEntity(dragonfireball);
+                        DragonFireball dragonfireball = new DragonFireball(this.level, this, d9, d10 , d11);
+                        dragonfireball.setOwner(this);
+                        dragonfireball.moveTo(d6, d7, d8, 0.0F, 0.0F);
+                        this.level.addFreshEntity(dragonfireball);
+                    }
                 }
             }
 
@@ -252,7 +242,32 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
             }
         }
 
-        this.refreshDimensions();
+        if(this.isCharging()){
+            if(this.getTarget()!=null){
+                if(this.delayCharge>20){
+                    Vec3 dir = this.getTarget().position().subtract(this.position()).normalize();
+                    double speed = 2D; // velocidad de carga (ajustable)
+
+                    // Movimiento directo
+                    this.setDeltaMovement(dir.scale(speed));
+                    this.hasImpulse = true;
+                }
+
+                if(this.delayCharge%4==0){
+                    this.rotateToTarget(this.getTarget().position());
+                }
+                if (this.getBoundingBox().intersects(this.getTarget().getBoundingBox())) {
+                    this.setCharging(false);
+                    this.attackMelee = 45;
+                    if(!this.level.isClientSide){
+                        this.level.broadcastEntityEvent(this, (byte) 8);
+                        this.getTarget().addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 100, 4));
+                        PacketHandler.sendToAllTracking(new PacketTargetDragon(this.getId(), -1, 1), this);
+                    }
+                }
+                this.delayCharge++;
+            }
+        }
     }
 
     private void rotateToTarget(Vec3 pos) {
@@ -265,7 +280,8 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
             this.yBodyRot = Mth.approachDegrees(this.yBodyRot, (float) f6, maxTurn);
             this.setYRot(this.yBodyRot);
             this.setYHeadRot(this.yBodyRot);
-            this.setXRot(Mth.approachDegrees(this.getXRot(), (float) f5, maxTurn));        }
+            this.setXRot(Mth.approachDegrees(this.getXRot(), (float) f5, maxTurn));
+        }
     }
 
     @Override
@@ -306,6 +322,16 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
             this.dragonFight.updateDragon(this);
             this.dragonFight.setDragonKilled(this);
         }
+    }
+
+    @Override
+    protected void tryCheckInsideBlocks() {
+        super.tryCheckInsideBlocks();
+    }
+
+    @Override
+    protected void checkInsideBlocks() {
+        //super.checkInsideBlocks();
     }
 
     protected void tickDeath() {
@@ -352,7 +378,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
         this.processFlappingMovement();
         if (this.level.isClientSide) {
             this.setHealth(this.getHealth());
-            if (!this.isSilent() && !this.phaseManager.getCurrentPhase().isSitting() && --this.growlTime < 0) {
+            if (this.canFly() && !this.isSilent() && !this.phaseManager.getCurrentPhase().isSitting() && --this.growlTime < 0) {
                 this.level.playLocalSound(this.getX(), this.getY(), this.getZ(), SoundEvents.ENDER_DRAGON_GROWL, this.getSoundSource(), 2.5F, 0.8F + this.random.nextFloat() * 0.3F, false);
                 this.growlTime = 200 + this.random.nextInt(200);
             }
@@ -758,15 +784,6 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
         }
     }
 
-    @Override
-    public EntityDimensions getDimensions(Pose p_21047_) {
-        return this.getType().getDimensions().scale(this.getScale(),this.canFly() ? 1.0F : 0.5F);
-    }
-
-    @Override
-    public float getScale() {
-        return this.canFly() ? 4.0F : super.getScale();
-    }
 
     private void tickPart(FallenPartEntity p_31116_, double p_31117_, double p_31118_, double p_31119_) {
         p_31116_.setPos(this.getX() + p_31117_, this.getY() + p_31118_, this.getZ() + p_31119_);
@@ -816,6 +833,17 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
     @Override
     public void checkDespawn() {
 
+    }
+
+    @Override
+    public void travel(Vec3 p_21280_) {
+
+        super.travel(p_21280_);
+    }
+
+    @Override
+    public void updateSwimming() {
+        super.updateSwimming();
     }
 
     @Override
@@ -1097,6 +1125,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
 
     private void setCharging(boolean isCharging) {
         this.entityData.set(CHARGING,isCharging);
+        this.delayCharge = 0;
     }
 
     public void setModeFly(boolean mode) {
@@ -1122,7 +1151,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
                         state.getController().setAnimation(new AnimationBuilder().loop("flying"));
                     }
                 }else{
-                    if(this.isCharging() && this.attackMelee<=0){
+                    if(this.isCharging() && this.attackMelee<=0 && this.delayCharge<=0){
                         state.getController().setAnimationSpeed(2.0D);
                         state.getController().setAnimation(new AnimationBuilder().loop("groundrun"));
                     }else if(this.shootTime>0){
@@ -1438,7 +1467,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
 
             if (distSqr <= 1024 && this.seeTime >= 20) {
                 this.mob.getNavigation().stop();
-            } else if (this.mob.getNavigation().isDone() && this.seeTime >= 0) {
+            } else if (!this.mob.getNavigation().isInProgress() && this.seeTime >= 0) {
                 this.mob.getNavigation().moveTo(target, this.speedModifier);
             }
 
@@ -1451,6 +1480,8 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
         private void selectNextStrat(LivingEntity livingentity, double distance) {
             boolean hasShield = entityHasShield(livingentity);
             if(distance > 516.0D || this.mob.level.random.nextFloat()<0.4F){
+                this.mob.level.playLocalSound(this.mob.getX(), this.mob.getY(), this.mob.getZ(), SoundEvents.ENDER_DRAGON_GROWL, this.mob.getSoundSource(), 2.5F, 0.8F + this.mob.random.nextFloat() * 0.3F, false);
+
                 if(hasShield){
                     this.strat = Strat.RUN;
                     this.mob.setCharging(true);

@@ -6,6 +6,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.PacketListener;
 import net.minecraft.network.protocol.Packet;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.api.distmarker.Dist;
@@ -60,6 +62,7 @@ public class PacketTargetDragon implements Packet<PacketListener> {
         }else if(this.idAction==1){
             if(dragon instanceof FallenDragonEntity fallenDragon){
                 fallenDragon.clawAttack = false;
+                fallenDragon.playSound(SoundEvents.ANVIL_HIT);
             }
         }else if(this.idAction==2){
             if(dragon instanceof FallenDragonEntity fallenDragon){

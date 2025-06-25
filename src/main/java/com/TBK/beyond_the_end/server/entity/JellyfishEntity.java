@@ -842,7 +842,11 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
             int points = 36;
             double radius = 5.5;
 
+
+            ParticleOptions particleoptions = ParticleTypes.POOF;
+
             Vec3 vec3 = this.dragonDeath.subtract(this.position());
+
             Vec3 direction = vec3.normalize(); // dirección del "tubo" de anillos
             int distance = Mth.ceil(vec3.length());
             Vec3 up = new Vec3(0, 1, 0);
@@ -851,6 +855,28 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
             }
             Vec3 right = direction.cross(up).normalize();  // eje X local
             Vec3 forward = right.cross(direction).normalize(); // eje Y local
+            int i2;
+            float f1;
+            i2 = 30;
+            f1 = distance;
+
+
+            for(int j = 0; j < i2; ++j) {
+                float f2 = (float) (this.random.nextFloat() * (this.random.nextFloat()*Math.PI));
+                float f3 = Mth.sqrt(this.random.nextFloat()) * f1;
+                double d0 = this.getX() + (double)(Mth.cos(f2) * f3);
+                double d4 = this.getZ() + (double)(Mth.sin(f2) * f3);
+                double d2 = this.level.getHeight(Heightmap.Types.WORLD_SURFACE, (int) d0, (int) d4);
+
+                Vec3 delta=this.position().subtract(new Vec3(d0,d2,d4)).normalize().scale(2.0D);
+
+                double d5 = delta.x + (0.5D - this.random.nextDouble()) * 0.15D;
+                double d6 = (double)0.01F;
+                double d7 = delta.z + (0.5D - this.random.nextDouble()) * 0.15D;
+
+
+                this.level.addAlwaysVisibleParticle(particleoptions, d0, d2, d4, d5, d6, d7);
+            }
 
             for (int i1 = 0; i1 < distance; i1 += 10) {
                 double px = this.getX() + direction.x * i1;
@@ -871,7 +897,7 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
                     double fy = py + offset.y;
                     double fz = pz + offset.z;
 
-                    level.addParticle(BKParticles.FLAME_PARTICLE.get(), fx, fy, fz, 0, 0, 0);
+                    level.addParticle(BKParticles.FLAME_PARTICLE.get(), fx, fy, fz, direction.x, direction.y, direction.z);
                 }
             }
         }

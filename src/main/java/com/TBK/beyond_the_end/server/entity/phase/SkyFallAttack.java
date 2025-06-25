@@ -87,7 +87,7 @@ public class SkyFallAttack extends AbstractDragonPhaseInstance {
                         this.fireballCharge=0;
                         this.spawnAreaDamage(new BlockPos(pos));
                     }
-                    List<HitResult> results=SkyFallAttack.raycastForEntity(this.dragon.level,this.dragon,200,true,3);
+                    List<HitResult> results=SkyFallAttack.raycastForEntity(this.dragon.level,this.dragon,200,true,20);
                     for (HitResult result:results){
                         if(result.getType().equals(HitResult.Type.ENTITY)){
                             ((EntityHitResult)result).getEntity().hurt(DamageSource.indirectMagic(this.dragon,null),3F);

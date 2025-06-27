@@ -217,7 +217,7 @@ public class JellyfishMinionEntity extends PathfinderMob {
             this.circlingAngle += this.rot ? 0.05F : -0.05F;
             offsetX = Math.cos(this.circlingAngle) * this.circleRadius;
             offsetZ = Math.sin(this.circlingAngle) * this.circleRadius;
-
+            this.heightOffset = Math.cos(this.circlingAngle) * 9;
             if (target != null) {
                 double heightOffset = this.calculateHeightOffset(target);
                 this.circlingPosition = new Vec3(target.getX() + offsetX, target.getY() + heightOffset, target.getZ() + offsetZ);
@@ -281,14 +281,14 @@ public class JellyfishMinionEntity extends PathfinderMob {
     private double calculateHeightOffset(LivingEntity target) {
         double currentAltitude = this.getY();
         double targetAltitude = target.getY();
-        double targetHeight = targetAltitude + 20.0D + this.heightOffset;
+        double targetHeight = targetAltitude + 10.0D + this.heightOffset;
         return targetHeight - currentAltitude;
     }
 
     private double calculateHeightOffset(BlockPos target) {
         double currentAltitude = this.getY();
         double targetAltitude = target.getY();
-        double targetHeight = targetAltitude + 20.0D  + this.heightOffset;
+        double targetHeight = targetAltitude + 10.0D  + this.heightOffset;
         return targetHeight - currentAltitude;
     }
     @Override

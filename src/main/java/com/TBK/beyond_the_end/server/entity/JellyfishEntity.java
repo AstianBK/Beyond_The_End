@@ -335,10 +335,12 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
             }
             this.startLazerTimer--;
             if(this.getTarget()!=null){
-                Vec3 vec3=new Vec3(this.getTarget().getBlockX(),this.getTarget().getBlockY(),this.getTarget().getBlockZ());
-                this.directionBlock=vec3;
-                if(!this.level.isClientSide){
-                    PacketHandler.sendToAllTracking(new PacketActionDragon(this.getId(), (int) vec3.x, (int) vec3.y, (int) vec3.z),this);
+                if(this.startLazerTimer>90){
+                    Vec3 vec3=new Vec3(this.getTarget().getBlockX(),this.getTarget().getBlockY(),this.getTarget().getBlockZ());
+                    this.directionBlock=vec3;
+                    if(!this.level.isClientSide){
+                        PacketHandler.sendToAllTracking(new PacketActionDragon(this.getId(), (int) vec3.x, (int) vec3.y, (int) vec3.z),this);
+                    }
                 }
             }
             if(this.startLazerTimer==0){
@@ -555,6 +557,9 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
                         this.prepareTimer = 10;
                         if(!this.level.isClientSide){
                             int randomPos = this.level.random.nextInt(0,8);
+                            if(randomPos==this.positionNextPosIndex){
+                                randomPos=this.positionNextPosIndex<7 ? this.positionNextPosIndex+1 : 0 ;
+                            }
                             this.positionNextPosIndex = randomPos;
                             PacketHandler.sendToAllTracking(new PacketNextActionJellyfish(this.getId(),randomPos,6),this);
                         }
@@ -923,7 +928,7 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
         }else if(p_21375_==3){
             this.particleChargedPoof();
             if(BeyondTheEnd.jellyfishFightEvent!=null){
-                BeyondTheEnd.jellyfishFightEvent.screenShakeAmount=1.0F;
+                BeyondTheEnd.jellyfishFightEvent.screenShakeAmount=0.5F;
             }
         }else if(p_21375_==8){
             this.shootLaser.stop();

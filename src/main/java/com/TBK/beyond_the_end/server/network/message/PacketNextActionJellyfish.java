@@ -8,6 +8,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.PacketListener;
 import net.minecraft.network.protocol.Packet;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -57,7 +58,7 @@ public class PacketNextActionJellyfish implements Packet<PacketListener> {
             jellyfish.nextTimer=0;
             if(this.idAction==4){
                 jellyfish.shootLaser.stop();
-                jellyfish.playSound(BTESounds.JELLYFISH_LAND.get(),2.0F,1.0F);
+                jellyfish.level.playSound(null,jellyfish,BTESounds.JELLYFISH_LAND.get(), SoundSource.HOSTILE,4.0F,1.0F);
                 jellyfish.positionLastGroundPos = timeForNextAction;
                 jellyfish.maxJumpCount = timeForNextAction % 2 == 0 ? 1 :3;
             }else if(this.idAction==5){
@@ -67,7 +68,7 @@ public class PacketNextActionJellyfish implements Packet<PacketListener> {
                 jellyfish.positionNextPosIndex = timeForNextAction;
                 jellyfish.jump.start(jellyfish.tickCount);
             }else if(this.idAction==7){
-                jellyfish.playSound(BTESounds.JELLYFISH_JUMP.get(),2.0F,1.0F);
+                jellyfish.level.playSound(null,jellyfish,BTESounds.JELLYFISH_JUMP.get(), SoundSource.HOSTILE,4.0F,1.0F);
                 jellyfish.idleTimer = 0;
             }else if(this.idAction==8){
                 jellyfish.maxTimerInAir = timeForNextAction;

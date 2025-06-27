@@ -26,6 +26,6 @@ public class DragonGlowingLayer<T extends Entity & IAnimatable> extends GeoLayer
 
     @Override
     public RenderType getRenderType(ResourceLocation textureLocation) {
-        return RenderType.eyes(textureLocation);
+        return RenderType.entityTranslucentEmissive(textureLocation);
     }
 }

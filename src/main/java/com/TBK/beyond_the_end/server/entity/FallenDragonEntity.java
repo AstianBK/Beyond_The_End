@@ -191,7 +191,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
             this.shootTime--;
             if(this.getTarget()!=null){
                 if(!this.level.isClientSide){
-                    if(this.shootTime%4==0){
+                    if(this.shootTime%6==0){
                         this.rotateToTarget(this.getTarget().getEyePosition());
                     }
                     if(this.shootTime==6){
@@ -246,15 +246,17 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
         if(this.isCharging()){
             if(this.getTarget()!=null){
                 if(this.delayCharge>20){
-                    Vec3 dir = this.getTarget().position().subtract(this.position()).normalize();
-                    double speed = 2D; // velocidad de carga (ajustable)
+                    if(this.delayCharge%10==0){
+                        Vec3 dir = this.getTarget().position().subtract(this.position()).normalize();
+                        double speed = 2D; // velocidad de carga (ajustable)
 
-                    // Movimiento directo
-                    this.setDeltaMovement(dir.scale(speed));
-                    this.hasImpulse = true;
+                        // Movimiento directo
+                        this.setDeltaMovement(dir.scale(speed));
+                        this.hasImpulse = true;
+                    }
                 }
 
-                if(this.delayCharge%4==0){
+                if(this.delayCharge%10==0){
                     this.rotateToTarget(this.getTarget().position());
                 }
                 if (this.getBoundingBox().intersects(this.getTarget().getBoundingBox())) {
@@ -276,7 +278,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
             Vec3 vec32 = pos.subtract(this.getEyePosition());
             double f5 = -Math.toDegrees(Math.atan2(vec32.y,Math.sqrt(vec32.x*vec32.x + vec32.z*vec32.z)));
             double f6 = Math.toDegrees(Math.atan2(vec32.z, vec32.x)) - 90.0F;
-            float maxTurn = 10.0F; // velocidad máxima de giro por tick
+            float maxTurn = 20.0F; // velocidad máxima de giro por tick
 
             this.yBodyRot = Mth.approachDegrees(this.yBodyRot, (float) f6, maxTurn);
             this.setYRot(this.yBodyRot);
@@ -327,7 +329,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
 
     @Override
     protected void tryCheckInsideBlocks() {
-        super.tryCheckInsideBlocks();
+        //super.tryCheckInsideBlocks();
     }
 
     @Override

@@ -162,7 +162,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
                 .add(Attributes.MAX_HEALTH, 500.0D)
                 .add(Attributes.FOLLOW_RANGE,1000.0D)
                 .add(Attributes.ATTACK_DAMAGE,10.0D)
-                .add(Attributes.MOVEMENT_SPEED,0.25D)
+                .add(Attributes.MOVEMENT_SPEED,0.23D)
                 .add(Attributes.KNOCKBACK_RESISTANCE,1.0F);
     }
 

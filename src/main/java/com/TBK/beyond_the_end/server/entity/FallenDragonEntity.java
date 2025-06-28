@@ -19,6 +19,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
@@ -28,6 +29,7 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.control.LookControl;
+import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
@@ -45,6 +47,7 @@ import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.pathfinder.*;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.slf4j.Logger;
 import software.bernie.geckolib3.core.IAnimatable;
 import software.bernie.geckolib3.core.PlayState;
@@ -80,6 +83,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
     private final FallenPartEntity tail3;
     private final FallenPartEntity wing1;
     private final FallenPartEntity wing2;
+
     public BlockPos targetPos=null;
     private int attackMelee=0;
     public float oFlapTime;
@@ -115,6 +119,9 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
         } else {
             this.dragonFight = null;
         }
+        this.moveControl = new MoveControl(this){
+
+        };
         this.phaseManager=new FallenDragonPhaseManager(this);
         this.subEntities = new FallenPartEntity[]{this.head, this.neck, this.body, this.tail1, this.tail2, this.tail3, this.wing1, this.wing2};
 
@@ -247,12 +254,8 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
             if(this.getTarget()!=null){
                 if(this.delayCharge>20){
                     if(this.delayCharge%10==0){
-                        Vec3 dir = this.getTarget().position().subtract(this.position()).normalize();
-                        double speed = 2D; // velocidad de carga (ajustable)
-
-                        // Movimiento directo
-                        this.setDeltaMovement(dir.scale(speed));
-                        this.hasImpulse = true;
+                        LivingEntity target = this.getTarget();
+                        this.getNavigation().moveTo(target,2.0D);
                     }
                 }
 
@@ -553,7 +556,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
                         enderdragonpart = this.tail3;
                     }
 
-                    double[] adouble1 = this.getLatencyPos(12 + k * 2, flag ? 0.0F :1.0F);
+                    double[] adouble1 = this.getLatencyPos(12 + k * 2, 1.0F);
                     float f17 = this.hasModeFly() ?  this.getYRot() * ((float)Math.PI / 180F) + this.rotWrap(adouble1[0] - adouble[0]) * ((float)Math.PI / 180F) : 180F * ((float)Math.PI / 180F) + this.rotWrap(adouble1[0] - adouble[0]) * ((float)Math.PI / 180F);;
                     float f18 = Mth.sin(f17);
                     float f20 = Mth.cos(f17);
@@ -578,6 +581,80 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
                 this.noPhysics=false;
                 super.aiStep();
             }
+        }
+        boolean flag=this.isOnGround() && this.phaseManager.getCurrentPhase().getPhase().equals(FallenDragonPhase.FLAME);
+
+        this.yBodyRot = this.getYRot();
+        Vec3[] avec3 = new Vec3[this.subEntities.length];
+
+        for(int j = 0; j < this.subEntities.length; ++j) {
+            avec3[j] = new Vec3(this.subEntities[j].getX(), this.subEntities[j].getY(), this.subEntities[j].getZ());
+        }
+
+        float f12 = (float)(this.getLatencyPos(5, 1.0F)[1] - this.getLatencyPos(10, 1.0F)[1]) * 10.0F * ((float)Math.PI / 180F);
+        float f13 = Mth.cos(f12);
+        float f1 = Mth.sin(f12);
+        float f14 = this.getYRot() * ((float)Math.PI / 180F);
+        float f2 = Mth.sin(f14);
+        float f15 = Mth.cos(f14);
+
+        this.tickPart(this.body, (double)(f2 * 0.5F), 0.0D, (double)(-f15 * 0.5F));
+        this.tickPart(this.wing1, (double)(f15 * 4.5F), 2.0D, (double)(f2 * 4.5F));
+        this.tickPart(this.wing2, (double)(f15 * -4.5F), 2.0D, (double)(f2 * -4.5F));
+        if (!this.level.isClientSide && this.hurtTime == 0 && this.canFly()) {
+            this.knockBack(this.level.getEntities(this, this.wing1.getBoundingBox().inflate(4.0D, 2.0D, 4.0D).move(0.0D, -2.0D, 0.0D), EntitySelector.NO_CREATIVE_OR_SPECTATOR),false);
+            this.knockBack(this.level.getEntities(this, this.wing2.getBoundingBox().inflate(4.0D, 2.0D, 4.0D).move(0.0D, -2.0D, 0.0D), EntitySelector.NO_CREATIVE_OR_SPECTATOR),false);
+            this.hurt(this.level.getEntities(this, this.head.getBoundingBox().inflate(1.0D), EntitySelector.NO_CREATIVE_OR_SPECTATOR));
+            this.hurt(this.level.getEntities(this, this.neck.getBoundingBox().inflate(1.0D), EntitySelector.NO_CREATIVE_OR_SPECTATOR));
+        }
+
+        float f3 = this.hasModeFly() ? Mth.sin(this.getYRot() * ((float)Math.PI / 180F) - this.yRotA * 0.01F) : Mth.sin(180F * ((float)Math.PI / 180F) - this.yRotA * 0.01F) ;
+        float f16 = this.hasModeFly() ? Mth.cos(this.getYRot() * ((float)Math.PI / 180F) - this.yRotA * 0.01F) : Mth.cos(180F * ((float)Math.PI / 180F) - this.yRotA * 0.01F);
+        float f4 = this.getHeadYOffset();
+        if(flag){
+            this.tickPart(this.head, (double)-(f2 * 6.5F), (double)(f4 + f1 * 6.5F), (double)-(-f15 * 6.5F));
+            this.tickPart(this.neck, (double)-(f2 * 5.5F), (double)(f4 + f1 * 5.5F), (double)-(-f15 * 5.5F));
+        }else{
+            this.tickPart(this.head, (double)(f3 * 6.5F * f13), (double)(f4 + f1 * 6.5F), (double)(-f16 * 6.5F * f13));
+            this.tickPart(this.neck, (double)(f3 * 5.5F * f13), (double)(f4 + f1 * 5.5F), (double)(-f16 * 5.5F * f13));
+        }
+
+        double[] adouble = this.getLatencyPos(5, 1.0F);
+
+        for(int k = 0; k < 3; ++k) {
+            FallenPartEntity enderdragonpart = null;
+            if (k == 0) {
+                enderdragonpart = this.tail1;
+            }
+
+            if (k == 1) {
+                enderdragonpart = this.tail2;
+            }
+
+            if (k == 2) {
+                enderdragonpart = this.tail3;
+            }
+
+            double[] adouble1 = this.getLatencyPos(12 + k * 2, 1.0F);
+            float f17 = this.hasModeFly() ?  this.getYRot() * ((float)Math.PI / 180F) + this.rotWrap(adouble1[0] - adouble[0]) * ((float)Math.PI / 180F) : 180F * ((float)Math.PI / 180F) + this.rotWrap(adouble1[0] - adouble[0]) * ((float)Math.PI / 180F);;
+            float f18 = Mth.sin(f17);
+            float f20 = Mth.cos(f17);
+            float f21 = 1.5F;
+            float f22 = (float)(k + 1) * 2.0F;
+            if(flag){
+                this.tickPart(enderdragonpart, (double)((f2 * 1.5F - f22)), adouble1[1] - adouble[1] - (double)((f22 + 1.5F) * f1) + 1.5D, (double)(-(f15 * 1.5F - f22)));
+            }else {
+                this.tickPart(enderdragonpart, (double)(-(f2 * 1.5F + f18 * f22) * f13), adouble1[1] - adouble[1] - (double)((f22 + 1.5F) * f1) + 1.5D, (double)((f15 * 1.5F + f20 * f22) * f13));
+            }
+        }
+
+        for(int l = 0; l < this.subEntities.length; ++l) {
+            this.subEntities[l].xo = avec3[l].x;
+            this.subEntities[l].yo = avec3[l].y;
+            this.subEntities[l].zo = avec3[l].z;
+            this.subEntities[l].xOld = avec3[l].x;
+            this.subEntities[l].yOld = avec3[l].y;
+            this.subEntities[l].zOld = avec3[l].z;
         }
         if (!this.level.isClientSide) {
             if (this.dragonFight != null) {
@@ -609,7 +686,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
         return (float)Mth.wrapDegrees(p_31165_);
     }
 
-    public boolean hurt(FallenPartEntity p_31121_, DamageSource p_31122_, float p_31123_) {
+    public boolean hurt(FallenPartEntity entity,DamageSource p_31122_, float p_31123_) {
         if(this.isRespawn() || this.phaseManager.getCurrentPhase().getPhase() == FallenDragonPhase.DEATH){
             return false;
         }
@@ -619,9 +696,9 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
                 return false;
             } else {
                 p_31123_ = this.phaseManager.getCurrentPhase().onHurt(p_31122_, p_31123_);
-                if (p_31121_ != this.head) {
+                /*if (p_31121_ != this.head) {
                     p_31123_ = p_31123_ / 4.0F + Math.min(p_31123_, 1.0F);
-                }
+                }*/
 
                 if (p_31123_ < 0.01F) {
                     return false;
@@ -683,14 +760,11 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
         if(this.phaseManager.getCurrentPhase().getPhase()!=FallenDragonPhase.FLAME && this.attackMelee<=0 && this.chargedAnim<=0 && !this.isCharging()){
             if(this.getHealth()<this.getMaxHealth()*0.9F){
                 if(this.hasModeFly()){
-                    this.teleport(0,80,0);
+                    //this.teleport(0,80,0);
                     this.setModeFly(false);
                     this.phaseManager.setPhase(FallenDragonPhase.HOLDING_PATTERN);
                     this.setDeltaMovement(Vec3.ZERO);
                     this.getNavigation().stop();
-                    for (FallenPartEntity partEntity : this.subEntities){
-                        partEntity.discard();
-                    }
                 }
             }
         }
@@ -1140,33 +1214,27 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
     public void registerControllers(AnimationData data) {
         data.addAnimationController(new AnimationController<>(this,"controller",10, state -> {
             boolean isMove= !(state.getLimbSwingAmount() > -0.15F && state.getLimbSwingAmount() < 0.15F);
-            if(this.phaseManager.getCurrentPhase()==FallenDragonPhase.DEATH){
-                state.getController().setAnimationSpeed(1.0D);
-                BeyondTheEnd.LOGGER.debug("AnimationMoment xd");
-                state.getController().setAnimation(new AnimationBuilder().loop("death"));
-            }else {
-                if((!this.isOnGround() && !this.isCharging()) || this.phaseManager.getCurrentPhase().getPhase()==FallenDragonPhase.FLAME){
-                    if(this.phaseManager.getCurrentPhase().getPhase()==FallenDragonPhase.FLAME){
-                        state.getController().setAnimationSpeed(1.0D);
-                        state.getController().setAnimation(new AnimationBuilder().loop("flyingidlefire"));
-                    }else if(this.attackMelee<=0){
-                        state.getController().setAnimationSpeed(1.0D);
-                        state.getController().setAnimation(new AnimationBuilder().loop("flying"));
-                    }
-                }else{
-                    if(this.isCharging() && this.attackMelee<=0 && this.delayCharge<=0){
-                        state.getController().setAnimationSpeed(2.0D);
-                        state.getController().setAnimation(new AnimationBuilder().loop("groundrun"));
-                    }else if(this.shootTime>0){
-                        state.getController().setAnimationSpeed(this.isBackAttack ? 2.0D : 1.0D);
-                        state.getController().setAnimation(new AnimationBuilder().playOnce("shootfirehead"));
-                    }else if(this.attackMelee>0){
-                        state.getController().setAnimationSpeed(this.isBackAttack ? 2.0D : 1.0D);
-                        state.getController().setAnimation(new AnimationBuilder().playOnce(this.isBackAttack ? "meleetail" : this.clawAttack ? "meleeclaw" : "meleebite"));
-                    }else {
-                        state.getController().setAnimationSpeed(1.0D);
-                        state.getController().setAnimation(new AnimationBuilder().loop(isMove ? "groundwalk" : "ground"));
-                    }
+            if((!this.isOnGround() && !this.isCharging()) || this.phaseManager.getCurrentPhase().getPhase()==FallenDragonPhase.FLAME){
+                if(this.phaseManager.getCurrentPhase().getPhase()==FallenDragonPhase.FLAME){
+                    state.getController().setAnimationSpeed(1.0D);
+                    state.getController().setAnimation(new AnimationBuilder().loop("flyingidlefire"));
+                }else if(this.attackMelee<=0){
+                    state.getController().setAnimationSpeed(1.0D);
+                    state.getController().setAnimation(new AnimationBuilder().loop("flying"));
+                }
+            }else{
+                if(this.isCharging() && this.attackMelee<=0 ){
+                    state.getController().setAnimationSpeed(2.0D);
+                    state.getController().setAnimation(new AnimationBuilder().loop("groundrun"));
+                }else if(this.shootTime>0){
+                    state.getController().setAnimationSpeed(this.isBackAttack ? 2.0D : 1.0D);
+                    state.getController().setAnimation(new AnimationBuilder().playOnce("shootfirehead"));
+                }else if(this.attackMelee>0){
+                    state.getController().setAnimationSpeed(this.isBackAttack ? 2.0D : 1.0D);
+                    state.getController().setAnimation(new AnimationBuilder().playOnce(this.isBackAttack ? "meleetail" : this.clawAttack ? "meleeclaw" : "meleebite"));
+                }else {
+                    state.getController().setAnimationSpeed(1.0D);
+                    state.getController().setAnimation(new AnimationBuilder().loop(isMove ? "groundwalk" : "ground"));
                 }
             }
             return PlayState.CONTINUE;
@@ -1357,7 +1425,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
 
         public void start() {
             if (this.path != null) {
-                this.mob.getNavigation().moveTo(this.path, this.speedModifier);
+                this.mob.moveControl.setWantedPosition(this.pathedTargetX,this.pathedTargetY,this.pathedTargetZ,this.speedModifier);
             }
             this.mob.setAggressive(true);
             this.ticksUntilNextPathRecalculation = 0;
@@ -1424,7 +1492,8 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
                             this.ticksUntilNextPathRecalculation += 5;
                         }
 
-                        this.mob.getNavigation().moveTo(target, this.speedModifier);
+
+                        this.mob.getNavigation().moveTo(target,this.speedModifier);
                         this.ticksUntilNextPathRecalculation = this.adjustedTickDelay(this.ticksUntilNextPathRecalculation);
                     }
 
@@ -1471,7 +1540,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
             if (distSqr <= 1024 && this.seeTime >= 20) {
                 this.mob.getNavigation().stop();
             } else if (!this.mob.getNavigation().isInProgress() && this.seeTime >= 0) {
-                this.mob.getNavigation().moveTo(target, this.speedModifier);
+                this.mob.getNavigation().moveTo(target,this.speedModifier);
             }
 
             if (this.mob.shootTime <= -1 && this.countShoot <= 0 && this.seeTime >= -60) {
@@ -1485,14 +1554,20 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
             if(distance > 516.0D || this.mob.level.random.nextFloat()<0.4F){
                 this.mob.level.playLocalSound(this.mob.getX(), this.mob.getY(), this.mob.getZ(), SoundEvents.ENDER_DRAGON_GROWL, this.mob.getSoundSource(), 2.5F, 0.8F + this.mob.random.nextFloat() * 0.3F, false);
 
-                if(hasShield){
-                    this.strat = Strat.RUN;
-                    this.mob.setCharging(true);
-                    this.mob.getNavigation().stop();
+                if(this.mob.level.random.nextFloat()<0.35F){
+                    this.strat = Strat.SHOOT_FLY;
+                    this.mob.setModeFly(true);
+                    this.mob.phaseManager.setPhase(FallenDragonPhase.FLAME);
                 }else {
-                    this.countShoot=0;
-                    this.mob.shootTime=-1;
-                    this.strat = this.mob.level.random.nextBoolean() ? Strat.SHOOT_RUN : Strat.SHOOT;
+                    if(hasShield){
+                        this.strat = Strat.RUN;
+                        this.mob.setCharging(true);
+                        this.mob.getNavigation().stop();
+                    }else {
+                        this.countShoot=0;
+                        this.mob.shootTime=-1;
+                        this.strat = this.mob.level.random.nextBoolean() ? Strat.SHOOT_RUN : Strat.SHOOT;
+                    }
                 }
             }else {
                 this.strat = Strat.NORMAL;
@@ -1535,6 +1610,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
             SHOOT_RUN,
             SHOOT,
             RUN,
+            SHOOT_FLY,
             NORMAL;
         }
 

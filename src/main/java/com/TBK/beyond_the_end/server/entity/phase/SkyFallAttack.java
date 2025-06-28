@@ -231,8 +231,8 @@ public class SkyFallAttack extends AbstractDragonPhaseInstance {
     }
 
     public static List<HitResult> raycastForEntity(Level level, FallenDragonEntity originEntity, float distance, boolean checkForBlocks, float bbInflation) {
-        Vec3 start = originEntity.head.position();
-        Vec3 end = originEntity.head.position();
+        Vec3 start = originEntity.position();
+        Vec3 end = originEntity.position();
         Vec3 d0 = originEntity
                 .getLookAngle()
                 .add(Math.cos((float)originEntity.tickCount*0.1F)*0.523599F,-0.785398,Math.cos((float)originEntity.tickCount*0.1F)*0.523599F)

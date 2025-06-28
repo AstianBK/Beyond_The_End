@@ -902,7 +902,7 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
                     double fy = py + offset.y;
                     double fz = pz + offset.z;
 
-                    level.addParticle(BKParticles.FLAME_PARTICLE.get(), fx, fy, fz, direction.x, direction.y, direction.z);
+                    level.addParticle(BKParticles.FLAME_PARTICLE.get(), fx, fy, fz, -direction.x, -direction.y, -direction.z);
                 }
             }
         }

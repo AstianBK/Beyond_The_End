@@ -21,7 +21,7 @@ public class BKEntityType {
     public static final RegistryObject<EntityType<FallenDragonEntity>> FALLEN_DRAGON =
             ENTITY_TYPES.register("fallen_dragon",
                     () -> EntityType.Builder.of(FallenDragonEntity::new, MobCategory.MONSTER)
-                            .fireImmune().sized(3.0F, 5.0F)
+                            .fireImmune().sized(1.0F, 1.0F)
                             .clientTrackingRange(30)
                             .build(new ResourceLocation(BeyondTheEnd.MODID, "fallen_dragon").toString()));
     public static final RegistryObject<EntityType<FallenDragonFakeEntity>> FALLEN_DRAGON_FAKE =
@@ -35,7 +35,7 @@ public class BKEntityType {
             ENTITY_TYPES.register("jellyfish",
                     () -> EntityType.Builder.of(JellyfishEntity::new, MobCategory.MONSTER)
                             .fireImmune().sized(16.0F, 12.0F)
-                            .clientTrackingRange(30)
+                            .clientTrackingRange(100)
                             .build(new ResourceLocation(BeyondTheEnd.MODID, "jellyfish").toString()));
 
 

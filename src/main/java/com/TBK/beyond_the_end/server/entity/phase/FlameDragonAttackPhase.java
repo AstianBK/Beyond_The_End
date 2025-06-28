@@ -60,14 +60,16 @@ public class FlameDragonAttackPhase extends AbstractDragonPhaseInstance {
                 this.waitTime=0;
                 ++this.fireballCharge;
                 if (this.fireballCharge >= 15) {
-                    Vec3 vec32 = this.dragon.getViewVector(1.0F);
-                    double d6 = this.dragon.head.getX() + vec32.x;
-                    double d7 = this.dragon.head.getY(0.5D) + 1.5D;
-                    double d8 = this.dragon.head.getZ() + vec32.z;
-                    Vec3 deltaTarget = this.attackTarget.getDeltaMovement();
-                    double d9 = this.attackTarget.getX() - d6 + deltaTarget.x;
-                    double d10 = this.attackTarget.getY(0.5D) - d7;
-                    double d11 = this.attackTarget.getZ() - d8 + deltaTarget.z;
+                    float yawRad = (float)Math.toRadians(this.dragon.getYRot());
+                    float sin = (float)Math.sin(yawRad);
+                    float cos = (float)Math.cos(yawRad);
+                    double d6 = this.dragon.getX() - 6.25D*sin;
+                    double d7 = this.dragon.getY() + 1.5D +5.0D;
+                    double d8 = this.dragon.getZ() + 6.25D*cos;
+                    double d9 = this.attackTarget.getX() - d6;
+                    double d10 = this.attackTarget.getY() - d7 ;
+                    double d11 = this.attackTarget.getZ() - d8;
+
                     if (!this.dragon.isSilent()) {
                         this.dragon.level.levelEvent((Player)null, 1017, this.dragon.blockPosition(), 0);
                     }

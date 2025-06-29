@@ -42,15 +42,15 @@
     ]
   },
   "jellyfish_shoot1": {
-    "subtitle": "sounds.beyond_the_end.jellyminion_shoot1",
+    "subtitle": "sounds.beyond_the_end.jellyfish_shoot1",
     "sounds": [
-      "beyond_the_end:jellyminion_shoot1"
+      "beyond_the_end:jellyfish_shoot1"
     ]
   },
   "jellyfish_shoot2": {
-    "subtitle": "sounds.beyond_the_end.jellyminion_shoot2",
+    "subtitle": "sounds.beyond_the_end.jellyfish_shoot2",
     "sounds": [
-      "beyond_the_end:jellyminion_shoot2"
+      "beyond_the_end:jellyfish_shoot2"
     ]
   }
 }

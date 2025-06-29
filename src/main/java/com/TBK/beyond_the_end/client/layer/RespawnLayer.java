@@ -40,15 +40,17 @@ public class RespawnLayer<T extends JellyfishEntity,M extends JellyfishModel<T>>
             float f7 = Math.min(porcent > 0.8F ? (porcent - 0.8F) / 0.2F : 0.0F, 1.0F);
             RandomSource randomsource = RandomSource.create(432L);
             VertexConsumer vertexconsumer2 = bufferSource.getBuffer(RenderType.lightning());
-
-            for(int i = 0; (float)i < (porcent + porcent * porcent) / 2.0F * 60.0F; ++i) {
+            poseStack.pushPose();
+            poseStack.translate(0,0.5d,0);
+            float progress = (animatable.tickCount%200+p_117353_)/200.0F;
+            for(int i = 0; (float)i < 15.0F; ++i) {
                 poseStack.mulPose(Vector3f.XP.rotationDegrees(randomsource.nextFloat() * 360.0F));
                 poseStack.mulPose(Vector3f.YP.rotationDegrees(randomsource.nextFloat() * 360.0F));
                 poseStack.mulPose(Vector3f.ZP.rotationDegrees(randomsource.nextFloat() * 360.0F));
                 poseStack.mulPose(Vector3f.XP.rotationDegrees(randomsource.nextFloat() * 360.0F));
                 poseStack.mulPose(Vector3f.YP.rotationDegrees(randomsource.nextFloat() * 360.0F));
-                poseStack.mulPose(Vector3f.ZP.rotationDegrees(randomsource.nextFloat() * 360.0F + porcent * 90.0F));
-                float f3 = randomsource.nextFloat() * 20.0F + 5.0F + f7 * 10.0F;
+                poseStack.mulPose(Vector3f.ZP.rotationDegrees(randomsource.nextFloat() * 360.0F + progress * 90.0F));
+                float f3 = randomsource.nextFloat() * 10.0F + 5.0F + f7 * 10.0F;
                 float f4 = randomsource.nextFloat() * 2.0F + 1.0F + f7 * 2.0F;
                 Matrix4f matrix4f = poseStack.last().pose();
                 int j = (int)(255.0F * (1.0F - f7));
@@ -62,6 +64,7 @@ public class RespawnLayer<T extends JellyfishEntity,M extends JellyfishModel<T>>
                 vertex4(vertexconsumer2, matrix4f, f3, f4);
                 vertex2(vertexconsumer2, matrix4f, f3, f4);
             }
+            poseStack.popPose();
         }
     }
     private static void vertex01(VertexConsumer p_114220_, Matrix4f p_114221_, int p_114222_) {

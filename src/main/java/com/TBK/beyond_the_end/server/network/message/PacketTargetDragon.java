@@ -59,10 +59,14 @@ public class PacketTargetDragon implements Packet<PacketListener> {
                 fallenDragon.phaseManager.setPhase(FallenDragonPhase.SKYFALL);
                 fallenDragon.phaseManager.getPhase(FallenDragonPhase.SKYFALL).setTarget((LivingEntity) entity);
             }
+        }if(this.idAction==4){
+            if(dragon instanceof FallenDragonEntity fallenDragon){
+                fallenDragon.phaseManager.setPhase(FallenDragonPhase.FLAME);
+                fallenDragon.phaseManager.getPhase(FallenDragonPhase.FLAME).setTarget((LivingEntity) entity);
+            }
         }else if(this.idAction==1){
             if(dragon instanceof FallenDragonEntity fallenDragon){
                 fallenDragon.clawAttack = false;
-                fallenDragon.playSound(SoundEvents.ANVIL_HIT);
             }
         }else if(this.idAction==2){
             if(dragon instanceof FallenDragonEntity fallenDragon){

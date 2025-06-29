@@ -7,6 +7,7 @@ import com.TBK.beyond_the_end.server.entity.JellyfishEntity;
 import com.TBK.beyond_the_end.server.entity.JellyfishMinionEntity;
 import com.TBK.beyond_the_end.server.entity.projectile.ChargeFlash;
 import com.TBK.beyond_the_end.server.entity.projectile.ChargeFollowing;
+import com.TBK.beyond_the_end.server.entity.projectile.FallenDragonFireball;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -48,6 +49,10 @@ public class BKEntityType {
     public static final RegistryObject<EntityType<ChargeFollowing>> CHARGE_FOLLOWING = ENTITY_TYPES
             .register("charge_following", () -> EntityType.Builder.<ChargeFollowing>of(ChargeFollowing::new, MobCategory.MISC)
                     .fireImmune().sized(1F, 1F).build(BeyondTheEnd.MODID+ "charge_following"));
+
+    public static final RegistryObject<EntityType<FallenDragonFireball>> FALLEN_DRAGON_FIREBALL = ENTITY_TYPES
+            .register("fallen_dragon_fireball", () -> EntityType.Builder.<FallenDragonFireball>of(FallenDragonFireball::new, MobCategory.MISC)
+                    .fireImmune().sized(1F, 1F).build(BeyondTheEnd.MODID+ "fallen_dragon_fireball"));
 
     public static final RegistryObject<EntityType<ChargeFlash>> CHARGE_FLASH = ENTITY_TYPES
             .register("charge_flash", () -> EntityType.Builder.<ChargeFlash>of(ChargeFlash::new, MobCategory.MISC)

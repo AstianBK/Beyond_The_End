@@ -79,7 +79,7 @@ public class SkyFallAttack extends AbstractDragonPhaseInstance {
 
             Vec3 pos=new Vec3(this.dragon.getX(),this.dragon.level.getHeight(Heightmap.Types.WORLD_SURFACE, (int) this.dragon.getX(), (int) this.dragon.getZ()),this.dragon.getZ());
 
-            if (this.dragon.getY() > this.attackTarget.getY()+8.0D && this.dragon.getY() < this.attackTarget.getY()+14.0D) {
+            if (this.dragon.getY() > this.attackTarget.getY()+10.0D && this.dragon.getY() < this.attackTarget.getY()+14.0D) {
                 this.flameTime++;
                 if (this.dragon.hasLineOfSight(this.attackTarget)) {
                     this.fireballCharge++;
@@ -89,8 +89,12 @@ public class SkyFallAttack extends AbstractDragonPhaseInstance {
                     }
                     List<HitResult> results=SkyFallAttack.raycastForEntity(this.dragon.level,this.dragon,200,true,20);
                     for (HitResult result:results){
-                        if(result.getType().equals(HitResult.Type.ENTITY)){
-                            ((EntityHitResult)result).getEntity().hurt(DamageSource.indirectMagic(this.dragon,null),3F);
+                        if(result.getType().equals(HitResult.Type.BLOCK)){
+                            Vec3 block = result.getLocation();
+                            List<LivingEntity> list = this.dragon.level.getEntitiesOfClass(LivingEntity.class,new AABB(block.add(-3,1,-3),block.add(3,-1,3)));
+                            for (LivingEntity livingEntity : list){
+                                livingEntity.hurt(DamageSource.indirectMagic(this.dragon,null),3F);
+                            }
                         }
                     }
                     this.dragon.level.broadcastEntityEvent(this.dragon,(byte) 4);
@@ -231,21 +235,27 @@ public class SkyFallAttack extends AbstractDragonPhaseInstance {
     }
 
     public static List<HitResult> raycastForEntity(Level level, FallenDragonEntity originEntity, float distance, boolean checkForBlocks, float bbInflation) {
-        Vec3 start = originEntity.position();
-        Vec3 end = originEntity.position();
+        float yawRad = (float)Math.toRadians(originEntity.getYRot());
+        float sin = (float)Math.sin(yawRad);
+        float cos = (float)Math.cos(yawRad);
+        double d6 = -6.25D*sin;
+        double d8 = 6.25D*cos;
+
+        Vec3 start = originEntity.position().add(-d6,1,-d8);
+        Vec3 end = start;
         Vec3 d0 = originEntity
                 .getLookAngle()
                 .add(Math.cos((float)originEntity.tickCount*0.1F)*0.523599F,-0.785398,Math.cos((float)originEntity.tickCount*0.1F)*0.523599F)
                 .multiply(-1.0F,1.0F,-1.0F)
                 .normalize();
 
-        int i = 0;
+        float i = 0.0F;
         while (i<distance){
             end = end.add(d0);
             if(!level.isEmptyBlock(new BlockPos(end))){
                 break;
             }
-            i++;
+            i+=0.25F;
         }
         return internalRaycastForEntity(level, originEntity, start, end, checkForBlocks, 30.0F);
     }
@@ -256,25 +266,11 @@ public class SkyFallAttack extends AbstractDragonPhaseInstance {
             blockHitResult = level.clip(new ClipContext(start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, originEntity));
             end = blockHitResult.getLocation();
         }
-        AABB range = originEntity.getBoundingBox().expandTowards(end.subtract(start));
-
 
         if(!level.isClientSide){
             PacketHandler.sendToAllTracking(new PacketFlameParticles(start,end),originEntity);
         }
-
-        List<HitResult> hits = new ArrayList<>();
-        List<? extends Entity> entities = level.getEntities(originEntity, range, e-> e instanceof LivingEntity);
-        for (Entity target : entities) {
-            HitResult hit = checkEntityIntersecting(target, start, end, bbInflation);
-            if (hit.getType() != HitResult.Type.MISS)
-                hits.add(hit);
-        }
-
-        if (!hits.isEmpty()) {
-            hits.sort(Comparator.comparingDouble(o -> o.getLocation().distanceToSqr(start)));
-            return hits;
-        } else if (checkForBlocks) {
+        if (checkForBlocks) {
             return List.of(blockHitResult);
         }
         return List.of(BlockHitResult.miss(end, Direction.UP, new BlockPos(end)));

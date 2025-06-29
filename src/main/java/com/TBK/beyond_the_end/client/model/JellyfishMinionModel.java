@@ -164,29 +164,9 @@ public class JellyfishMinionModel<T extends JellyfishMinionEntity> extends Hiera
 
 	public List<ModelPart> getEye(){
 		return List.of(Eyes,Tendrils2,
-				LowerTendril2,
-				LowerTendril1Section2,
-				LowerTendril1Section3,
-				LowerTendrilMiddle,
-				LowerTendril1Section4,
 				Tendrils3,
-				LowerTendril3,
-				LowerTendril1Section7,
-				LowerTendril1Section8,
-				LowerMiddleTendril,
-				LowerTendril1Section9,
 				Tendrils4,
-				LowerTendril4,
-				LowerTendril1Section5,
-				LowerTendril1Section6,
-				MiddleTentacle,
-				LowerTendril1Section10,
-				Tendrils5,
-				LowerTendril5,
-				LowerTendril1Section11,
-				LowerTendril1Section12,
-				LowerTendrilSectionMiddle,
-				LowerTendril1Section13
+				Tendrils5
 		);
 	}
 

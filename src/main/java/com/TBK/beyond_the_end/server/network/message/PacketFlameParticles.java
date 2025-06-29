@@ -74,7 +74,7 @@ public class PacketFlameParticles implements Packet<PacketListener> {
         Vec3 end=new Vec3(this.xEnd,this.yEnd,this.zEnd);
         Vec3 start=new Vec3(this.xInitial,this.yInitial,this.zInitial);
         Vec3 line=end.subtract(start).normalize().scale(6.5F);
-        for (int i=0;i<150;i++){
+        for (int i=0;i<300;i++){
             Random r=new Random();
             double d9 =  line.x;
             double d10 =  line.y;

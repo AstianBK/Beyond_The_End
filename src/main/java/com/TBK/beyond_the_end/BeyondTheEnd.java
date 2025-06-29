@@ -15,6 +15,7 @@ import com.mojang.logging.LogUtils;
 import net.minecraft.client.particle.DragonBreathParticle;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
+import net.minecraft.client.renderer.entity.DragonFireballRenderer;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraft.client.renderer.entity.SlimeRenderer;
 import net.minecraft.server.MinecraftServer;
@@ -79,6 +80,7 @@ public class BeyondTheEnd
         EntityRenderers.register(BKEntityType.JELLYFISH_MINION.get(), JellyfishMinionRenderer::new);
         EntityRenderers.register(BKEntityType.CHARGE_FOLLOWING.get(), ChargeFollowingRenderer::new);
         EntityRenderers.register(BKEntityType.CHARGE_FLASH.get(), ChargeFlashRenderer::new);
+        EntityRenderers.register(BKEntityType.FALLEN_DRAGON_FIREBALL.get(), FallenFireballRenderer::new);
 
     }
 

@@ -1,6 +1,8 @@
 package com.TBK.beyond_the_end.server.entity.projectile;
 
 import com.TBK.beyond_the_end.common.registry.BKEntityType;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -46,7 +48,9 @@ public class ChargeFlash extends NormalProjectile{
     protected void onHitEntity(EntityHitResult p_37259_) {
         if(p_37259_.getEntity() instanceof LivingEntity living ){
             living.hurt(DamageSource.LIGHTNING_BOLT,4.0F);
-
+            if(this.level.isClientSide){
+                living.level.playLocalSound(living.getX(),living.getY(),living.getZ(), SoundEvents.THORNS_HIT, SoundSource.HOSTILE,3.0F,1.0F,false);
+            }
         }
     }
 }

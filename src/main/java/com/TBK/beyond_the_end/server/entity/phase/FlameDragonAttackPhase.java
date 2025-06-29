@@ -1,6 +1,7 @@
 package com.TBK.beyond_the_end.server.entity.phase;
 
 import com.TBK.beyond_the_end.server.entity.FallenDragonEntity;
+import com.TBK.beyond_the_end.server.entity.projectile.FallenDragonFireball;
 import com.TBK.beyond_the_end.server.network.PacketHandler;
 import com.TBK.beyond_the_end.server.network.message.PacketTargetDragon;
 import com.mojang.logging.LogUtils;
@@ -63,9 +64,9 @@ public class FlameDragonAttackPhase extends AbstractDragonPhaseInstance {
                     float yawRad = (float)Math.toRadians(this.dragon.getYRot());
                     float sin = (float)Math.sin(yawRad);
                     float cos = (float)Math.cos(yawRad);
-                    double d6 = this.dragon.getX() - 6.25D*sin;
-                    double d7 = this.dragon.getY() + 1.5D +5.0D;
-                    double d8 = this.dragon.getZ() + 6.25D*cos;
+                    double d6 = this.dragon.getX() + 5.25D*sin;
+                    double d7 = this.dragon.getY() + 4.75D;
+                    double d8 = this.dragon.getZ() - 5.25D*cos;
                     double d9 = this.attackTarget.getX() - d6;
                     double d10 = this.attackTarget.getY() - d7 ;
                     double d11 = this.attackTarget.getZ() - d8;
@@ -74,7 +75,7 @@ public class FlameDragonAttackPhase extends AbstractDragonPhaseInstance {
                         this.dragon.level.levelEvent((Player)null, 1017, this.dragon.blockPosition(), 0);
                     }
 
-                    DragonFireball dragonfireball = new DragonFireball(this.dragon.level, this.dragon, d9, d10, d11);
+                    FallenDragonFireball dragonfireball = new FallenDragonFireball(this.dragon.level, this.dragon, d9, d10, d11);
                     dragonfireball.setOwner(this.dragon);
                     dragonfireball.moveTo(d6, d7, d8, 0.0F, 0.0F);
                     this.dragon.level.addFreshEntity(dragonfireball);
@@ -86,8 +87,8 @@ public class FlameDragonAttackPhase extends AbstractDragonPhaseInstance {
                     }
                     this.countFireball++;
                     if(this.countFireball>this.maxCountFireball-1){
+                        this.dragon.teleport(this.dragon.getX(),this.dragon.level.getHeight(Heightmap.Types.WORLD_SURFACE, (int) this.dragon.getX(), (int) this.dragon.getZ()),this.dragon.getZ());
                         this.dragon.phaseManager.setPhase(FallenDragonPhase.HOLDING_PATTERN);
-                        this.dragon.teleportTo(0,80,0);
                         this.dragon.setModeFly(false);
                     }
                 }

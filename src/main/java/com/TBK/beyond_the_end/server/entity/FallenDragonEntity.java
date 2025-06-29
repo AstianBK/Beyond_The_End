@@ -3,6 +3,7 @@ package com.TBK.beyond_the_end.server.entity;
 import com.TBK.beyond_the_end.BeyondTheEnd;
 import com.TBK.beyond_the_end.common.registry.BKEntityType;
 import com.TBK.beyond_the_end.server.entity.phase.*;
+import com.TBK.beyond_the_end.server.entity.projectile.FallenDragonFireball;
 import com.TBK.beyond_the_end.server.network.PacketHandler;
 import com.TBK.beyond_the_end.server.network.message.PacketTargetDragon;
 import com.google.common.collect.Lists;
@@ -86,8 +87,8 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
 
     public BlockPos targetPos=null;
     private int attackMelee=0;
-    public float oFlapTime;
-    public float flapTime;
+    public int oFlapTime;
+    public int flapTime;
     public boolean inWall;
     public int delayCharge = 0;
     public int dragonDeathTime;
@@ -101,6 +102,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
     public boolean isFlame=false;
 
     public int shootTime = 0;
+    private boolean hasFlapped = false;
 
     public FallenDragonEntity(EntityType<? extends FallenDragonEntity> p_31096_, Level p_31097_) {
         super(p_31096_, p_31097_);
@@ -153,9 +155,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
 
 
     public boolean isFlapping() {
-        float f = Mth.cos(this.flapTime * ((float)Math.PI * 2F));
-        float f1 = Mth.cos(this.oFlapTime * ((float)Math.PI * 2F));
-        return f1 <= -0.3F && f >= -0.3F;
+        return false;
     }
 
     public void onFlap() {
@@ -215,7 +215,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
                             this.level.levelEvent((Player)null, 1017, this.blockPosition(), 0);
                         }
 
-                        DragonFireball dragonfireball = new DragonFireball(this.level, this, d9, d10 , d11);
+                        FallenDragonFireball dragonfireball = new FallenDragonFireball(this.level, this, d9, d10 , d11);
                         dragonfireball.setOwner(this);
                         dragonfireball.moveTo(d6, d7, d8, 0.0F, 0.0F);
                         this.level.addFreshEntity(dragonfireball);
@@ -248,6 +248,9 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
                     }
                 }
             }
+            if(this.attackMelee==0){
+                this.clawAttack=true;
+            }
         }
 
         if(this.isCharging()){
@@ -255,23 +258,32 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
                 if(this.delayCharge>20){
                     if(this.delayCharge%10==0){
                         LivingEntity target = this.getTarget();
-                        this.getNavigation().moveTo(target,2.0D);
+                        this.getNavigation().moveTo(target,3.0D);
                     }
                 }
 
                 if(this.delayCharge%10==0){
                     this.rotateToTarget(this.getTarget().position());
                 }
+                double d0 = (this.body.getBoundingBox().minX + this.body.getBoundingBox().maxX) / 2.0D;
+                double d1 = (this.body.getBoundingBox().minZ + this.body.getBoundingBox().maxZ) / 2.0D;
+
+                for (LivingEntity entity : this.level.getEntitiesOfClass(LivingEntity.class,this.getBoundingBox().inflate(15.0F))){
+                    if(!entity.is(entity) && entity!=this.getTarget()){
+                        this.knockBack(entity,d0,d1);
+                    }
+                }
+                this.delayCharge++;
                 if (this.getBoundingBox().intersects(this.getTarget().getBoundingBox())) {
                     this.setCharging(false);
                     this.attackMelee = 45;
                     if(!this.level.isClientSide){
+                        this.level.playSound(null,this.getTarget(),SoundEvents.ANVIL_HIT,SoundSource.HOSTILE,4.0F,1.0F);
                         this.level.broadcastEntityEvent(this, (byte) 8);
                         this.getTarget().addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 100, 4));
                         PacketHandler.sendToAllTracking(new PacketTargetDragon(this.getId(), -1, 1), this);
                     }
                 }
-                this.delayCharge++;
             }
         }
     }
@@ -358,19 +370,22 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
             }
         }
     }
+    private void knockBack(LivingEntity entity,double d0,double d1) {
+        double d2 = entity.getX() - d0;
+        double d3 = entity.getZ() - d1;
+        double d4 = Math.max(d2 * d2 + d3 * d3, 0.1D);
+        entity.push(d2 / d4 * 16.0D,(double)0.2F, d3 / d4 * 16.0D);
+        entity.hurt(DamageSource.mobAttack(this), 20.0F);
+        this.doEnchantDamageEffects(this, entity);
 
+    }
     private void knockBack(List<Entity> p_31132_, boolean up) {
         double d0 = (this.getBoundingBox().minX + this.getBoundingBox().maxX) / 2.0D;
         double d1 = (this.getBoundingBox().minZ + this.getBoundingBox().maxZ) / 2.0D;
 
         for(Entity entity : p_31132_) {
             if (entity instanceof LivingEntity) {
-                double d2 = entity.getX() - d0;
-                double d3 = entity.getZ() - d1;
-                double d4 = Math.max(d2 * d2 + d3 * d3, 0.1D);
-                entity.push(d2 / d4 * 16.0D,(double)0.2F, d3 / d4 * 16.0D);
-                entity.hurt(DamageSource.mobAttack(this), 20.0F);
-                this.doEnchantDamageEffects(this, entity);
+                this.knockBack((LivingEntity) entity,d0,d1);
             }
         }
     }
@@ -390,7 +405,6 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
             }
         }
 
-        this.oFlapTime = this.flapTime;
         if (this.isRespawn()) {
             FallenDragonInstance dragonphaseinstance = this.phaseManager.getCurrentPhase();
 
@@ -422,20 +436,16 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
                     }
                 }
                 this.yBodyRot = this.getYRot();
-                Vec3 vec3 = this.getDeltaMovement();
-                float f = 0.2F / ((float)vec3.horizontalDistance() * 10.0F + 1.0F);
-                f *= (float)Math.pow(2.0D, vec3.y);
-                if (this.phaseManager.getCurrentPhase().isSitting()) {
-                    this.flapTime += 0.1F;
-                } else if (this.inWall) {
-                    this.flapTime += f * 0.5F;
-                } else {
-                    this.flapTime += f;
+                if(this.flapTime==0){
+                    this.flapTime=20;
+                }
+                if(this.flapTime>0){
+                    this.flapTime--;
                 }
 
                 this.setYRot(Mth.wrapDegrees(this.getYRot()));
                 if (this.isNoAi()) {
-                    this.flapTime = 0.5F;
+                    this.flapTime = 0;
                 } else {
                     if (this.posPointer < 0) {
                         for(int i = 0; i < this.positions.length; ++i) {
@@ -502,80 +512,6 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
                         }
                     }
 
-                }
-                boolean flag=this.isOnGround() && this.phaseManager.getCurrentPhase().getPhase().equals(FallenDragonPhase.FLAME);
-
-                this.yBodyRot = this.getYRot();
-                Vec3[] avec3 = new Vec3[this.subEntities.length];
-
-                for(int j = 0; j < this.subEntities.length; ++j) {
-                    avec3[j] = new Vec3(this.subEntities[j].getX(), this.subEntities[j].getY(), this.subEntities[j].getZ());
-                }
-
-                float f12 = (float)(this.getLatencyPos(5, 1.0F)[1] - this.getLatencyPos(10, 1.0F)[1]) * 10.0F * ((float)Math.PI / 180F);
-                float f13 = Mth.cos(f12);
-                float f1 = Mth.sin(f12);
-                float f14 = this.getYRot() * ((float)Math.PI / 180F);
-                float f2 = Mth.sin(f14);
-                float f15 = Mth.cos(f14);
-
-                this.tickPart(this.body, (double)(f2 * 0.5F), 0.0D, (double)(-f15 * 0.5F));
-                this.tickPart(this.wing1, (double)(f15 * 4.5F), 2.0D, (double)(f2 * 4.5F));
-                this.tickPart(this.wing2, (double)(f15 * -4.5F), 2.0D, (double)(f2 * -4.5F));
-                if (!this.level.isClientSide && this.hurtTime == 0 && this.canFly()) {
-                    this.knockBack(this.level.getEntities(this, this.wing1.getBoundingBox().inflate(4.0D, 2.0D, 4.0D).move(0.0D, -2.0D, 0.0D), EntitySelector.NO_CREATIVE_OR_SPECTATOR),false);
-                    this.knockBack(this.level.getEntities(this, this.wing2.getBoundingBox().inflate(4.0D, 2.0D, 4.0D).move(0.0D, -2.0D, 0.0D), EntitySelector.NO_CREATIVE_OR_SPECTATOR),false);
-                    this.hurt(this.level.getEntities(this, this.head.getBoundingBox().inflate(1.0D), EntitySelector.NO_CREATIVE_OR_SPECTATOR));
-                    this.hurt(this.level.getEntities(this, this.neck.getBoundingBox().inflate(1.0D), EntitySelector.NO_CREATIVE_OR_SPECTATOR));
-                }
-
-                float f3 = this.hasModeFly() ? Mth.sin(this.getYRot() * ((float)Math.PI / 180F) - this.yRotA * 0.01F) : Mth.sin(180F * ((float)Math.PI / 180F) - this.yRotA * 0.01F) ;
-                float f16 = this.hasModeFly() ? Mth.cos(this.getYRot() * ((float)Math.PI / 180F) - this.yRotA * 0.01F) : Mth.cos(180F * ((float)Math.PI / 180F) - this.yRotA * 0.01F);
-                float f4 = this.getHeadYOffset();
-                if(flag){
-                    this.tickPart(this.head, (double)-(f2 * 6.5F), (double)(f4 + f1 * 6.5F), (double)-(-f15 * 6.5F));
-                    this.tickPart(this.neck, (double)-(f2 * 5.5F), (double)(f4 + f1 * 5.5F), (double)-(-f15 * 5.5F));
-                }else{
-                    this.tickPart(this.head, (double)(f3 * 6.5F * f13), (double)(f4 + f1 * 6.5F), (double)(-f16 * 6.5F * f13));
-                    this.tickPart(this.neck, (double)(f3 * 5.5F * f13), (double)(f4 + f1 * 5.5F), (double)(-f16 * 5.5F * f13));
-                }
-
-                double[] adouble = this.getLatencyPos(5, 1.0F);
-
-                for(int k = 0; k < 3; ++k) {
-                    FallenPartEntity enderdragonpart = null;
-                    if (k == 0) {
-                        enderdragonpart = this.tail1;
-                    }
-
-                    if (k == 1) {
-                        enderdragonpart = this.tail2;
-                    }
-
-                    if (k == 2) {
-                        enderdragonpart = this.tail3;
-                    }
-
-                    double[] adouble1 = this.getLatencyPos(12 + k * 2, 1.0F);
-                    float f17 = this.hasModeFly() ?  this.getYRot() * ((float)Math.PI / 180F) + this.rotWrap(adouble1[0] - adouble[0]) * ((float)Math.PI / 180F) : 180F * ((float)Math.PI / 180F) + this.rotWrap(adouble1[0] - adouble[0]) * ((float)Math.PI / 180F);;
-                    float f18 = Mth.sin(f17);
-                    float f20 = Mth.cos(f17);
-                    float f21 = 1.5F;
-                    float f22 = (float)(k + 1) * 2.0F;
-                    if(flag){
-                        this.tickPart(enderdragonpart, (double)((f2 * 1.5F - f22)), adouble1[1] - adouble[1] - (double)((f22 + 1.5F) * f1) + 1.5D, (double)(-(f15 * 1.5F - f22)));
-                    }else {
-                        this.tickPart(enderdragonpart, (double)(-(f2 * 1.5F + f18 * f22) * f13), adouble1[1] - adouble[1] - (double)((f22 + 1.5F) * f1) + 1.5D, (double)((f15 * 1.5F + f20 * f22) * f13));
-                    }
-                }
-
-                for(int l = 0; l < this.subEntities.length; ++l) {
-                    this.subEntities[l].xo = avec3[l].x;
-                    this.subEntities[l].yo = avec3[l].y;
-                    this.subEntities[l].zo = avec3[l].z;
-                    this.subEntities[l].xOld = avec3[l].x;
-                    this.subEntities[l].yOld = avec3[l].y;
-                    this.subEntities[l].zOld = avec3[l].z;
                 }
             }else {
                 this.noPhysics=false;
@@ -696,9 +632,6 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
                 return false;
             } else {
                 p_31123_ = this.phaseManager.getCurrentPhase().onHurt(p_31122_, p_31123_);
-                /*if (p_31121_ != this.head) {
-                    p_31123_ = p_31123_ / 4.0F + Math.min(p_31123_, 1.0F);
-                }*/
 
                 if (p_31123_ < 0.01F) {
                     return false;
@@ -760,7 +693,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
         if(this.phaseManager.getCurrentPhase().getPhase()!=FallenDragonPhase.FLAME && this.attackMelee<=0 && this.chargedAnim<=0 && !this.isCharging()){
             if(this.getHealth()<this.getMaxHealth()*0.9F){
                 if(this.hasModeFly()){
-                    //this.teleport(0,80,0);
+                    this.teleport(this.getX(),this.level.getHeight(Heightmap.Types.WORLD_SURFACE, (int) this.getX(), (int) this.getZ()),this.getZ());
                     this.setModeFly(false);
                     this.phaseManager.setPhase(FallenDragonPhase.HOLDING_PATTERN);
                     this.setDeltaMovement(Vec3.ZERO);
@@ -780,13 +713,13 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
         Vec3 vec3 = new Vec3(this.getX() - p_32501_.getX(), this.getY(0.5D), this.getZ() - p_32501_.getZ());
         vec3 = vec3.normalize();
         double d1 = this.getX() + (this.random.nextDouble() - 0.5D) * this.level.random.nextInt(32,64) - vec3.x * 6.0D;
-        double d2 = 110.0F;
+        double d2 = 85.0F;
         double d3 = this.getZ() + (this.random.nextDouble() - 0.5D) * this.level.random.nextInt(32,64) - vec3.z * 6.0D;
 
         return this.teleport(d1, d2, d3);
     }
 
-    private boolean teleport(double p_32544_, double p_32545_, double p_32546_) {
+    public boolean teleport(double p_32544_, double p_32545_, double p_32546_) {
         BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos(p_32544_, p_32545_, p_32546_);
 
         while(blockpos$mutableblockpos.getY() > this.level.getMinBuildHeight()) {
@@ -934,7 +867,12 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
         if(p_21375_==4){
             this.isFlame=true;
         }else if(p_21375_==8){
+            this.setCharging(false);
             this.attackMelee=45;
+        }else if(p_21375_==9){
+            this.setCharging(true);
+            this.attackMelee=45;
+            this.level.playLocalSound(this.getX(), this.getY(), this.getZ(), SoundEvents.ENDER_DRAGON_GROWL, this.getSoundSource(), 2.5F, 0.8F + this.random.nextFloat() * 0.3F, false);
         }else if(p_21375_==62){
             this.attackMelee=23;
             this.isBackAttack=true;
@@ -1215,10 +1153,21 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
         data.addAnimationController(new AnimationController<>(this,"controller",10, state -> {
             boolean isMove= !(state.getLimbSwingAmount() > -0.15F && state.getLimbSwingAmount() < 0.15F);
             if((!this.isOnGround() && !this.isCharging()) || this.phaseManager.getCurrentPhase().getPhase()==FallenDragonPhase.FLAME){
+                float animTick = (float) (state.getAnimationTick() % 45); // se reinicia cada 2.25s
+                float seconds = animTick / 20f;
+
+                // 🔊 Flap en 0.5s y 1.75s (con margen de error)
+                if ((Math.abs(seconds - 0.5f) < 0.05f || Math.abs(seconds - 1.75f) < 0.05f) && !hasFlapped) {
+                    this.onFlap();
+                    hasFlapped = true;
+                } else if (seconds > 1.8f) {
+                    hasFlapped = false;
+                }
                 if(this.phaseManager.getCurrentPhase().getPhase()==FallenDragonPhase.FLAME){
                     state.getController().setAnimationSpeed(1.0D);
                     state.getController().setAnimation(new AnimationBuilder().loop("flyingidlefire"));
                 }else if(this.attackMelee<=0){
+
                     state.getController().setAnimationSpeed(1.0D);
                     state.getController().setAnimation(new AnimationBuilder().loop("flying"));
                 }
@@ -1425,7 +1374,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
 
         public void start() {
             if (this.path != null) {
-                this.mob.moveControl.setWantedPosition(this.pathedTargetX,this.pathedTargetY,this.pathedTargetZ,this.speedModifier);
+                this.mob.getNavigation().moveTo(this.path,this.speedModifier);
             }
             this.mob.setAggressive(true);
             this.ticksUntilNextPathRecalculation = 0;
@@ -1511,7 +1460,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
                     }
                 }
 
-                if (this.timeSelectNewStrat > 100 && this.strat==Strat.NORMAL) {
+                if (this.timeSelectNewStrat > 100) {
                     this.selectNextStrat(target, distSqr);
                     this.timeSelectNewStrat = 0;
                 }
@@ -1552,16 +1501,21 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
         private void selectNextStrat(LivingEntity livingentity, double distance) {
             boolean hasShield = entityHasShield(livingentity);
             if(distance > 516.0D || this.mob.level.random.nextFloat()<0.4F){
-                this.mob.level.playLocalSound(this.mob.getX(), this.mob.getY(), this.mob.getZ(), SoundEvents.ENDER_DRAGON_GROWL, this.mob.getSoundSource(), 2.5F, 0.8F + this.mob.random.nextFloat() * 0.3F, false);
 
                 if(this.mob.level.random.nextFloat()<0.35F){
                     this.strat = Strat.SHOOT_FLY;
                     this.mob.setModeFly(true);
+                    this.mob.teleportTowards(livingentity);
                     this.mob.phaseManager.setPhase(FallenDragonPhase.FLAME);
+                    this.mob.phaseManager.getPhase(FallenDragonPhase.FLAME).setTarget(livingentity);
+                    PacketHandler.sendToAllTracking(new PacketTargetDragon(this.mob.getId(),livingentity.getId(),4),this.mob);
                 }else {
                     if(hasShield){
                         this.strat = Strat.RUN;
                         this.mob.setCharging(true);
+                        if(!this.mob.level.isClientSide){
+                            this.mob.level.broadcastEntityEvent(this.mob,(byte) 8);
+                        }
                         this.mob.getNavigation().stop();
                     }else {
                         this.countShoot=0;

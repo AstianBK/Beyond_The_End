@@ -28,8 +28,11 @@ public class FallenDragonModel<T extends FallenDragonEntity> extends AnimatedGeo
         return new ResourceLocation(BeyondTheEnd.MODID,"animations/fallen_dragon.animation.json");
     }
 
+
+
     @Override
     public void setCustomAnimations(T entity, int instanceId, AnimationEvent animationEvent) {
+
         GeoBone main= (GeoBone) this.getBone("fallen_dragon");
         if(main!=null){
             this.resetMain(main);

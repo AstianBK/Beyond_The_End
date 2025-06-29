@@ -4,6 +4,7 @@ import com.TBK.beyond_the_end.BeyondTheEnd;
 import com.TBK.beyond_the_end.common.registry.BKEntityType;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -137,6 +138,9 @@ public class ChargeFollowing extends NormalProjectile{
     protected void onHitEntity(EntityHitResult p_37259_) {
         if(p_37259_.getEntity() instanceof LivingEntity living ){
             living.hurt(DamageSource.LIGHTNING_BOLT,9.0F);
+            if(this.level.isClientSide){
+                living.level.playLocalSound(living.getX(),living.getY(),living.getZ(), SoundEvents.THORNS_HIT, SoundSource.HOSTILE,3.0F,1.0F,false);
+            }
         }
     }
 }

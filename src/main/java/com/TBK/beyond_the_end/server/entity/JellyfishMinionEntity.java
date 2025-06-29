@@ -176,10 +176,10 @@ public class JellyfishMinionEntity extends PathfinderMob {
                             ball.setPos(this.getEyePosition());
                             ball.shoot(this.getTarget().getEyePosition().x-this.getEyePosition().x,this.getTarget().getEyePosition().y-this.getEyePosition().y,this.getTarget().getEyePosition().z-this.getEyePosition().z,1.0F,1.0F);
                             this.level.addFreshEntity(ball);
-                            this.level.broadcastEntityEvent(this,(byte) 8);
+                            this.level.broadcastEntityEvent(this,(byte) 9);
                         }else {
                             this.level.addFreshEntity(new ChargeFollowing(this.level,this,this.getTarget()));
-                            this.level.broadcastEntityEvent(this,(byte) 9);
+                            this.level.broadcastEntityEvent(this,(byte) 8);
                         }
                     }
                     this.setActionForID(0);
@@ -311,6 +311,10 @@ public class JellyfishMinionEntity extends PathfinderMob {
         }
     }
 
+    @Override
+    protected float getSoundVolume() {
+        return super.getSoundVolume();
+    }
 
     @Override
     public void die(DamageSource p_21014_) {
@@ -348,9 +352,9 @@ public class JellyfishMinionEntity extends PathfinderMob {
             this.idle.stop();
             this.idleTimer=7;
         }else if(p_21375_==8){
-            this.level.playLocalSound(this.getX(),this.getY(),this.getZ(),BTESounds.JELLYFISH_SHOOT1.get(),SoundSource.HOSTILE,3.0F,1.0F,false);
+            this.level.playLocalSound(this.getX(),this.getY(),this.getZ(), BTESounds.JELLYFISH_SHOOT1.get(), SoundSource.HOSTILE,5.0F,1.0F,true);
         }else if(p_21375_==9){
-            this.level.playLocalSound(this.getX(),this.getY(),this.getZ(),BTESounds.JELLYFISH_SHOOT2.get(),SoundSource.HOSTILE,3.0F,1.0F,false);
+            this.level.playLocalSound(this.getX(),this.getY(),this.getZ(), BTESounds.JELLYFISH_SHOOT2.get(), SoundSource.HOSTILE,5.0F,1.0F,true);
         }
         super.handleEntityEvent(p_21375_);
     }

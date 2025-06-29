@@ -267,21 +267,21 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
                 }
                 double d0 = (this.body.getBoundingBox().minX + this.body.getBoundingBox().maxX) / 2.0D;
                 double d1 = (this.body.getBoundingBox().minZ + this.body.getBoundingBox().maxZ) / 2.0D;
-
-                for (LivingEntity entity : this.level.getEntitiesOfClass(LivingEntity.class,this.getBoundingBox().inflate(15.0F))){
-                    if(!entity.is(entity) && entity!=this.getTarget()){
-                        this.knockBack(entity,d0,d1);
-                    }
-                }
                 this.delayCharge++;
-                if (this.getBoundingBox().intersects(this.getTarget().getBoundingBox())) {
-                    this.setCharging(false);
-                    this.attackMelee = 45;
-                    if(!this.level.isClientSide){
-                        this.level.playSound(null,this.getTarget(),SoundEvents.ANVIL_HIT,SoundSource.HOSTILE,4.0F,1.0F);
-                        this.level.broadcastEntityEvent(this, (byte) 8);
-                        this.getTarget().addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 100, 4));
-                        PacketHandler.sendToAllTracking(new PacketTargetDragon(this.getId(), -1, 1), this);
+                for (LivingEntity entity : this.level.getEntitiesOfClass(LivingEntity.class,this.getBoundingBox().inflate(7.5F))){
+                    if(entity==this.getTarget()){
+                        this.setCharging(false);
+                        this.attackMelee = 45;
+                        if(!this.level.isClientSide){
+                            this.level.playSound(null,this.getTarget(),SoundEvents.ANVIL_HIT,SoundSource.HOSTILE,4.0F,1.0F);
+                            this.level.broadcastEntityEvent(this, (byte) 8);
+                            this.getTarget().addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 100, 4));
+                            PacketHandler.sendToAllTracking(new PacketTargetDragon(this.getId(), -1, 1), this);
+                        }
+                        break;
+                    }
+                    if(!entity.is(entity)){
+                        this.knockBack(entity,d0,d1);
                     }
                 }
             }

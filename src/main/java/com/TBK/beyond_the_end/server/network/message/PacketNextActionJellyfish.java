@@ -1,6 +1,5 @@
 package com.TBK.beyond_the_end.server.network.message;
 
-import com.TBK.beyond_the_end.BeyondTheEnd;
 import com.TBK.beyond_the_end.common.registry.BTESounds;
 import com.TBK.beyond_the_end.server.entity.JellyfishEntity;
 import com.TBK.beyond_the_end.server.entity.JellyfishMinionEntity;
@@ -25,25 +24,25 @@ import java.util.Random;
 import java.util.function.Supplier;
 
 public class PacketNextActionJellyfish implements Packet<PacketListener> {
-    private final int timeForNextAction;
+    private final int value;
     private final int idJellyfish;
     private final int idAction;
     public PacketNextActionJellyfish(FriendlyByteBuf buf) {
         this.idJellyfish = buf.readInt();
-        this.timeForNextAction = buf.readInt();
+        this.value = buf.readInt();
         this.idAction = buf.readInt();
     }
 
     public PacketNextActionJellyfish(int idJellyfish, int timeForNextAction, int idAction) {
         this.idJellyfish = idJellyfish;
-        this.timeForNextAction = timeForNextAction;
+        this.value = timeForNextAction;
         this.idAction = idAction;
     }
 
     @Override
     public void write(FriendlyByteBuf buf) {
         buf.writeInt(this.idJellyfish);
-        buf.writeInt(this.timeForNextAction);
+        buf.writeInt(this.value);
         buf.writeInt(this.idAction);
     }
 
@@ -65,29 +64,31 @@ public class PacketNextActionJellyfish implements Packet<PacketListener> {
             jellyfish.nextTimer=0;
             if(this.idAction==4){
                 jellyfish.shootLaser.stop();
-                jellyfish.positionLastGroundPos = timeForNextAction;
-                jellyfish.maxJumpCount = timeForNextAction % 2 == 0 ? 1 :3;
+                jellyfish.positionLastGroundPos = value;
+                jellyfish.maxJumpCount = value % 2 == 0 ? 1 :3;
             }else if(this.idAction==5){
                 jellyfish.idleTimer = 0;
+                jellyfish.level.playLocalSound(jellyfish.getX(),jellyfish.getY(),jellyfish.getZ(),BTESounds.JELLYFISH_LAND.get(), SoundSource.HOSTILE,8.0F,1.0F,false);
                 this.particlePoof(mc.level,20,jellyfish.blockPosition());
             }else if(this.idAction==6){
                 jellyfish.prepareTimer=10;
-                jellyfish.positionNextPosIndex = timeForNextAction;
+                jellyfish.positionNextPosIndex = value;
                 jellyfish.jump.start(jellyfish.tickCount);
             }else if(this.idAction==7){
+                jellyfish.level.playLocalSound(jellyfish.getX(),jellyfish.getY(),jellyfish.getZ(),BTESounds.JELLYFISH_JUMP.get(), SoundSource.HOSTILE,8.0F,1.0F,false);
                 jellyfish.idleTimer = 0;
             }else if(this.idAction==8){
-                jellyfish.maxTimerInAir = timeForNextAction;
+                jellyfish.maxTimerInAir = value;
                 jellyfish.timerInAir = 0;
             }else if(this.idAction!=0){
-                jellyfish.maxNextTimer = timeForNextAction;
+                jellyfish.maxNextTimer = value;
             }
 
         }else if(dragon instanceof JellyfishMinionEntity minion){
             minion.setActionForID(this.idAction);
             minion.nextTimer=0;
             if(this.idAction!=0){
-                minion.maxNextTimer=timeForNextAction;
+                minion.maxNextTimer= value;
             }
         }
     }

@@ -255,7 +255,6 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
             }else {
                 if(this.screenShakeAmount<=0.0F){
                     this.screenShakeAmount=0.5F;
-                    //this.level.broadcastEntityEvent(this,(byte) 65);
                 }
             }
 
@@ -507,7 +506,6 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
     @Override
     public void aiStep() {
         super.aiStep();
-        BeyondTheEnd.LOGGER.debug(this.level.isClientSide ?"FASE CLIENTE "+this.actuallyPhase : "FASE SERVER "+this.actuallyPhase);
         if(this.actuallyPhase == PhaseAttack.GROUND){
             if(this.positionLastGroundPos!=-1){
                 this.setPos(Vec3.atCenterOf(this.groundPos[this.positionLastGroundPos]).add(0,5,0));
@@ -604,7 +602,6 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
             if(this.prepareTimer==0){
                 this.setActionForID(7);
                 if (!this.level.isClientSide) {
-                    this.level.playSound(null,this,BTESounds.JELLYFISH_JUMP.get(), SoundSource.HOSTILE,4.0F,1.0F);
                     PacketHandler.sendToAllTracking(new PacketNextActionJellyfish(this.getId(), 0, 7), this);
                 }
             }

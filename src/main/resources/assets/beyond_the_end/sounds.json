@@ -41,13 +41,13 @@
       "beyond_the_end:jellyminion_hurt"
     ]
   },
-  "jellyfish_shoot1": {
+  "jellyminion_shoot1": {
     "subtitle": "sounds.beyond_the_end.jellyminion_shoot1",
     "sounds": [
       "beyond_the_end:jellyminion_shoot1"
     ]
   },
-  "jellyfish_shoot2": {
+  "jellyminion_shoot2": {
     "subtitle": "sounds.beyond_the_end.jellyminion_shoot2",
     "sounds": [
       "beyond_the_end:jellyminion_shoot2"

@@ -3,6 +3,7 @@ package com.TBK.beyond_the_end.server;
 import com.TBK.beyond_the_end.BeyondTheEnd;
 import com.TBK.beyond_the_end.common.DimensionUtil;
 import com.TBK.beyond_the_end.common.blocks.BKPortalForcer;
+import com.TBK.beyond_the_end.common.registry.BTESounds;
 import com.TBK.beyond_the_end.common.registry.BkDimension;
 import com.TBK.beyond_the_end.server.capabilities.BkCapabilities;
 import com.TBK.beyond_the_end.server.capabilities.PortalPlayer;
@@ -20,6 +21,8 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -61,33 +64,9 @@ public class Events {
     @SubscribeEvent
     public static void onUseItem(PlayerInteractEvent.RightClickItem event) {
         Player player = (Player) event.getEntity();
-        if(!event.getLevel().isClientSide){
+        if(event.getLevel().isClientSide){
             if(event.getItemStack().is(Items.STICK) && !player.isShiftKeyDown()){
-                BeyondTheEnd.LOGGER.debug("El valor anterior de x :"+BeyondTheEnd.x);
-                BeyondTheEnd.x+=1;
-                BeyondTheEnd.LOGGER.debug("El valor actual de x :"+BeyondTheEnd.x);
-
-            }else if(event.getItemStack().is(Items.STICK) ){
-                BeyondTheEnd.LOGGER.debug("El valor anterior de z :"+BeyondTheEnd.z);
-                BeyondTheEnd.z+=5;
-                BeyondTheEnd.LOGGER.debug("El valor actual de z :"+BeyondTheEnd.z);
-            }
-
-            if(event.getItemStack().is(Items.BLAZE_ROD) && !player.isShiftKeyDown()){
-                BeyondTheEnd.LOGGER.debug("El valor anterior de x :"+BeyondTheEnd.x);
-                BeyondTheEnd.x-=1;
-                BeyondTheEnd.LOGGER.debug("El valor actual de x :"+BeyondTheEnd.x);
-
-            }else if(event.getItemStack().is(Items.BLAZE_ROD) && player.isShiftKeyDown()){
-                BeyondTheEnd.LOGGER.debug("El valor anterior de z :"+BeyondTheEnd.z);
-                BeyondTheEnd.z-=5;
-                BeyondTheEnd.LOGGER.debug("El valor actual de z :"+BeyondTheEnd.z);
-            }
-
-            if(event.getItemStack().is(Items.HEART_OF_THE_SEA)){
-                BeyondTheEnd.LOGGER.debug("El valor de x :"+BeyondTheEnd.x);
-                BeyondTheEnd.LOGGER.debug("El valor de z :"+BeyondTheEnd.z);
-
+                player.level.playLocalSound(player.getX(),player.getY(),player.getZ(),BTESounds.JELLYFISH_SHOOT1.get(), SoundSource.HOSTILE,5.0F,1.0F,false);
             }
         }
     }

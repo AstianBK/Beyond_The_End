@@ -65,7 +65,7 @@ public class FlameDragonAttackPhase extends AbstractDragonPhaseInstance {
                     float sin = (float)Math.sin(yawRad);
                     float cos = (float)Math.cos(yawRad);
                     double d6 = this.dragon.getX() + 5.25D*sin;
-                    double d7 = this.dragon.getY() + 4.75D;
+                    double d7 = this.dragon.getY() + 3.75D;
                     double d8 = this.dragon.getZ() - 5.25D*cos;
                     double d9 = this.attackTarget.getX() - d6;
                     double d10 = this.attackTarget.getY() - d7 ;

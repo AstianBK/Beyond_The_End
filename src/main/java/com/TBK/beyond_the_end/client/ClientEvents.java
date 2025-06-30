@@ -20,6 +20,7 @@ public class ClientEvents {
             //another mod has cancelled fog rendering.
             return;
         }
+
         float end=RenderSystem.getShaderFogEnd();
         float defaultNearPlaneDistance = RenderSystem.getShaderFogStart();
 

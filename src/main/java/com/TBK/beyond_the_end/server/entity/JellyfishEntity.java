@@ -45,6 +45,9 @@ import java.util.List;
 import java.util.Random;
 
 public class JellyfishEntity extends PathfinderMob implements ICamShaker {
+
+    public int lastAction = -1;
+
     public int idleTimer = 0;
     public int lazerTimer = 0;
     public int spinTimer = 0;
@@ -247,8 +250,9 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
                     if(hitResult.getType() == HitResult.Type.ENTITY){
                         Entity entity = ((EntityHitResult)hitResult).getEntity();
                         if(entity instanceof LivingEntity living){
-                            living.hurt(DamageSource.GENERIC,4.0F);
-                            living.hurt(DamageSource.mobAttack(this),8.0F);
+                            //ChargeBeam
+                            living.hurt(DamageSource.GENERIC,50.0F);
+                            living.hurt(DamageSource.mobAttack(this),25.0F);
                         }
                     }
                 }
@@ -277,7 +281,19 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
 
         if(!this.level.isClientSide){
             if(this.nextTimer>this.maxNextTimer && this.actuallyPhase==PhaseAttack.SPIN_AROUND && this.getTarget()!=null){
-                int nextAction=this.level.random.nextInt(0,4);
+                //int nextAction=this.level.random.nextInt(0,4);
+                // Para pruebas ------------------------------
+                /*int nextAction = 5;
+                if (lastAction < 3) nextAction = lastAction++;
+                else nextAction = 0;*/
+                //No repetir ---------------------------------
+                int nextAction =this.level.random.nextInt(0,4);
+                if (nextAction == lastAction){
+                    if (nextAction > 3) nextAction++;
+                    else nextAction = 0;
+                }
+
+                lastAction = nextAction;
                 this.nextTimer = 0;
                 if(nextAction==3){
                     if(!this.canSummonMinions()){
@@ -1235,7 +1251,8 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
 
         protected void checkAndPerformAttack() {
             this.mob.level.getEntitiesOfClass(LivingEntity.class,this.mob.getBoundingBox().inflate(25.0D,4.0F,25.0F),e->e!=this.mob && !this.mob.isAlliedTo(e)).forEach(e->{
-                if(e.hurt(DamageSource.mobAttack(this.mob),10.0F)){
+                //Rotacion?
+                if(e.hurt(DamageSource.mobAttack(this.mob),30.0F)){
                     double dX=e.getX()-this.mob.getX();
                     double dZ=e.getZ()-this.mob.getZ();
                     double d0=Math.sqrt(dX*dX+dZ*dZ);

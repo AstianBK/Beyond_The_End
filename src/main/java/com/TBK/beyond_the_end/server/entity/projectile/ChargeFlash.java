@@ -47,7 +47,7 @@ public class ChargeFlash extends NormalProjectile{
     @Override
     protected void onHitEntity(EntityHitResult p_37259_) {
         if(p_37259_.getEntity() instanceof LivingEntity living ){
-            living.hurt(DamageSource.LIGHTNING_BOLT,4.0F);
+            living.hurt(DamageSource.LIGHTNING_BOLT,16.0F);
             if(this.level.isClientSide){
                 living.level.playLocalSound(living.getX(),living.getY(),living.getZ(), SoundEvents.THORNS_HIT, SoundSource.HOSTILE,3.0F,1.0F,false);
             }

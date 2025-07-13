@@ -79,9 +79,9 @@ public class JellyfishMinionEntity extends PathfinderMob {
 
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 20.0D)
+                .add(Attributes.MAX_HEALTH, 40.0D)
                 .add(Attributes.FOLLOW_RANGE,100.0D)
-                .add(Attributes.FLYING_SPEED,0.35D);
+                .add(Attributes.FLYING_SPEED,0.7D);
     }
 
     public boolean causeFallDamage(float pFallDistance, float pMultiplier, DamageSource pSource) {

@@ -566,7 +566,7 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
                     this.legs[l].yOld = avec3[l].y;
                     this.legs[l].zOld = avec3[l].z;
                 }
-                if(this.waitInGroundTime++>100){
+                if(this.waitInGroundTime++>200){
                     if(this.jumpCount<this.maxJumpCount){
                         this.prepareTimer = 10;
                         if(!this.level.isClientSide){
@@ -674,7 +674,6 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
                 leg.setSize(EntityDimensions.scalable(0, 0));
             }
         }
-
 
         if(!this.level.isClientSide){
             if(this.actuallyPhase!=PhaseAttack.ATTACK  || this.getTarget()==null){

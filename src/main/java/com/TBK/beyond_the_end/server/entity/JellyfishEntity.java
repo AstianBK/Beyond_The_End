@@ -12,11 +12,13 @@ import com.TBK.beyond_the_end.server.network.message.PacketNextActionJellyfish;
 import com.TBK.beyond_the_end.server.network.message.PacketPlaySound;
 import com.TBK.beyond_the_end.server.network.message.PacketActionDragon;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.TicketType;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -34,12 +36,14 @@ import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.*;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Random;
@@ -97,6 +101,7 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
     private final JellyfishPartEntity leg2;
     private final JellyfishPartEntity leg3;
     private final JellyfishPartEntity[] legs;
+
     private final BlockPos[] groundPos = new BlockPos[]{
             new BlockPos(0,90,0),
             new BlockPos(19,90,30),
@@ -911,21 +916,17 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
 
                 double angle = 2 * Math.PI * i / points + 0.1744444F * i1;
 
-                // Punto en círculo vertical (en el plano XY local del anillo)
                 double x = radius * Math.cos(angle);
                 double y = radius * Math.sin(angle);
 
-                // Transformar a coordenadas globales usando la base
                 Vec3 offset = right.scale(x).add(forward.scale(y));
 
                 double fx = px + offset.x;
                 double fy = py + offset.y;
                 double fz = pz + offset.z;
-                // Derivadas de x e y respecto al ángulo (velocidad circular)
                 double dx = -radius * Math.sin(angle);
                 double dy = radius * Math.cos(angle);
 
-                // Convertirlas a coordenadas globales con los mismos ejes
                 Vec3 motion = right.scale(dx).add(forward.scale(dy)).normalize().scale(0.3); // velocidad tangencial
 
                 level.addParticle(this.random.nextBoolean() ? BKParticles.FLAME_PARTICLE.get() : ParticleTypes.SOUL_FIRE_FLAME, fx, fy, fz, motion.x, motion.y, motion.z);

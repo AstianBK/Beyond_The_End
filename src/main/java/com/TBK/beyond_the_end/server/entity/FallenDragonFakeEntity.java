@@ -4,6 +4,11 @@ import com.TBK.beyond_the_end.BeyondTheEnd;
 import com.TBK.beyond_the_end.server.entity.phase.FallenDragonPhase;
 import com.TBK.beyond_the_end.server.network.PacketHandler;
 import com.TBK.beyond_the_end.server.network.message.PacketNextActionJellyfish;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.TicketType;
+import net.minecraft.util.Unit;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -11,6 +16,7 @@ import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import software.bernie.geckolib3.GeckoLib;
@@ -24,6 +30,11 @@ import software.bernie.geckolib3.util.GeckoLibUtil;
 
 public class FallenDragonFakeEntity extends PathfinderMob implements IAnimatable {
     public final AnimationFactory factory = GeckoLibUtil.createFactory(this);
+    public static final TicketType<Unit> FAKE = TicketType.create("fake", (p_9460_, p_9461_) -> {
+        return 0;
+    });
+    public int idTarget = -1;
+
     public FallenDragonFakeEntity(EntityType<? extends PathfinderMob> p_21683_, Level p_21684_) {
         super(p_21683_, p_21684_);
     }
@@ -57,13 +68,20 @@ public class FallenDragonFakeEntity extends PathfinderMob implements IAnimatable
     public void tick() {
         this.noPhysics = true;
         this.setNoGravity(true);
-        JellyfishEntity jellyfish = this.level.getEntitiesOfClass(JellyfishEntity.class,this.getBoundingBox().inflate(2000)).stream().findFirst().orElse(null);
+        JellyfishEntity jellyfish;
+        if(this.idTarget == -1){
+           jellyfish = this.level.getEntitiesOfClass(JellyfishEntity.class,this.getBoundingBox().inflate(500)).stream().findFirst().orElse(null);
+           if(jellyfish!=null){
+               this.idTarget = jellyfish.getId();
+           }
+        }else {
+            jellyfish = this.level.getEntity(this.idTarget) instanceof JellyfishEntity ? (JellyfishEntity) this.level.getEntity(this.idTarget) :  null;
+        }
         if(jellyfish!=null){
-            Vec3 vec32 = this.position().subtract(jellyfish.getEyePosition());
+            Vec3 vec32 = this.position().subtract(jellyfish.getEyePosition().add(0,-jellyfish.getEyeHeight()/2,0));
             this.setDeltaMovement(vec32.multiply(-1,-1,-1).normalize().scale(0.35D));
             jellyfish.dragonDeath=this.position();
             jellyfish.setTarget(this);
-
             double f5 = -Math.toDegrees(Math.atan2(vec32.y,Math.sqrt(vec32.x*vec32.x + vec32.z*vec32.z)));
             double f6 = Math.toDegrees(Math.atan2(vec32.z, vec32.x)) - 90.0F;
             this.yHeadRot=(float)f6;
@@ -73,6 +91,7 @@ public class FallenDragonFakeEntity extends PathfinderMob implements IAnimatable
             this.setXRot((float) f5);
             this.setRot(this.getYRot(),this.getXRot());
             if(!this.level.getEntities(this,this.getBoundingBox(),e->e==jellyfish).isEmpty()) {
+                BeyondTheEnd.LOGGER.debug("Termino");
                 jellyfish.shootLaser.stop();
                 jellyfish.setActionForID(4);
                 jellyfish.positionLastGroundPos=0;
@@ -89,5 +108,15 @@ public class FallenDragonFakeEntity extends PathfinderMob implements IAnimatable
     @Override
     public AnimationFactory getFactory() {
         return this.factory;
+    }
+
+    @Override
+    protected void checkInsideBlocks() {
+
+    }
+
+    @Override
+    public void checkDespawn() {
+
     }
 }

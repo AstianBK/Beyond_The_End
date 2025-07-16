@@ -39,7 +39,7 @@ import java.util.*;
 import java.util.function.Predicate;
 
 public class JellyfishFightEvent {
-    private static final Predicate<Entity> VALID_PLAYER = EntitySelector.ENTITY_STILL_ALIVE.and(EntitySelector.withinDistance(0.0D, 128.0D, 0.0D, 192.0D));
+    private static final Predicate<Entity> VALID_PLAYER = EntitySelector.ENTITY_STILL_ALIVE.and(EntitySelector.withinDistance(0.0D, 128.0D, 0.0D, 300.0D));
     private final ServerBossEvent dragonEvent = (ServerBossEvent)(new ServerBossEvent(Component.translatable("entity.beyond_the_end.jellyfish"), BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.PROGRESS)).setPlayBossMusic(true).setCreateWorldFog(false);
     public final ServerLevel level;
     private final BlockPattern exitPortalPattern;
@@ -126,9 +126,9 @@ public class JellyfishFightEvent {
             this.ticksSinceLastPlayerScan = 0;
         }
 
-        this.level.getChunkSource().removeRegionTicket(TicketType.DRAGON, new ChunkPos(0, 0), 14, Unit.INSTANCE);
+        this.level.getChunkSource().removeRegionTicket(BeyondTheEnd.JELLY, new ChunkPos(0, 0), 1, Unit.INSTANCE);
         if (!this.dragonEvent.getPlayers().isEmpty()) {
-            this.level.getChunkSource().addRegionTicket(BeyondTheEnd.JELLY, new ChunkPos(0, 0), 14, Unit.INSTANCE);
+            this.level.getChunkSource().addRegionTicket(BeyondTheEnd.JELLY, new ChunkPos(0, 0), 1, Unit.INSTANCE);
             boolean flag = this.isArenaLoaded();
             if (this.needsStateScanning && flag) {
                 this.scanState();
@@ -136,7 +136,6 @@ public class JellyfishFightEvent {
             }
 
             if (!this.dragonKilled) {
-
                 if ((this.jellyfishUUID == null || ++this.ticksSinceDragonSeen >= 1200) && flag) {
                     this.findOrCreateDragon();
                     this.ticksSinceDragonSeen = 0;
@@ -206,7 +205,7 @@ public class JellyfishFightEvent {
 
     private boolean isArenaLoaded() {
         for(int i = -8; i <= 8; ++i) {
-            for(int j = 8; j <= 8; ++j) {
+            for(int j = -8; j <= 8; ++j) {
                 ChunkAccess chunkaccess = this.level.getChunk(i, j, ChunkStatus.FULL, false);
                 if (!(chunkaccess instanceof LevelChunk)) {
                     return false;

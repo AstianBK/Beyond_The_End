@@ -33,7 +33,7 @@ public class FallenDragonFireball extends AbstractHurtingProjectile {
                     Entity impact = ((EntityHitResult)p_36913_).getEntity();
 
                     if(impact instanceof LivingEntity){
-                        impact.hurt(DamageSource.CACTUS,10);
+                        impact.hurt(DamageSource.CACTUS,30);
                     }
                 }
                 List<LivingEntity> list = this.level.getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(4.0D, 2.0D, 4.0D));

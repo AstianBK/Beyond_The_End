@@ -328,7 +328,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
                 if(living.isBlocking() && living instanceof Player player){
                     player.disableShield(true);
                 }
-                living.hurt(DamageSource.mobAttack(this).bypassArmor(), 12.0F);
+                living.hurt(DamageSource.mobAttack(this).bypassArmor(), 24.0F);
             }
         }
     }
@@ -363,7 +363,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
     private void bite(List<Entity> p_31132_) {
         for(Entity entity : p_31132_) {
             if (entity instanceof LivingEntity) {
-                entity.hurt(DamageSource.GENERIC, 20.0F);
+                entity.hurt(DamageSource.GENERIC, 40.0F);
                 if(entity instanceof  Player player){
                     player.disableShield(true);
                 }
@@ -375,7 +375,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
         double d3 = entity.getZ() - d1;
         double d4 = Math.max(d2 * d2 + d3 * d3, 0.1D);
         entity.push(d2 / d4 * 16.0D,(double)0.2F, d3 / d4 * 16.0D);
-        entity.hurt(DamageSource.mobAttack(this), 20.0F);
+        entity.hurt(DamageSource.mobAttack(this), 40.0F);
         this.doEnchantDamageEffects(this, entity);
 
     }

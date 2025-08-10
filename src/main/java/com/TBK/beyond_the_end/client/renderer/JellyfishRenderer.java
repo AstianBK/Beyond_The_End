@@ -5,6 +5,7 @@ import com.TBK.beyond_the_end.client.layer.JellyfishEmissiveLayer;
 import com.TBK.beyond_the_end.client.layer.RespawnLayer;
 import com.TBK.beyond_the_end.client.model.JellyfishModel;
 import com.TBK.beyond_the_end.common.Util;
+import com.TBK.beyond_the_end.common.registry.BKRenderType;
 import com.TBK.beyond_the_end.server.entity.JellyfishEntity;
 import com.TBK.beyond_the_end.server.entity.phase.RespawnPhase;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -109,7 +110,7 @@ public class JellyfishRenderer<T extends JellyfishEntity,M extends JellyfishMode
         float f16 = (float)p_112192_ * p_112189_ * (0.5F / p_112194_) + f15;
         p_112185_.pushPose();
         p_112185_.mulPose(Vector3f.YP.rotationDegrees(f * 2.25F - 45.0F));
-        renderPart(p_112185_, p_112186_.getBuffer(RenderType.eyes(p_112187_)), 1.0F, 1.0F, 1.0F, 0.1F, p_112191_, i, 0.0F, p_112194_, p_112194_, 0.0F, f9, 0.0F, 0.0F, f12, 0.0F, 1.0F, f16, f15);
+        renderPart(p_112185_, p_112186_.getBuffer(RenderType.beaconBeam(p_112187_,false)), 1.0F, 1.0F, 1.0F, 0.1F, p_112191_, i, 0.0F, p_112194_, p_112194_, 0.0F, f9, 0.0F, 0.0F, f12, 0.0F, 1.0F, f16, f15);
         p_112185_.popPose();
         f6 = -p_112195_;
         float f7 = -p_112195_;
@@ -117,7 +118,7 @@ public class JellyfishRenderer<T extends JellyfishEntity,M extends JellyfishMode
         f9 = -p_112195_;
         f15 = -1.0F + f2;
         f16 = (float)p_112192_ * p_112189_ + f15;
-        renderPart(p_112185_, p_112186_.getBuffer(RenderType.eyes(p_112187_)), f3, f4, f5, 1.0F, p_112191_, i, f6, f7, p_112195_, f8, f9, p_112195_, p_112195_, p_112195_, 0.0F, 1.0F, f16, f15);
+        renderPart(p_112185_, p_112186_.getBuffer(RenderType.beaconBeam(p_112187_,true)), f3, f4, f5, 1.0F, p_112191_, i, f6, f7, p_112195_, f8, f9, p_112195_, p_112195_, p_112195_, 0.0F, 1.0F, f16, f15);
     }
 
     private static void renderPart(PoseStack p_112156_, VertexConsumer p_112157_, float p_112158_, float p_112159_, float p_112160_, float p_112161_, int p_112162_, int p_112163_, float p_112164_, float p_112165_, float p_112166_, float p_112167_, float p_112168_, float p_112169_, float p_112170_, float p_112171_, float p_112172_, float p_112173_, float p_112174_, float p_112175_) {

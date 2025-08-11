@@ -2,6 +2,7 @@ package com.TBK.beyond_the_end.common.registry;
 
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 
@@ -28,4 +29,27 @@ public class BKRenderType extends RenderType {
                         .createCompositeState(true)
         );
     }
+
+    public static RenderType laser (ResourceLocation texture){
+        return RenderType.create(
+                "orb_transparent",
+                DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP,
+                VertexFormat.Mode.QUADS,
+                256,
+                false,
+                true,
+                RenderType.CompositeState.builder()
+                        .setShaderState(RenderType.RENDERTYPE_ENTITY_TRANSLUCENT_EMISSIVE_SHADER)
+                        .setTextureState(new RenderStateShard.TextureStateShard(
+                                texture,
+                                false,
+                                false))
+                        .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY) // NO aditivo
+                        .setCullState(RenderStateShard.NO_CULL)
+                        .setDepthTestState(RenderStateShard.LEQUAL_DEPTH_TEST) // Agregado
+                        .setWriteMaskState(WriteMaskStateShard.COLOR_WRITE)
+                        .createCompositeState(true)
+        );
+    }
+
 }

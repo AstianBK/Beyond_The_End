@@ -118,7 +118,8 @@ public class JellyfishRenderer<T extends JellyfishEntity,M extends JellyfishMode
         f9 = -p_112195_;
         f15 = -1.0F + f2;
         f16 = (float)p_112192_ * p_112189_ + f15;
-        renderPart(p_112185_, p_112186_.getBuffer(RenderType.beaconBeam(p_112187_,true)), f3, f4, f5, 1.0F, p_112191_, i, f6, f7, p_112195_, f8, f9, p_112195_, p_112195_, p_112195_, 0.0F, 1.0F, f16, f15);
+        renderPart(p_112185_, p_112186_.getBuffer(RenderType.beaconBeam(p_112187_,false)), f3, f4, f5, 1.0F, p_112191_, i, f6, f7, p_112195_, f8, f9, p_112195_, p_112195_, p_112195_, 0.0F, 1.0F, f16, f15);
+        renderPart(p_112185_, p_112186_.getBuffer(BKRenderType.laser(p_112187_)), f3, f4, f5, 1.0F, p_112191_, i, f6, f7, p_112195_, f8, f9, p_112195_, p_112195_, p_112195_, 0.0F, 1.0F, f16, f15);
     }
 
     private static void renderPart(PoseStack p_112156_, VertexConsumer p_112157_, float p_112158_, float p_112159_, float p_112160_, float p_112161_, int p_112162_, int p_112163_, float p_112164_, float p_112165_, float p_112166_, float p_112167_, float p_112168_, float p_112169_, float p_112170_, float p_112171_, float p_112172_, float p_112173_, float p_112174_, float p_112175_) {

@@ -1,0 +1,56 @@
+{
+  "jellyfish_charge": {
+    "subtitle": "sounds.beyondtheend.jellyfish_charge",
+    "sounds": [
+      "beyondtheend:jellyfish_charge"
+    ]
+  },
+  "jellyfish_explosion": {
+    "subtitle": "sounds.beyondtheend.jellyfish_explosion",
+    "sounds": [
+      "beyondtheend:jellyfish_explosion"
+    ]
+  },
+  "jellyfish_laserloop": {
+    "subtitle": "sounds.beyondtheend.jellyfish_laserloop",
+    "sounds": [
+      "beyondtheend:jellyfish_laserloop"
+    ]
+  },
+  "jellyfish_jump": {
+    "subtitle": "sounds.beyondtheend.jellyfish_jump",
+    "sounds": [
+      "beyondtheend:jellyfish_jump"
+    ]
+  },
+  "jellyfish_land": {
+    "subtitle": "sounds.beyondtheend.jellyfish_land",
+    "sounds": [
+      "beyondtheend:jellyfish_land"
+    ]
+  },
+  "jellyfish_summon": {
+    "subtitle": "sounds.beyondtheend.jellyfish_summon",
+    "sounds": [
+      "beyondtheend:jellyfish_summon"
+    ]
+  },
+  "jellyfish_hurt": {
+    "subtitle": "sounds.beyondtheend.jellyminion_hurt",
+    "sounds": [
+      "beyondtheend:jellyminion_hurt"
+    ]
+  },
+  "jellyminion_shoot1": {
+    "subtitle": "sounds.beyondtheend.jellyminion_shoot1",
+    "sounds": [
+      "beyondtheend:jellyminion_shoot1"
+    ]
+  },
+  "jellyminion_shoot2": {
+    "subtitle": "sounds.beyondtheend.jellyminion_shoot2",
+    "sounds": [
+      "beyondtheend:jellyminion_shoot2"
+    ]
+  }
+}

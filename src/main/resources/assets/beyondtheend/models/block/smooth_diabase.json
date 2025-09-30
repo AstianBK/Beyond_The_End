@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:block/cube_all",
   "textures": {
-    "all": "beyond_the_end:block/cratered_diabase"
+    "all": "beyondtheend:block/smooth_diabase"
   }
 }

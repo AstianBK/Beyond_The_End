@@ -20,7 +20,7 @@ plugins {
 }
 apply plugin: 'org.spongepowered.mixin'
 mixin {
-    add sourceSets.main, "beyond_the_end.refmap.json"
+    add sourceSets.main, "beyondtheend.refmap.json"
 }
 
 version = mod_version
@@ -62,7 +62,7 @@ minecraft {
         client {
             property 'forge.enabledGameTestNamespaces', mod_id
 
-            arg "-mixin.config=beyond_the_end.mixins.json"
+            arg "-mixin.config=beyondtheend.mixins.json"
             property "mixin.env.remapRefMap", "true"
 
 
@@ -71,7 +71,7 @@ minecraft {
         server {
             property 'forge.enabledGameTestNamespaces', mod_id
             property "mixin.env.remapRefMap", "true"
-            arg "-mixin.config=beyond_the_end.mixins.json"
+            arg "-mixin.config=beyondtheend.mixins.json"
 
             args '--nogui'
         }

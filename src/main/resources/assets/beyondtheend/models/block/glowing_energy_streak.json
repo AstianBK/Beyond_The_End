@@ -1,9 +1,9 @@
 {
   "parent": "block/block",
   "textures": {
-    "particle": "beyond_the_end:block/glowing_energy",
-    "top": "beyond_the_end:block/glowing_energy_streak",
-    "side": "beyond_the_end:block/glowing_energy"
+    "particle": "beyondtheend:block/glowing_energy",
+    "top": "beyondtheend:block/glowing_energy_streak",
+    "side": "beyondtheend:block/glowing_energy"
   },
   "elements": [
     {   "from": [ 0, 0, 0 ],

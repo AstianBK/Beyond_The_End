@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:block/cube_all",
   "textures": {
-    "all": "beyond_the_end:block/smooth_tephrite"
+    "all": "beyondtheend:block/cobbled_diabase"
   }
 }

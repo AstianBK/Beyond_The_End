@@ -42,7 +42,7 @@ public class BeyondTheEnd
 {
     public static FallenDragonFight bossFight = null;
     public static JellyfishFightEvent jellyfishFightEvent = null;
-    public static final String MODID = "beyond_the_end";
+    public static final String MODID = "beyondtheend";
     public static final Logger LOGGER = LogUtils.getLogger();
     public static CommonProxy PROXY = DistExecutor.safeRunForDist(() -> ClientProxy::new, () -> CommonProxy::new);
     public static final TicketType<Unit> JELLY = TicketType.create("jelly", (p_9460_, p_9461_) -> {

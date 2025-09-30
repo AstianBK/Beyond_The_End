@@ -50,7 +50,7 @@ import java.util.function.Predicate;
 
 public class FallenDragonFight extends EndDragonFight {
     private static final Predicate<Entity> VALID_PLAYER = EntitySelector.ENTITY_STILL_ALIVE.and(EntitySelector.withinDistance(0.0D, 128.0D, 0.0D, 300.0D));
-    private final ServerBossEvent dragonEvent = (ServerBossEvent)(new ServerBossEvent(Component.translatable("entity.beyond_the_end.fallen_dragon"), BossEvent.BossBarColor.RED, BossEvent.BossBarOverlay.PROGRESS)).setPlayBossMusic(true).setCreateWorldFog(true);
+    private final ServerBossEvent dragonEvent = (ServerBossEvent)(new ServerBossEvent(Component.translatable("entity.beyondtheend.fallen_dragon"), BossEvent.BossBarColor.RED, BossEvent.BossBarOverlay.PROGRESS)).setPlayBossMusic(true).setCreateWorldFog(true);
     private final ServerLevel level;
     private final BlockPattern exitPortalPattern;
     private int ticksSinceDragonSeen;

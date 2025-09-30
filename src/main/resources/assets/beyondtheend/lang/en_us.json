@@ -1,0 +1,16 @@
+{
+  "block.beyondtheend.cobbled_diabase": "Cobbled Diabase",
+  "block.beyondtheend.cratered_diabase": "Cratered Diabase",
+  "block.beyondtheend.smooth_diabase": "Diabase",
+
+
+  "block.beyondtheend.cobbled_tephrite": "Cobbled Tephrite",
+  "block.beyondtheend.smooth_tephrite": "Tephrite",
+
+  "itemGroup.beyondtheend.bk_tab": "Beyond The End",
+
+  "block.beyondtheend.glowing_energy_streak": "Energy Streak",
+  "block.beyondtheend.glowing_energy": "Energy Dot",
+  "block.beyondtheend.portal": "Beyond The End Portal",
+  "entity.beyondtheend.jellyfish": "Jellyfish"
+}

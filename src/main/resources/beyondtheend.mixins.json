@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "package": "com.TBK.beyond_the_end.common.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "minVersion": "0.8",
+  "refmap": "beyondtheend.refmap.json",
+  "mixins": [
+    "EntityAccesor",
+    "LevelAccesor",
+    "ServerLevelAccesor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

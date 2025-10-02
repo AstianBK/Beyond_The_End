@@ -1,12 +1,12 @@
 {
-  "type": "beyond_the_end:the_new_end",
+  "type": "beyondtheend:the_new_end",
   "generator": {
     "type": "minecraft:noise",
     "biome_source": {
       "type": "minecraft:multi_noise",
       "biomes": [
         {
-          "biome": "beyond_the_end:boss_fight",
+          "biome": "beyondtheend:boss_fight",
           "parameters": {
             "temperature": 0,
             "humidity": 0,
@@ -20,7 +20,7 @@
       ]
     },
     "settings": {
-      "name": "beyond_the_end:the_new_end",
+      "name": "beyondtheend:the_new_end",
       "sea_level": 0,
       "legacy_random_source": true,
       "disable_mob_generation": true,
@@ -167,7 +167,7 @@
             "if_true": {
               "type": "minecraft:biome",
               "biome_is": [
-                "beyond_the_end:boss_fight"
+                "beyondtheend:boss_fight"
               ]
             },
             "then_run": {

@@ -1,6 +1,0 @@
-{
-  "type": "forge:add_features",
-  "biomes": "beyond_the_end:boss_fight",
-  "features": "beyond_the_end:spike_placed",
-  "step": "surface_structures"
-}

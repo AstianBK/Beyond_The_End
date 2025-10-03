@@ -526,7 +526,8 @@ public class FallenDragonFight extends EndDragonFight {
             }
             Vec3i size = component.getSize();
             BlockPos offset = new BlockPos(-size.getX() / 2 + addX, height, -size.getZ() / 2 + addZ);
-            component.placeInWorld(level, offset, offset, settings, level.getRandom(), Block.UPDATE_KNOWN_SHAPE);
+
+            component.placeInWorld(level, offset, offset, settings, level.getRandom(), Block.UPDATE_NONE | Block.UPDATE_SUPPRESS_LIGHT);
             BeyondTheEnd.LOGGER.info("Placed " + component + " at " + offset + " in " + (System.currentTimeMillis() - start) + "ms");
             return size;
         }

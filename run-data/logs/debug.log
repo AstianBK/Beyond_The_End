@@ -188,7 +188,7 @@
 [04sep.2024 15:44:44.198] [main/DEBUG] [net.minecraftforge.coremod.transformer.CoreModBaseTransformer/COREMOD]: Transforming net/minecraft/world/effect/MobEffectInstance
 [04sep.2024 15:45:01.411] [main/DEBUG] [net.minecraftforge.fml.ModWorkManager/LOADING]: Using 8 threads for parallel mod-loading
 [04sep.2024 15:45:01.435] [main/DEBUG] [net.minecraftforge.fml.javafmlmod.FMLJavaModLanguageProvider/LOADING]: Loading FMLModContainer from classloader cpw.mods.modlauncher.TransformingClassLoader@23f86d8a - got cpw.mods.cl.ModuleClassLoader@389562d6
-[04sep.2024 15:45:01.436] [main/DEBUG] [net.minecraftforge.fml.javafmlmod.FMLModContainer/LOADING]: Creating FMLModContainer instance for com.TBK.beyond_the_end.BeyondTheEnd
+[04sep.2024 15:45:01.436] [main/DEBUG] [net.minecraftforge.fml.javafmlmod.FMLModContainer/LOADING]: Creating FMLModContainer instance for com.TBK.beyondtheend.BeyondTheEnd
 [04sep.2024 15:45:01.450] [main/DEBUG] [net.minecraftforge.fml.javafmlmod.FMLJavaModLanguageProvider/LOADING]: Loading FMLModContainer from classloader cpw.mods.modlauncher.TransformingClassLoader@23f86d8a - got cpw.mods.cl.ModuleClassLoader@389562d6
 [04sep.2024 15:45:01.450] [main/DEBUG] [net.minecraftforge.fml.javafmlmod.FMLModContainer/LOADING]: Creating FMLModContainer instance for net.minecraftforge.common.ForgeMod
 [04sep.2024 15:45:01.456] [main/DEBUG] [net.minecraftforge.fml.javafmlmod.FMLJavaModLanguageProvider/LOADING]: Loading FMLModContainer from classloader cpw.mods.modlauncher.TransformingClassLoader@23f86d8a - got cpw.mods.cl.ModuleClassLoader@389562d6
@@ -203,11 +203,11 @@
 [04sep.2024 15:45:01.572] [modloading-worker-0/INFO] [net.minecraftforge.common.ForgeMod/FORGEMOD]: Forge mod loading, version 43.3.0, for MC 1.19.2 with MCP 20220805.130853
 [04sep.2024 15:45:01.582] [modloading-worker-0/INFO] [net.minecraftforge.common.MinecraftForge/FORGE]: MinecraftForge v43.3.0 Initialized
 [04sep.2024 15:45:01.695] [modloading-worker-0/DEBUG] [net.minecraftforge.fml.javafmlmod.AutomaticEventSubscriber/LOADING]: Attempting to inject @EventBusSubscriber classes into the eventbus for beyond_the_end
-[04sep.2024 15:45:01.703] [modloading-worker-0/DEBUG] [net.minecraftforge.fml.javafmlmod.AutomaticEventSubscriber/LOADING]: Auto-subscribing com.TBK.beyond_the_end.BeyondTheEnd$Fixers to MOD
-[04sep.2024 15:45:01.783] [modloading-worker-0/DEBUG] [net.minecraftforge.fml.javafmlmod.AutomaticEventSubscriber/LOADING]: Auto-subscribing com.TBK.beyond_the_end.common.datagen.DataGenerators to MOD
-[04sep.2024 15:45:01.794] [modloading-worker-0/DEBUG] [net.minecraftforge.fml.javafmlmod.AutomaticEventSubscriber/LOADING]: Auto-subscribing com.TBK.beyond_the_end.Config to MOD
-[04sep.2024 15:45:01.832] [modloading-worker-0/DEBUG] [net.minecraftforge.fml.javafmlmod.AutomaticEventSubscriber/LOADING]: Auto-subscribing com.TBK.beyond_the_end.server.capabilities.BkCapabilities$Registration to FORGE
-[04sep.2024 15:45:01.841] [modloading-worker-0/DEBUG] [net.minecraftforge.fml.javafmlmod.AutomaticEventSubscriber/LOADING]: Auto-subscribing com.TBK.beyond_the_end.server.Events to FORGE
+[04sep.2024 15:45:01.703] [modloading-worker-0/DEBUG] [net.minecraftforge.fml.javafmlmod.AutomaticEventSubscriber/LOADING]: Auto-subscribing com.TBK.beyondtheend.BeyondTheEnd$Fixers to MOD
+[04sep.2024 15:45:01.783] [modloading-worker-0/DEBUG] [net.minecraftforge.fml.javafmlmod.AutomaticEventSubscriber/LOADING]: Auto-subscribing com.TBK.beyondtheend.common.datagen.DataGenerators to MOD
+[04sep.2024 15:45:01.794] [modloading-worker-0/DEBUG] [net.minecraftforge.fml.javafmlmod.AutomaticEventSubscriber/LOADING]: Auto-subscribing com.TBK.beyondtheend.Config to MOD
+[04sep.2024 15:45:01.832] [modloading-worker-0/DEBUG] [net.minecraftforge.fml.javafmlmod.AutomaticEventSubscriber/LOADING]: Auto-subscribing com.TBK.beyondtheend.server.capabilities.BkCapabilities$Registration to FORGE
+[04sep.2024 15:45:01.841] [modloading-worker-0/DEBUG] [net.minecraftforge.fml.javafmlmod.AutomaticEventSubscriber/LOADING]: Auto-subscribing com.TBK.beyondtheend.server.Events to FORGE
 [04sep.2024 15:45:01.846] [modloading-worker-0/WARN] [software.bernie.geckolib3.GeckoLib/]: Minecraft.getInstance() was null, could not register reload listeners. Ignore if datagenning.
 [04sep.2024 15:45:01.860] [modloading-worker-0/DEBUG] [io.netty.util.internal.PlatformDependent0/]: -Dio.netty.noUnsafe: false
 [04sep.2024 15:45:01.860] [modloading-worker-0/DEBUG] [io.netty.util.internal.PlatformDependent0/]: Java version: 17

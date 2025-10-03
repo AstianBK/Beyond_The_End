@@ -1,0 +1,134 @@
+package com.TBK.beyondtheend.server.entity.phase;
+
+import com.TBK.beyondtheend.server.entity.FallenDragonEntity;
+import com.TBK.beyondtheend.server.entity.projectile.FallenDragonFireball;
+import com.mojang.logging.LogUtils;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.phys.Vec3;
+import org.slf4j.Logger;
+
+import javax.annotation.Nullable;
+
+public class FlameDragonAttackPhase extends AbstractDragonPhaseInstance {
+    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final int FIREBALL_CHARGE_AMOUNT = 5;
+    private boolean isFlyMode;
+    private int fireballCharge;
+    private int waitTime;
+    @Nullable
+    private Path currentPath;
+    @Nullable
+    private Vec3 targetLocation;
+    @Nullable
+    private LivingEntity attackTarget;
+    private int countFireball;
+    private int maxCountFireball=0;
+
+    public FlameDragonAttackPhase(FallenDragonEntity p_31357_) {
+        super(p_31357_);
+    }
+
+    public void doServerTick() {
+        if (this.attackTarget == null || (this.attackTarget instanceof Player player && player.isCreative())) {
+            this.dragon.phaseManager.setPhase(FallenDragonPhase.HOLDING_PATTERN);
+
+        } else {
+            Vec3 vec31 = (new Vec3(this.attackTarget.getX() - this.dragon.getX(), 0.0D, this.attackTarget.getZ() - this.dragon.getZ())).normalize();
+            Vec3 vec3 = (new Vec3((double) Mth.sin(this.dragon.getYRot() * ((float)Math.PI / 180F)), 0.0D, (double)(-Mth.cos(this.dragon.getYRot() * ((float)Math.PI / 180F))))).normalize();
+            float f1 = (float)vec3.dot(vec31);
+            float f = (float)(Math.acos((double)f1) * (double)(180F / (float)Math.PI));
+            f += 0.5F;
+            if(!(f >= 0.0F && f < 10.0F)){
+                this.targetLocation=this.attackTarget.getEyePosition();
+            }else if(this.attackTarget.distanceToSqr(this.dragon) < 4096.0D){
+                this.targetLocation = this.dragon.position();
+            }else {
+                this.targetLocation=this.attackTarget.getEyePosition();
+            }
+            if (this.attackTarget.distanceToSqr(this.dragon) < 4096.0D && f >= 0.0F && f < 10.0F) {
+                this.waitTime=0;
+                ++this.fireballCharge;
+                if (this.fireballCharge >= 15) {
+                    float yawRad = (float)Math.toRadians(this.dragon.getYRot());
+                    float sin = (float)Math.sin(yawRad);
+                    float cos = (float)Math.cos(yawRad);
+                    double d6 = this.dragon.getX() + 5.25D*sin;
+                    double d7 = this.dragon.getY() + 3.75D;
+                    double d8 = this.dragon.getZ() - 5.25D*cos;
+                    double d9 = this.attackTarget.getX() - d6;
+                    double d10 = this.attackTarget.getY() - d7 ;
+                    double d11 = this.attackTarget.getZ() - d8;
+
+                    if (!this.dragon.isSilent()) {
+                        this.dragon.level.levelEvent((Player)null, 1017, this.dragon.blockPosition(), 0);
+                    }
+
+                    FallenDragonFireball dragonfireball = new FallenDragonFireball(this.dragon.level, this.dragon, d9, d10, d11);
+                    dragonfireball.setOwner(this.dragon);
+                    dragonfireball.moveTo(d6, d7, d8, 0.0F, 0.0F);
+                    this.dragon.level.addFreshEntity(dragonfireball);
+                    this.fireballCharge = 0;
+                    if (this.currentPath != null) {
+                        while(!this.currentPath.isDone()) {
+                            this.currentPath.advance();
+                        }
+                    }
+                    this.countFireball++;
+                    if(this.countFireball>this.maxCountFireball-1){
+                        this.dragon.teleport(this.dragon.getX(),this.dragon.level.getHeight(Heightmap.Types.WORLD_SURFACE, (int) this.dragon.getX(), (int) this.dragon.getZ()),this.dragon.getZ());
+                        this.dragon.phaseManager.setPhase(FallenDragonPhase.HOLDING_PATTERN);
+                        this.dragon.setModeFly(false);
+                    }
+                }
+            }else {
+                this.fireballCharge=0;
+                this.waitTime++;
+            }
+
+            if(this.waitTime>300){
+                this.dragon.setModeFly(false);
+            }
+        }
+    }
+
+    public void begin() {
+        this.fireballCharge = 0;
+        this.targetLocation = null;
+        this.currentPath = null;
+        this.attackTarget = null;
+        this.countFireball = 0;
+        this.maxCountFireball = 10 + this.dragon.level.random.nextInt(0,10);
+        this.waitTime = 0;
+        this.isFlyMode=false;
+    }
+
+    @Override
+    public void end() {
+        this.fireballCharge = 0;
+        this.countFireball = 0;
+        this.waitTime = 0;
+    }
+
+    public void setTarget(LivingEntity p_31359_) {
+        this.attackTarget = p_31359_;
+    }
+
+    public void setIsFlyMode(boolean p_31359_) {
+        this.isFlyMode = p_31359_;
+    }
+
+
+    @Nullable
+    public Vec3 getFlyTargetLocation() {
+        return this.targetLocation;
+    }
+
+    @Override
+    public FallenDragonPhase<? extends FallenDragonInstance> getPhase() {
+        return FallenDragonPhase.FLAME;
+    }
+}

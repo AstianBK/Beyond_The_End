@@ -6,6 +6,7 @@ import com.TBK.beyondtheend.common.registry.BKEntityType;
 import com.TBK.beyondtheend.common.registry.BkDimension;
 import com.TBK.beyondtheend.server.entity.phase.FallenDragonPhase;
 import com.google.common.collect.*;
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
@@ -18,16 +19,21 @@ import net.minecraft.server.level.*;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.Unit;
 import net.minecraft.world.BossEvent;
+import net.minecraft.world.Clearable;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LiquidBlockContainer;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.block.entity.TheEndPortalBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.pattern.BlockInWorld;
 import net.minecraft.world.level.block.state.pattern.BlockPattern;
 import net.minecraft.world.level.block.state.pattern.BlockPatternBuilder;
@@ -39,14 +45,21 @@ import net.minecraft.world.level.dimension.end.DragonRespawnAnimation;
 import net.minecraft.world.level.dimension.end.EndDragonFight;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.feature.EndPodiumFeature;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.BitSetDiscreteVoxelShape;
+import net.minecraft.world.phys.shapes.DiscreteVoxelShape;
 
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.function.Predicate;
+
+import static net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.processBlockInfos;
+import static net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.updateShapeAtEdge;
 
 public class FallenDragonFight extends EndDragonFight {
     private static final Predicate<Entity> VALID_PLAYER = EntitySelector.ENTITY_STILL_ALIVE.and(EntitySelector.withinDistance(0.0D, 128.0D, 0.0D, 300.0D));
@@ -527,11 +540,52 @@ public class FallenDragonFight extends EndDragonFight {
             Vec3i size = component.getSize();
             BlockPos offset = new BlockPos(-size.getX() / 2 + addX, height, -size.getZ() / 2 + addZ);
 
-            component.placeInWorld(level, offset, offset, settings, level.getRandom(), Block.UPDATE_NONE | Block.UPDATE_SUPPRESS_LIGHT);
+            placeInWorld(component,level, offset, offset, settings, level.getRandom(), Block.UPDATE_NONE | Block.UPDATE_SUPPRESS_LIGHT);
             BeyondTheEnd.LOGGER.info("Placed " + component + " at " + offset + " in " + (System.currentTimeMillis() - start) + "ms");
             return size;
         }
 
+        public boolean placeInWorld(StructureTemplate component,ServerLevelAccessor world, BlockPos templatePos, BlockPos offsetPos, StructurePlaceSettings settings, RandomSource random, int flags) {
+            if (component.palettes.isEmpty()) return false;
+
+            List<StructureTemplate.StructureBlockInfo> blocks = settings.getRandomPalette(component.palettes, templatePos).blocks();
+            if (blocks.isEmpty()) return false;
+            if (component.getSize().getX() < 1 || component.getSize().getY() < 1 || component.getSize().getZ() < 1) return false;
+
+            List<Pair<BlockPos, CompoundTag>> blockEntitiesToLoad = new ArrayList<>(blocks.size());
+
+            // Iterar sobre todos los bloques, pero solo colocar los que no son aire
+            for (StructureTemplate.StructureBlockInfo info : processBlockInfos(world, templatePos, offsetPos, settings, blocks, component)) {
+                BlockPos pos = info.pos;
+                BlockState state = info.state.mirror(settings.getMirror()).rotate(settings.getRotation());
+
+                // 🔹 SALTAR BLOQUES DE AIRE
+                if (state.isAir()) continue;
+
+                // Colocar el bloque de forma rápida
+                world.setBlock(pos, state, flags & ~2); // quitar flag de actualización de vecinos
+
+                // Guardar NBT para procesar después
+                if (info.nbt != null) {
+                    blockEntitiesToLoad.add(Pair.of(pos, info.nbt));
+                }
+            }
+
+            // Procesar NBT de bloques contenedores después de colocar todos los bloques
+            for (Pair<BlockPos, CompoundTag> pair : blockEntitiesToLoad) {
+                BlockPos pos = pair.getFirst();
+                CompoundTag nbt = pair.getSecond();
+                BlockEntity be = world.getBlockEntity(pos);
+                if (be != null) {
+                    if (be instanceof RandomizableContainerBlockEntity) {
+                        nbt.putLong("LootTableSeed", random.nextLong());
+                    }
+                    be.load(nbt);
+                }
+            }
+
+            return true;
+        }
         public void makeInitialIsland(ServerLevel level, long start) {
             StructurePlaceSettings settings = new StructurePlaceSettings();
             Vec3i center = this.centreOffSet;

@@ -42,28 +42,28 @@ public class ClientEvents {
     public void computeCameraAngles(ViewportEvent.ComputeCameraAngles event) {
         Entity player = Minecraft.getInstance().getCameraEntity();
         float partialTick = Minecraft.getInstance().getPartialTick();
-        float tremorAmount =  0F;
+        float amount =  0F;
         if (player != null) {
             double shakeDistanceScale = 64;
-            double distance = Double.MAX_VALUE;
-            if (tremorAmount == 0) {
+            double distance;
+            if (amount == 0) {
                 AABB aabb = player.getBoundingBox().inflate(shakeDistanceScale);
                 for (Mob screenShaker : Minecraft.getInstance().level.getEntitiesOfClass(Mob.class, aabb, (mob -> mob instanceof ICamShaker forge && forge.getScreenShakeAmount(partialTick)>0.0F))) {
                     ICamShaker shakesScreen = (ICamShaker) screenShaker;
                     if (player.isOnGround() && ((ICamShaker) screenShaker).canShake(player)) {
                         distance = ((ICamShaker) screenShaker).getShakeDistanceForEntity(player);
-                        tremorAmount = Math.min((1F - (float) Math.min(1, distance / shakesScreen.getShakeDistance())) * Math.max(shakesScreen.getScreenShakeAmount(partialTick), 0F), 2.0F);
+                        amount = Math.min((1F - (float) Math.min(1, distance / shakesScreen.getShakeDistance())) * Math.max(shakesScreen.getScreenShakeAmount(partialTick), 0F), 2.0F);
 
                     }
                 }
-                if(tremorAmount==0){
+                if(amount ==0){
                     if(BeyondTheEnd.jellyfishFightEvent!=null && BeyondTheEnd.jellyfishFightEvent.screenShakeAmount>0.0F){
-                        tremorAmount = Math.min((1F - Math.max(BeyondTheEnd.jellyfishFightEvent.getScreenShakeAmount(partialTick), 0F)), 2.0F);
+                        amount = Math.min((1F - Math.max(BeyondTheEnd.jellyfishFightEvent.getScreenShakeAmount(partialTick), 0F)), 2.0F);
 
                     }
                 }
             }
-            if (tremorAmount > 0) {
+            if (amount > 0) {
                 if (ClientProxy.lastTick != player.tickCount) {
                     RandomSource rng = player.level.random;
                     ClientProxy.randomOffsets[0] = rng.nextFloat();
@@ -71,7 +71,7 @@ public class ClientEvents {
                     ClientProxy.randomOffsets[2] = rng.nextFloat();
                     ClientProxy.lastTick = player.tickCount;
                 }
-                double intensity = tremorAmount * Minecraft.getInstance().options.screenEffectScale().get();
+                double intensity = amount * Minecraft.getInstance().options.screenEffectScale().get();
                 event.getCamera().move(ClientProxy.randomOffsets[0] * 0.8F * intensity, ClientProxy.randomOffsets[1] * 0.0F, ClientProxy.randomOffsets[2] * 08F * intensity);
             }
         }

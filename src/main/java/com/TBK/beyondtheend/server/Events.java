@@ -185,15 +185,6 @@ public class Events {
     }
 
 
-    @SubscribeEvent
-    public static void onSleepFinish(SleepFinishedTimeEvent event) {
-        LevelAccessor level = event.getLevel();
-        Long time = DimensionUtil.finishSleep(level, event.getNewTime());
-        if (time != null) {
-            event.setTimeAddition(time);
-        }
-    }
-
 
     @SubscribeEvent
     public static void onTriedToSleep(SleepingTimeCheckEvent event) {

@@ -151,20 +151,7 @@ public class DimensionUtil {
     }
 
 
-    @Nullable
-    public static Long finishSleep(LevelAccessor level, long newTime) {
-        if (level instanceof ServerLevel && level.dimensionType().effectsLocation().equals(BkDimension.BEYOND_END_TYPE.location())) {
-            ServerLevelAccessor serverLevelAccessor = (ServerLevelAccessor) level;
-            serverLevelAccessor.getLevel().serverLevelData.setRainTime(0);
-            serverLevelAccessor.getLevel().serverLevelData.setRaining(false);
-            serverLevelAccessor.getLevel().serverLevelData.setThunderTime(0);
-            serverLevelAccessor.getLevel().serverLevelData.setThundering(false);
 
-            long time = newTime + 48000L;
-            return time - time % (long) BkDimension.BEYOND_END_TICKS_PER_DAY;
-        }
-        return null;
-    }
 
 
     public static boolean isEternalDay(Player player) {

@@ -105,7 +105,7 @@ dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     annotationProcessor "org.spongepowered:mixin:0.8.5:processor"
     implementation fg.deobf('software.bernie.geckolib:geckolib-forge-1.19:3.1.40')
-    implementation "curse.maven:euphoria-patches-915902:6653766"
+    //implementation "curse.maven:euphoria-patches-915902:6653766"
 }
 
 tasks.named('processResources', ProcessResources).configure {

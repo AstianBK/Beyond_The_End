@@ -461,11 +461,17 @@ public class FallenDragonFight extends EndDragonFight {
 
 
     public static class Structure implements Savable {
+
         private final ResourceLocation structure;
         private boolean isPlaced;
         private BlockPos centre;
         private int stepIndex = 0;
         private Vec3i centreOffSet;
+
+        public Queue<Runnable> tasks = new ArrayDeque<>();
+
+        private static final int BLOCK_BATCH = 300;
+        private static final int BE_BATCH = 100;
 
         public Structure(ResourceLocation structure, @Nullable BlockPos centre) {
             this.structure = structure;
@@ -489,10 +495,13 @@ public class FallenDragonFight extends EndDragonFight {
             CompoundTag data = new CompoundTag();
             data.putString("structure", this.structure.toString());
             data.putBoolean("isPlaced", this.isPlaced);
+
             if (this.centre != null)
                 data.put("Centre", NbtUtils.writeBlockPos(this.centre));
+
             if (this.centreOffSet != null)
                 data.put("offset", NbtUtils.writeBlockPos(new BlockPos(this.centreOffSet)));
+
             data.putInt("stepIndex", this.stepIndex);
             return data;
         }
@@ -500,10 +509,13 @@ public class FallenDragonFight extends EndDragonFight {
         @Override
         public void deserialise(CompoundTag data) {
             this.isPlaced = data.getBoolean("isPlaced");
+
             if (data.contains("Centre"))
                 this.centre = NbtUtils.readBlockPos(data.getCompound("Centre"));
+
             if (data.contains("offset"))
                 this.centreOffSet = NbtUtils.readBlockPos(data.getCompound("offset"));
+
             this.stepIndex = data.getInt("stepIndex");
         }
 
@@ -522,113 +534,151 @@ public class FallenDragonFight extends EndDragonFight {
         }
 
         private void place() {
-            this.place(StructureManager.getDimension(), true);
+            this.place(StructureManager.getDimension());
         }
 
-        private void place(ServerLevel level, boolean inform) {
-            long start = System.currentTimeMillis();
-            if (this.isPlaced || level == null || level.getRandom() == null) return;
-            this.makeInitialIsland(level, start);
+        private void place(ServerLevel level) {
+            if (this.isPlaced || level == null) return;
+
+            this.makeInitialIsland(level);
         }
 
-        public Vec3i placeComponent(long start, ServerLevel level, int addX, int height, int addZ, ResourceLocation location, StructurePlaceSettings settings) {
-            StructureTemplate component = this.findStructure(location).orElse(null);
-            if (component == null || level == null) {
-                BeyondTheEnd.LOGGER.error("Could not find island component :" + location);
-                return Vec3i.ZERO;
+
+        private void placeComponentBatched(ServerLevel level, StructureTemplate template, BlockPos origin, StructurePlaceSettings settings) {
+            if (template == null || template.palettes.isEmpty()) return;
+
+            List<StructureTemplate.StructureBlockInfo> rawBlocks = settings.getRandomPalette(template.palettes, origin).blocks();
+
+            if (rawBlocks.isEmpty()) return;
+
+            List<Pair<BlockPos, BlockState>> blocks = new ArrayList<>();
+            List<Pair<BlockPos, CompoundTag>> blockEntities = new ArrayList<>();
+
+            for (StructureTemplate.StructureBlockInfo info : rawBlocks) {
+
+                BlockPos pos = StructureTemplate.calculateRelativePosition(settings, info.pos).offset(origin);
+
+                BlockState state = info.state.mirror(settings.getMirror()).rotate(settings.getRotation());
+
+                if (state.isAir()) continue;
+
+                blocks.add(Pair.of(pos, state));
+
+                if (info.nbt != null) {
+                    blockEntities.add(Pair.of(pos, info.nbt));
+                }
             }
-            Vec3i size = component.getSize();
-            BlockPos offset = new BlockPos(-size.getX() / 2 + addX, height, -size.getZ() / 2 + addZ);
 
-            placeInWorld(component,level, offset, offset, settings, level.getRandom(), Block.UPDATE_NONE | Block.UPDATE_SUPPRESS_LIGHT);
-            BeyondTheEnd.LOGGER.info("Placed " + component + " at " + offset + " in " + (System.currentTimeMillis() - start) + "ms");
+            for (int i = 0; i < blocks.size(); i += BLOCK_BATCH) {
+                int start = i;
+                int end = Math.min(i + BLOCK_BATCH, blocks.size());
+
+                tasks.add(() -> {
+                    for (int j = start; j < end; j++) {
+                        Pair<BlockPos, BlockState> pair = blocks.get(j);
+                        level.setBlock(pair.getFirst(), pair.getSecond(), Block.UPDATE_NONE);
+                    }
+                });
+            }
+
+            for (int i = 0; i < blockEntities.size(); i += BE_BATCH) {
+                int start = i;
+                int end = Math.min(i + BE_BATCH, blockEntities.size());
+
+                tasks.add(() -> {
+                    for (int j = start; j < end; j++) {
+                        Pair<BlockPos, CompoundTag> pair = blockEntities.get(j);
+                        BlockEntity be = level.getBlockEntity(pair.getFirst());
+
+                        if (be != null) {
+                            be.load(pair.getSecond());
+                        }
+                    }
+                });
+            }
+        }
+
+
+        private Vec3i queueStructure(ServerLevel level, int addX, int y, int addZ, ResourceLocation loc) {
+            StructureTemplate template = this.findStructure(loc).orElse(null);
+            if (template == null) return Vec3i.ZERO;
+
+            Vec3i size = template.getSize();
+
+            BlockPos offset = new BlockPos(
+                    -size.getX() / 2 + addX,
+                    y,
+                    -size.getZ() / 2 + addZ
+            );
+
+            placeComponentBatched(level, template, offset, new StructurePlaceSettings());
+
             return size;
         }
 
-        public boolean placeInWorld(StructureTemplate component,ServerLevelAccessor world, BlockPos templatePos, BlockPos offsetPos, StructurePlaceSettings settings, RandomSource random, int flags) {
-            if (component.palettes.isEmpty()) return false;
+        public void makeInitialIsland(ServerLevel level) {
 
-            List<StructureTemplate.StructureBlockInfo> blocks = settings.getRandomPalette(component.palettes, templatePos).blocks();
-            if (blocks.isEmpty()) return false;
-            if (component.getSize().getX() < 1 || component.getSize().getY() < 1 || component.getSize().getZ() < 1) return false;
+            Vec3i center =this.queueStructure(level, 0, 50, 0, new ResourceLocation(BeyondTheEnd.MODID, "center"));
 
-            List<Pair<BlockPos, CompoundTag>> blockEntitiesToLoad = new ArrayList<>(blocks.size());
+            this.queueStructure(level, center.getX() + 26, 50, 1,
+                    new ResourceLocation(BeyondTheEnd.MODID, "island_east"));
 
-            // Iterar sobre todos los bloques, pero solo colocar los que no son aire
-            for (StructureTemplate.StructureBlockInfo info : processBlockInfos(world, templatePos, offsetPos, settings, blocks, component)) {
-                BlockPos pos = info.pos;
-                BlockState state = info.state.mirror(settings.getMirror()).rotate(settings.getRotation());
+            Vec3i south0 = this.queueStructure(level, 0, 51, center.getZ() + 6,
+                    new ResourceLocation(BeyondTheEnd.MODID, "island_south_0"));
 
-                // 🔹 SALTAR BLOQUES DE AIRE
-                if (state.isAir()) continue;
+            this.queueStructure(level, 0, 51 + south0.getY(), center.getZ() + 6,
+                    new ResourceLocation(BeyondTheEnd.MODID, "island_south_1"));
 
-                // Colocar el bloque de forma rápida
-                world.setBlock(pos, state, flags & ~2); // quitar flag de actualización de vecinos
+            this.queueStructure(level, 0, 50, -center.getZ() + 17,
+                    new ResourceLocation(BeyondTheEnd.MODID, "island_north"));
 
-                // Guardar NBT para procesar después
-                if (info.nbt != null) {
-                    blockEntitiesToLoad.add(Pair.of(pos, info.nbt));
-                }
-            }
+            Vec3i west0 = this.queueStructure(level, -center.getX() + 15, 50, 0,
+                    new ResourceLocation(BeyondTheEnd.MODID, "island_west_0"));
 
-            // Procesar NBT de bloques contenedores después de colocar todos los bloques
-            for (Pair<BlockPos, CompoundTag> pair : blockEntitiesToLoad) {
-                BlockPos pos = pair.getFirst();
-                CompoundTag nbt = pair.getSecond();
-                BlockEntity be = world.getBlockEntity(pos);
-                if (be != null) {
-                    if (be instanceof RandomizableContainerBlockEntity) {
-                        nbt.putLong("LootTableSeed", random.nextLong());
-                    }
-                    be.load(nbt);
-                }
-            }
+            this.queueStructure(level, -center.getX() + 15, 50 + west0.getY(), 0,
+                    new ResourceLocation(BeyondTheEnd.MODID, "island_west_1"));
 
-            return true;
+            Vec3i westN0 = this.queueStructure(level, -center.getX() + 15, 50, -center.getZ() + 17,
+                    new ResourceLocation(BeyondTheEnd.MODID, "west_north_0"));
+
+            this.queueStructure(level, -center.getX() + 15, 50 + westN0.getY(), -center.getZ() + 17,
+                    new ResourceLocation(BeyondTheEnd.MODID, "west_north_1"));
+
+            Vec3i westS0 = this.queueStructure(level, -center.getX() + 15, 50, center.getZ() - 4,
+                    new ResourceLocation(BeyondTheEnd.MODID, "west_south_0"));
+
+            this.queueStructure(level, -center.getX() + 15, 50 + westS0.getY(), center.getZ() - 4,
+                    new ResourceLocation(BeyondTheEnd.MODID, "west_south_1"));
+
+            this.queueStructure(level, center.getX() + 24, 50, -center.getZ() + 18,
+                    new ResourceLocation(BeyondTheEnd.MODID, "island_east_north"));
+
+            Vec3i eastS0 = this.queueStructure(level, center.getX() - 11, 50, center.getZ() + 7,
+                    new ResourceLocation(BeyondTheEnd.MODID, "east_south_0"));
+
+            this.queueStructure(level, center.getX() - 11, 50 + eastS0.getY(), center.getZ() + 7,
+                    new ResourceLocation(BeyondTheEnd.MODID, "east_south_1"));
+
+
+            this.isPlaced = true;
         }
-        public void makeInitialIsland(ServerLevel level, long start) {
-            StructurePlaceSettings settings = new StructurePlaceSettings();
-            Vec3i center = this.centreOffSet;
 
-            switch (this.stepIndex) {
-                case 0 -> {
-                    center = this.placeComponent(start, level, 0, 50, 0, new ResourceLocation(BeyondTheEnd.MODID, "center"), settings);
-                    this.centreOffSet = center;
-                }
-                case 1 -> this.placeComponent(start, level, center.getX() + 26, 50, 1, new ResourceLocation(BeyondTheEnd.MODID, "island_east"), settings);
-                case 2 -> {
-                    Vec3i south = this.placeComponent(start, level, 0, 51, center.getZ() + 6, new ResourceLocation(BeyondTheEnd.MODID, "island_south_0"), settings);
-                    this.placeComponent(start, level, 0, 51 + south.getY(), center.getZ() + 6, new ResourceLocation(BeyondTheEnd.MODID, "island_south_1"), settings);
-                }
-                case 3 -> this.placeComponent(start, level, 0, 50, -center.getZ() + 17, new ResourceLocation(BeyondTheEnd.MODID, "island_north"), settings);
-                case 4 -> {
-                    Vec3i west = this.placeComponent(start, level, -center.getX() + 15, 50, 0, new ResourceLocation(BeyondTheEnd.MODID, "island_west_0"), settings);
-                    this.placeComponent(start, level, -center.getX() + 15, 50 + west.getY(), 0, new ResourceLocation(BeyondTheEnd.MODID, "island_west_1"), settings);
-                }
-                case 5 -> this.placeComponent(start, level, center.getX() + 24, 50, -center.getZ() + 18, new ResourceLocation(BeyondTheEnd.MODID, "island_east_north"), settings);
-                case 6 -> {
-                    Vec3i westN = this.placeComponent(start, level, -center.getX() + 15, 50, -center.getZ() + 17, new ResourceLocation(BeyondTheEnd.MODID, "west_north_0"), settings);
-                    this.placeComponent(start, level, -center.getX() + 15, 50 + westN.getY(), -center.getZ() + 17, new ResourceLocation(BeyondTheEnd.MODID, "west_north_1"), settings);
-                }
-                case 7 -> {
-                    Vec3i westS = this.placeComponent(start, level, -center.getX() + 15, 50, center.getZ() - 4, new ResourceLocation(BeyondTheEnd.MODID, "west_south_0"), settings);
-                    this.placeComponent(start, level, -center.getX() + 15, 50 + westS.getY(), center.getZ() - 4, new ResourceLocation(BeyondTheEnd.MODID, "west_south_1"), settings);
-                }
-                case 8 -> {
-                    Vec3i eastS = this.placeComponent(start, level, center.getX() - 11, 50, center.getZ() + 7, new ResourceLocation(BeyondTheEnd.MODID, "east_south_0"), settings);
-                    this.placeComponent(start, level, center.getX() - 11, 50 + eastS.getY(), center.getZ() + 7, new ResourceLocation(BeyondTheEnd.MODID, "east_south_1"), settings);
-                }
-                default -> {
-                    this.isPlaced = true;
-                    return;
-                }
+        public void tick() {
+            int maxPerTick = 2;
+
+            for (int i = 0; i < maxPerTick; i++) {
+                Runnable task = tasks.poll();
+                if (task == null) return;
+
+                task.run();
             }
-            this.stepIndex++;
         }
 
         public BlockPos getCentre() {
             this.verify();
+
             if (this.centre != null) return this.centre;
+
             this.centre = new BlockPos(0, 80, 0);
             return this.centre;
         }

@@ -53,4 +53,11 @@
       "beyondtheend:jellyminion_shoot2"
     ]
   }
+,
+  "fallen_dragon_music": {
+    "sounds": [{ "name": "beyondtheend:music/fallen_dragon_music", "stream": true }]
+  },
+  "jellyfish_music": {
+    "sounds": [{ "name": "beyondtheend:music/jellyfish_music", "stream": true }]
+  }
 }

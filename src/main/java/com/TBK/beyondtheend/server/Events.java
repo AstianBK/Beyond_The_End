@@ -114,6 +114,7 @@ public class Events {
     public static void onWorldTick(TickEvent.LevelTickEvent event) {
         Level level = event.level;
         if (event.side == LogicalSide.SERVER && event.phase == TickEvent.Phase.END && BeyondTheEnd.getServer().getLevel(BkDimension.BEYOND_END_LEVEL)!=null) {
+            ServerData.get().getStructureManager().getStructure().tick();
             ServerData.get().getStructureManager().getStructure().getCentre();
             if(level.getServer()!=null && ServerData.get().tag()!=null){
                 Vec3i pos=new BlockPos(0, 80, 0);

@@ -261,9 +261,8 @@ public class JellyfishFightEvent {
         if (p_64097_.getUUID().equals(this.jellyfishUUID)) {
             this.dragonEvent.setProgress(p_64097_.getHealth() / p_64097_.getMaxHealth());
             this.ticksSinceDragonSeen = 0;
-            if (p_64097_.hasCustomName()) {
-                this.dragonEvent.setName(p_64097_.getDisplayName());
-            }
+            // BBB: siempre usar getDisplayName() — incluye EntityTooltipInfo
+            this.dragonEvent.setName(p_64097_.getDisplayName());
         }
     }
     @OnlyIn(Dist.CLIENT)

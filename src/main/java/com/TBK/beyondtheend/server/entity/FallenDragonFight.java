@@ -260,7 +260,7 @@ public class FallenDragonFight extends EndDragonFight {
 
     private boolean isArenaLoaded() {
         for(int i = -8; i <= 8; ++i) {
-            for(int j = 8; j <= 8; ++j) {
+            for(int j = -8; j <= 8; ++j) {
                 ChunkAccess chunkaccess = this.level.getChunk(i, j, ChunkStatus.FULL, false);
                 if (!(chunkaccess instanceof LevelChunk)) {
                     return false;
@@ -334,9 +334,8 @@ public class FallenDragonFight extends EndDragonFight {
         if (p_64097_.getUUID().equals(this.dragonUUID)) {
             this.dragonEvent.setProgress(p_64097_.getHealth() / p_64097_.getMaxHealth());
             this.ticksSinceDragonSeen = 0;
-            if (p_64097_.hasCustomName()) {
-                this.dragonEvent.setName(p_64097_.getDisplayName());
-            }
+            // BBB: siempre usar getDisplayName() — incluye EntityTooltipInfo
+            this.dragonEvent.setName(p_64097_.getDisplayName());
         }
 
     }
@@ -528,7 +527,7 @@ public class FallenDragonFight extends EndDragonFight {
         private void place(ServerLevel level, boolean inform) {
             long start = System.currentTimeMillis();
             if (this.isPlaced || level == null || level.getRandom() == null) return;
-            this.makeInitialIsland(level, start);
+            // tick() llama a makeInitialIsland un step por tick
         }
 
         public Vec3i placeComponent(long start, ServerLevel level, int addX, int height, int addZ, ResourceLocation location, StructurePlaceSettings settings) {
@@ -624,6 +623,13 @@ public class FallenDragonFight extends EndDragonFight {
                 }
             }
             this.stepIndex++;
+        }
+
+        public void tick() {
+            if (this.isPlaced) return;
+            ServerLevel level = StructureManager.getDimension();
+            if (level == null || level.getRandom() == null) return;
+            this.makeInitialIsland(level, System.currentTimeMillis());
         }
 
         public BlockPos getCentre() {

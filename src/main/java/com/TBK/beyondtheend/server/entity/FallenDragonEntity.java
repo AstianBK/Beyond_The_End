@@ -18,6 +18,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.FluidTags;
@@ -1090,6 +1091,28 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
 
     public FallenDragonFight getDragonFight(){
         return this.dragonFight;
+    }
+
+    // -------------------------------------------------------------------------
+    // BetterBossBars compatibility:
+    // BBB detecta el ServerBossEvent escuchando startSeenByPlayer/stopSeenByPlayer
+    // en la propia entidad. El dragonEvent vive en FallenDragonFight, así que lo
+    // exponemos aquí para que BBB pueda sustituir la barra vanilla por la custom.
+    // -------------------------------------------------------------------------
+    @Override
+    public void startSeenByPlayer(ServerPlayer player) {
+        super.startSeenByPlayer(player);
+        if (this.dragonFight != null) {
+            this.dragonFight.addPlayer(player);
+        }
+    }
+
+    @Override
+    public void stopSeenByPlayer(ServerPlayer player) {
+        super.stopSeenByPlayer(player);
+        if (this.dragonFight != null) {
+            this.dragonFight.removePlayer(player);
+        }
     }
 
     private Path reconstructPath(Node p_31129_, Node p_31130_) {

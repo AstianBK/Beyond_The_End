@@ -334,9 +334,10 @@ public class FallenDragonFight extends EndDragonFight {
         if (p_64097_.getUUID().equals(this.dragonUUID)) {
             this.dragonEvent.setProgress(p_64097_.getHealth() / p_64097_.getMaxHealth());
             this.ticksSinceDragonSeen = 0;
-            if (p_64097_.hasCustomName()) {
-                this.dragonEvent.setName(p_64097_.getDisplayName());
-            }
+            // Siempre usar getDisplayName() — incluye EntityTooltipInfo en el Style,
+            // necesario para que BetterBossBars pueda identificar el EntityType
+            // y renderizar la textura custom.
+            this.dragonEvent.setName(p_64097_.getDisplayName());
         }
 
     }

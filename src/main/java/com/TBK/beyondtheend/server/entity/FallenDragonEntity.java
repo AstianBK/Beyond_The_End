@@ -127,7 +127,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
         this.lookControl = new LookControl(this) {
             @Override
             public void tick() {
-                // No hacer nada → ahorro de CPU
+
             }
         };
         this.setId(ENTITY_COUNTER.getAndAdd(this.subEntities.length + 1) + 1);

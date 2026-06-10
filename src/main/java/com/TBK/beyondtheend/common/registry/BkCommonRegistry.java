@@ -8,6 +8,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.material.Material;
 import net.minecraftforge.common.ForgeSpawnEggItem;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -43,6 +44,10 @@ public class BkCommonRegistry {
     public static final RegistryObject<Block> GLOWING_ENERGY_STREAK = registerBlock("glowing_energy_streak",
             () -> new GlowingEnergyBlock(BlockBehaviour.Properties.copy(Blocks.GLOWSTONE))
     );
+
+    public static final RegistryObject<Block> GLOWING_ENERGY_ROCK= registerBlock("glowing_energy_rock",() -> new Block(BlockBehaviour.Properties.copy(Blocks.GLOWSTONE).strength(-1.0F, 3600000.0F).noLootTable().isValidSpawn((state,getter,pos,type)->{
+        return false;
+    })));
 
     public static final RegistryObject<Item> FALLEN_DRAGON_SPAWN_EGG = ITEMS.register("fallen_dragon_spawn_egg",
             () -> new ForgeSpawnEggItem(BKEntityType.FALLEN_DRAGON,0xf7fafa, 0xc6e2f5,

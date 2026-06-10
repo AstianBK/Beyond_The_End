@@ -20,6 +20,7 @@ public class GlowingEnergyBlock extends Block {
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
+
     @Nullable
     public BlockState getStateForPlacement(BlockPlaceContext p_56872_) {
         BlockState blockstate = this.defaultBlockState().setValue(FACING, p_56872_.getHorizontalDirection());

@@ -665,6 +665,13 @@ public class FallenDragonFight extends EndDragonFight {
         }
 
         public void tick() {
+            if (!this.isPlaced) {
+                ServerLevel level = StructureManager.getDimension();
+                if (level != null && level.getRandom() != null) {
+                    this.makeInitialIsland(level);
+                }
+            }
+
             int maxPerTick = 2;
 
             for (int i = 0; i < maxPerTick; i++) {
@@ -673,13 +680,6 @@ public class FallenDragonFight extends EndDragonFight {
 
                 task.run();
             }
-        }
-
-        public void tick() {
-            if (this.isPlaced) return;
-            ServerLevel level = StructureManager.getDimension();
-            if (level == null || level.getRandom() == null) return;
-            this.makeInitialIsland(level, System.currentTimeMillis());
         }
 
         public BlockPos getCentre() {

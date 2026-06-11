@@ -1,4 +1,4 @@
-tpackage com.TBK.beyondtheend.server.entity;
+package com.TBK.beyondtheend.server.entity;
 
 import com.TBK.beyondtheend.BeyondTheEnd;
 import com.TBK.beyondtheend.common.registry.BKEntityType;
@@ -273,3 +273,4 @@ public class JellyfishFightEvent {
 
     }
 }
+

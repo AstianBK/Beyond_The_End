@@ -3,12 +3,14 @@ package com.TBK.beyondtheend.server.entity;
 import com.TBK.beyondtheend.BeyondTheEnd;
 import com.TBK.beyondtheend.server.network.PacketHandler;
 import com.TBK.beyondtheend.server.network.message.PacketNextActionJellyfish;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.Packet;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.util.Unit;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import software.bernie.geckolib3.core.IAnimatable;
@@ -19,17 +21,25 @@ import software.bernie.geckolib3.core.manager.AnimationData;
 import software.bernie.geckolib3.core.manager.AnimationFactory;
 import software.bernie.geckolib3.util.GeckoLibUtil;
 
-public class FallenDragonFakeEntity extends PathfinderMob implements IAnimatable {
+import java.util.ArrayList;
+
+public class FallenDragonFakeEntity extends LivingEntity implements IAnimatable {
     public final AnimationFactory factory = GeckoLibUtil.createFactory(this);
     public static final TicketType<Unit> FAKE = TicketType.create("fake", (p_9460_, p_9461_) -> {
         return 0;
     });
     public int idTarget = -1;
 
-    public FallenDragonFakeEntity(EntityType<? extends PathfinderMob> p_21683_, Level p_21684_) {
+    public FallenDragonFakeEntity(EntityType<? extends LivingEntity> p_21683_, Level p_21684_) {
         super(p_21683_, p_21684_);
+        this.noPhysics = true;
+        this.setNoGravity(true);
     }
 
+    @Override
+    public boolean isPushable() {
+        return false;
+    }
     @Override
     public void registerControllers(AnimationData data) {
         data.addAnimationController(new AnimationController<>(this,"controller",10, state -> {
@@ -44,17 +54,7 @@ public class FallenDragonFakeEntity extends PathfinderMob implements IAnimatable
         return true;
     }
 
-    @Override
-    protected int calculateFallDamage(float p_21237_, float p_21238_) {
-        return 0;
-    }
-    protected PathNavigation createNavigation(Level pLevel) {
-        FlyingPathNavigation flyingpathnavigation = new FlyingPathNavigation(this, pLevel);
-        flyingpathnavigation.setCanOpenDoors(false);
-        flyingpathnavigation.setCanFloat(true);
-        flyingpathnavigation.setCanPassDoors(true);
-        return flyingpathnavigation;
-    }
+
     @Override
     public void tick() {
         this.noPhysics = true;
@@ -75,9 +75,7 @@ public class FallenDragonFakeEntity extends PathfinderMob implements IAnimatable
             jellyfish.setTarget(this);
             double f5 = -Math.toDegrees(Math.atan2(vec32.y,Math.sqrt(vec32.x*vec32.x + vec32.z*vec32.z)));
             double f6 = Math.toDegrees(Math.atan2(vec32.z, vec32.x)) - 90.0F;
-            this.yHeadRot=(float)f6;
             this.setYHeadRot((float) f6);
-            this.yBodyRot= (float) (f6);
             this.setYRot((float) f6);
             this.setXRot((float) f5);
             this.setRot(this.getYRot(),this.getXRot());
@@ -97,6 +95,11 @@ public class FallenDragonFakeEntity extends PathfinderMob implements IAnimatable
     }
 
     @Override
+    public HumanoidArm getMainArm() {
+        return HumanoidArm.RIGHT;
+    }
+
+    @Override
     public AnimationFactory getFactory() {
         return this.factory;
     }
@@ -105,6 +108,24 @@ public class FallenDragonFakeEntity extends PathfinderMob implements IAnimatable
     protected void checkInsideBlocks() {
 
     }
+
+
+    @Override
+    public Iterable<ItemStack> getArmorSlots() {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public ItemStack getItemBySlot(EquipmentSlot p_21127_) {
+        return ItemStack.EMPTY;
+    }
+
+    @Override
+    public void setItemSlot(EquipmentSlot p_21036_, ItemStack p_21037_) {
+
+    }
+
+
 
     @Override
     public void checkDespawn() {

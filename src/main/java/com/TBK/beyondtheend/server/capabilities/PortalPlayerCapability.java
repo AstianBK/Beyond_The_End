@@ -71,6 +71,7 @@ public class PortalPlayerCapability implements PortalPlayer{
     @Override
     public void onUpdate() {
         this.handleAetherPortal();
+
     }
 
     @Override

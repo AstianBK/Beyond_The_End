@@ -116,6 +116,7 @@ public class Events {
         if (event.side == LogicalSide.SERVER && event.phase == TickEvent.Phase.END && BeyondTheEnd.getServer().getLevel(BkDimension.BEYOND_END_LEVEL)!=null) {
             ServerData.get().getStructureManager().getStructure().tick();
             ServerData.get().getStructureManager().getStructure().getCentre();
+            ServerData.get().getStructureManager().getStructure().tick();
             if(level.getServer()!=null && ServerData.get().tag()!=null){
                 Vec3i pos=new BlockPos(0, 80, 0);
 

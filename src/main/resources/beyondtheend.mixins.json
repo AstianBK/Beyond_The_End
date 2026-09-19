@@ -9,6 +9,9 @@
     "LevelAccesor",
     "ServerLevelAccesor"
   ],
+  "client": [
+    "MusicManagerMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   }

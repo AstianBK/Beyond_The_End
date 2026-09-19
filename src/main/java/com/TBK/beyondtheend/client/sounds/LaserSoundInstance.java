@@ -47,6 +47,8 @@ public class LaserSoundInstance extends EntityBoundSoundInstance {
         if(this.sourceLaser.lazerTimer<=0){
             this.stop();
         }
+        this.end = this.sourceLaser.directionBlock;
+        this.start = this.sourceLaser.position();
         this.volume=10.0F * getDistanceFinal();
         super.tick();
     }

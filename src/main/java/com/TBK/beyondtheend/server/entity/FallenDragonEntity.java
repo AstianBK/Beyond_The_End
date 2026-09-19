@@ -664,8 +664,7 @@ public class FallenDragonEntity extends PathfinderMob implements IAnimatable {
         if(p_21016_.isMagic()){
             return false;
         }
-        if(p_21016_.getEntity() !=null && this.random.nextFloat()<0.5F){
-            LivingEntity living= (LivingEntity) p_21016_.getEntity();
+        if(p_21016_.getEntity() instanceof LivingEntity living && this.random.nextFloat()<0.5F){
             float entityHitAngle = (float) ((Math.atan2(living.getZ() - this.getZ(), living.getX() - this.getX()) * (180 / Math.PI) - 90) % 360);
             float entityAttackingAngle = (this.yBodyRot-180.0F) % 360;
             float arc = 50.0F;

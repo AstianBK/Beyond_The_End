@@ -40,6 +40,7 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.*;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Random;
@@ -60,6 +61,9 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
     public int jumpCount = 0;
     public int waitInGroundTime = 0;
     public int deathTimer = 0;
+    // Bloques por tick a los que el punto de mira del rayo persigue al objetivo (0.25 = 5 b/s).
+    // Caminando (~4.3 b/s) acaba alcanzando al jugador; corriendo (~5.6 b/s) se le escapa.
+    private static final double LASER_TRACK_SPEED = 0.25D;
     private final double speed = 1.0F;
     private final double circleRadius = 300.0D;
     private double circlingAngle = 0.0F;
@@ -246,6 +250,7 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
             this.lazerTimer--;
 
             if(!this.level.isClientSide){
+                this.trackLaserTarget();
                 List<HitResult> hitResults = Util.internalRaycastForAllEntity(this.level,this,this.getEyePosition(),this.directionBlock,true,4.0F);
                 for (HitResult hitResult : hitResults){
                     if(hitResult.getType() == HitResult.Type.ENTITY){
@@ -282,25 +287,19 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
 
         if(!this.level.isClientSide){
             if(this.nextTimer>this.maxNextTimer && this.actuallyPhase==PhaseAttack.SPIN_AROUND && this.getTarget()!=null){
-                //int nextAction=this.level.random.nextInt(0,4);
-                // Para pruebas ------------------------------
-                /*int nextAction = 5;
-                if (lastAction < 3) nextAction = lastAction++;
-                else nextAction = 0;*/
-                //No repetir ---------------------------------
-                int nextAction =this.level.random.nextInt(0,4);
-                if (nextAction == lastAction){
-                    if (nextAction > 3) nextAction++;
-                    else nextAction = 0;
+                // Elige entre embestida (1), laser (2) e invocacion (3) sin repetir la anterior.
+                // La invocacion solo entra en la tirada si no quedan minions vivos.
+                List<Integer> candidates = new ArrayList<>();
+                candidates.add(1);
+                candidates.add(2);
+                if(this.canSummonMinions()){
+                    candidates.add(3);
                 }
+                candidates.remove(Integer.valueOf(this.lastAction));
 
-                lastAction = nextAction;
+                int nextAction = candidates.get(this.level.random.nextInt(candidates.size()));
+                this.lastAction = nextAction;
                 this.nextTimer = 0;
-                if(nextAction==3){
-                    if(!this.canSummonMinions()){
-                        nextAction=2;
-                    }
-                }
                 this.setActionForID(nextAction);
                 PacketHandler.sendToAllTracking(new PacketNextActionJellyfish(this.getId(),0,nextAction),this);
             }
@@ -437,6 +436,27 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
         }
 
         this.refreshDimensions();
+    }
+
+    private void trackLaserTarget() {
+        LivingEntity target = this.getTarget();
+        if(target == null || !target.isAlive()){
+            return;
+        }
+
+        if(this.directionBlock.equals(Vec3.ZERO)){
+            this.directionBlock = target.position();
+        }else {
+            Vec3 toTarget = target.position().subtract(this.directionBlock);
+            double distance = toTarget.length();
+            if(distance > 1.0E-3D){
+                this.directionBlock = this.directionBlock.add(toTarget.scale(Math.min(distance, LASER_TRACK_SPEED) / distance));
+            }
+        }
+
+        if(this.lazerTimer % 2 == 0){
+            PacketHandler.sendToAllTracking(new PacketActionDragon(this.getId(), Mth.floor(this.directionBlock.x), Mth.floor(this.directionBlock.y), Mth.floor(this.directionBlock.z)),this);
+        }
     }
 
     private void knockBack(List<Entity> p_31132_) {

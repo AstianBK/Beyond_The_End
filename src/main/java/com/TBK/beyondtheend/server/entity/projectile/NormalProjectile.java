@@ -1,20 +1,18 @@
 package com.TBK.beyondtheend.server.entity.projectile;
 
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.entity.projectile.ThrowableProjectile;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.List;
 
 public abstract class NormalProjectile extends ThrowableProjectile {
     public int animTimer0=0;
     public int animTimer=0;
+    protected float damageScale = 1.0F;
 
     protected NormalProjectile(EntityType<? extends ThrowableProjectile> p_37466_, Level p_37467_) {
         super(p_37466_, p_37467_);
@@ -31,10 +29,11 @@ public abstract class NormalProjectile extends ThrowableProjectile {
 
         if (!this.level.isClientSide()) {
             HitResult result = ProjectileUtil.getHitResult(this, this::canHitEntity);
-            if (result.getType() == HitResult.Type.MISS && this.isAlive()) {
-                List<Entity> intersecting = this.level.getEntitiesOfClass(Entity.class, this.getBoundingBox(), this::canHitEntity);
-                if (!intersecting.isEmpty())
-                    this.onHit(new EntityHitResult(intersecting.get(0)));
+            if (result.getType() != HitResult.Type.MISS) {
+                this.onHit(result);
+                if (this.isRemoved()) {
+                    return;
+                }
             }
         }
 
@@ -57,6 +56,10 @@ public abstract class NormalProjectile extends ThrowableProjectile {
 
         this.setPos(d7, d2, d3);
         this.checkInsideBlocks();
+    }
+
+    public void setDamageScale(float damageScale) {
+        this.damageScale = damageScale;
     }
 
     public float getAnimTimer(float partialTicks){

@@ -20,6 +20,8 @@ import javax.annotation.Nullable;
 import java.util.UUID;
 
 public class ChargeFollowing extends NormalProjectile{
+    private static final int MAX_LIFETIME = 400;
+
     @Nullable
     private Entity finalTarget;
     @Nullable
@@ -90,6 +92,11 @@ public class ChargeFollowing extends NormalProjectile{
     @Override
     public void tick() {
         if(!this.level.isClientSide){
+            if(this.tickCount > MAX_LIFETIME){
+                this.discard();
+                return;
+            }
+
             this.setDeltaMovement(new Vec3(this.targetDeltaX,this.targetDeltaY,this.targetDeltaZ).subtract(this.position()).normalize().scale(0.2F));
 
             if(this.targetId!=null){
@@ -134,7 +141,7 @@ public class ChargeFollowing extends NormalProjectile{
     @Override
     protected void onHitEntity(EntityHitResult p_37259_) {
         if(p_37259_.getEntity() instanceof LivingEntity living ){
-            living.hurt(DamageSource.LIGHTNING_BOLT,32.0F);
+            living.hurt(DamageSource.LIGHTNING_BOLT,32.0F * this.damageScale);
             if(this.level.isClientSide){
                 living.level.playLocalSound(living.getX(),living.getY(),living.getZ(), SoundEvents.THORNS_HIT, SoundSource.HOSTILE,3.0F,1.0F,false);
             }

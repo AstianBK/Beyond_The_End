@@ -46,7 +46,8 @@ public class JellyfishMinionEntity extends PathfinderMob {
     public double offsetX=0.0D;
     public double offsetZ=0.0D;
     public double heightOffset = 0.0D;
-    private final double speed = 0.25F;
+    // Minions molestos pero faciles de matar: mas rapidos (antes 0.25) y con poca vida (antes 40)
+    private final double speed = 0.45D;
     public Vec3 directionBlock=Vec3.ZERO;
     public PhaseAttack actuallyPhase= PhaseAttack.SPIN_AROUND;
     public AnimationState idle = new AnimationState();
@@ -63,7 +64,7 @@ public class JellyfishMinionEntity extends PathfinderMob {
 
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 40.0D)
+                .add(Attributes.MAX_HEALTH, 8.0D)
                 .add(Attributes.FOLLOW_RANGE,100.0D)
                 .add(Attributes.FLYING_SPEED,0.7D);
     }
@@ -203,7 +204,7 @@ public class JellyfishMinionEntity extends PathfinderMob {
             target=this.jellyfish==null ? this.findJellyfish((ServerLevel) this.level) : this.jellyfish;
         }
         if(this.actuallyPhase== JellyfishMinionEntity.PhaseAttack.SPIN_AROUND ){
-            this.circlingAngle += this.rot ? 0.05F : -0.05F;
+            this.circlingAngle += this.rot ? 0.075F : -0.075F; // antes 0.05: giran mas deprisa
             offsetX = Math.cos(this.circlingAngle) * this.circleRadius;
             offsetZ = Math.sin(this.circlingAngle) * this.circleRadius;
             this.heightOffset = Math.cos(this.circlingAngle) * 9;

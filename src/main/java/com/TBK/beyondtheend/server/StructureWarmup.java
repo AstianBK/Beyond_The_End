@@ -20,6 +20,9 @@ import net.minecraftforge.fml.common.Mod;
  * StructureTemplateManager#get(...) cachea el resultado internamente, asi
  * que cuando FallenDragonFight.Structure#findStructure(...) lo pida despues,
  * sera un cache hit casi instantaneo en lugar de una lectura de disco.
+ *
+ * Solo se hace si la isla aun no esta colocada: en un mundo ya empezado
+ * las plantillas no se vuelven a usar.
  */
 @Mod.EventBusSubscriber(modid = BeyondTheEnd.MODID)
 public class StructureWarmup {
@@ -46,6 +49,19 @@ public class StructureWarmup {
     public static void onServerStarting(ServerStartingEvent event) {
         MinecraftServer server = event.getServer();
         StructureTemplateManager structureManager = server.getStructureManager();
+
+        // Las plantillas solo se usan para construir la isla la primera vez
+        // (Structure#makeInitialIsland). En un mundo donde ya esta colocada
+        // nadie las pide, y precargarlas costaba ~11 s en cada carga del mundo.
+        // Si algo falla al consultarlo, se precarga como antes.
+        try {
+            if (ServerData.get().getStructureManager().getStructure().isPlaced()) {
+                BeyondTheEnd.LOGGER.info("[BeyondTheEnd] Isla del lobby ya colocada: no se precargan sus estructuras");
+                return;
+            }
+        } catch (Exception e) {
+            BeyondTheEnd.LOGGER.warn("[BeyondTheEnd] No se pudo comprobar si la isla del lobby ya esta colocada; se precarga igualmente", e);
+        }
 
         long start = System.currentTimeMillis();
         BeyondTheEnd.LOGGER.info(

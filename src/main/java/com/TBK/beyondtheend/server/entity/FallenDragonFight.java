@@ -682,6 +682,11 @@ public class FallenDragonFight extends EndDragonFight {
             }
         }
 
+        /** true cuando la isla del lobby ya se ha colocado en este mundo. */
+        public boolean isPlaced() {
+            return this.isPlaced;
+        }
+
         public BlockPos getCentre() {
             this.verify();
 

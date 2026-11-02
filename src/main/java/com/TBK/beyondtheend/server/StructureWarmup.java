@@ -55,7 +55,7 @@ public class StructureWarmup {
         // nadie las pide, y precargarlas costaba ~11 s en cada carga del mundo.
         // Si algo falla al consultarlo, se precarga como antes.
         try {
-            if (ServerData.get().getStructureManager().getStructure().isPlaced()) {
+            if (ServerData.get().getStructureManager().getStructure().isComplete()) {
                 BeyondTheEnd.LOGGER.info("[BeyondTheEnd] Isla del lobby ya colocada: no se precargan sus estructuras");
                 return;
             }

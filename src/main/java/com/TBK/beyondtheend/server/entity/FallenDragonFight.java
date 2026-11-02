@@ -466,7 +466,17 @@ public class FallenDragonFight extends EndDragonFight {
         private final ResourceLocation structure;
         private boolean isPlaced;
         private BlockPos centre;
+        /** Tareas de colocacion de la isla ya ejecutadas (se guarda en el mundo para poder reanudar). */
         private int stepIndex = 0;
+        /**
+         * true cuando TODAS las tareas de la isla se han ejecutado. isPlaced se pone a true en cuanto se encolan,
+         * pero la cola no se guarda: si el juego se cerraba antes de terminar (unos minutos a 4 tareas por tick),
+         * la isla se quedaba a medias para siempre. Ahora, al cargar un mundo con isPlaced y sin placementDone,
+         * se vuelven a generar las mismas tareas (mismo orden) y se saltan las stepIndex ya hechas.
+         */
+        private boolean placementDone;
+        /** Solo en memoria: ya se ha comprobado en esta sesion si habia que reanudar. */
+        private boolean resumeChecked;
         private Vec3i centreOffSet;
 
         public Queue<Runnable> tasks = new ArrayDeque<>();
@@ -504,6 +514,7 @@ public class FallenDragonFight extends EndDragonFight {
                 data.put("offset", NbtUtils.writeBlockPos(new BlockPos(this.centreOffSet)));
 
             data.putInt("stepIndex", this.stepIndex);
+            data.putBoolean("placementDone", this.placementDone);
             return data;
         }
 
@@ -518,6 +529,8 @@ public class FallenDragonFight extends EndDragonFight {
                 this.centreOffSet = NbtUtils.readBlockPos(data.getCompound("offset"));
 
             this.stepIndex = data.getInt("stepIndex");
+            // Mundos de antes de este cambio: no se sabe si terminaron; se dan por terminados (no se reconstruye nada)
+            this.placementDone = data.contains("placementDone") ? data.getBoolean("placementDone") : this.isPlaced;
         }
 
         private static ResourceLocation getDefaultStructure() {
@@ -668,18 +681,43 @@ public class FallenDragonFight extends EndDragonFight {
             if (!this.isPlaced) {
                 ServerLevel level = StructureManager.getDimension();
                 if (level != null && level.getRandom() != null) {
+                    this.stepIndex = 0;
                     this.makeInitialIsland(level);
                 }
             }
 
+            // La isla se quedo a medias en una sesion anterior: mismas tareas, saltando las ya ejecutadas
+            if (this.isPlaced && !this.placementDone && !this.resumeChecked && tasks.isEmpty()) {
+                ServerLevel level = StructureManager.getDimension();
+                if (level != null) {
+                    this.resumeChecked = true;
+                    int done = this.stepIndex;
+                    this.makeInitialIsland(level);
+                    for (int i = 0; i < done && tasks.poll() != null; i++) { }
+                    BeyondTheEnd.LOGGER.info("[BeyondTheEnd] Reanudando la isla del lobby: {} tareas ya hechas, faltan {}",
+                            done, tasks.size());
+                }
+            }
             int maxPerTick = 2;
 
             for (int i = 0; i < maxPerTick; i++) {
                 Runnable task = tasks.poll();
-                if (task == null) return;
+                if (task == null) {
+                    if (this.isPlaced && !this.placementDone) {
+                        this.placementDone = true;
+                        BeyondTheEnd.LOGGER.info("[BeyondTheEnd] Isla del lobby terminada ({} tareas)", this.stepIndex);
+                    }
+                    return;
+                }
 
                 task.run();
+                this.stepIndex++;
             }
+        }
+
+        /** true cuando la isla del lobby esta colocada del todo (todas las tareas ejecutadas). */
+        public boolean isComplete() {
+            return this.isPlaced && this.placementDone;
         }
 
         /** true cuando la isla del lobby ya se ha colocado en este mundo. */

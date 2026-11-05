@@ -2,6 +2,7 @@ package com.TBK.beyondtheend.server.entity;
 
 import com.TBK.beyondtheend.BeyondTheEnd;
 import com.TBK.beyondtheend.Config;
+import com.TBK.beyondtheend.EndingTeleportHandler;
 import com.TBK.beyondtheend.client.particle.BKParticles;
 import com.TBK.beyondtheend.common.Util;
 import com.TBK.beyondtheend.common.api.ICamShaker;
@@ -13,6 +14,7 @@ import com.TBK.beyondtheend.server.network.PacketHandler;
 import com.TBK.beyondtheend.server.network.message.PacketNextActionJellyfish;
 import com.TBK.beyondtheend.server.network.message.PacketPlaySound;
 import com.TBK.beyondtheend.server.network.message.PacketActionDragon;
+import com.TBK.beyondtheend.server.network.message.StartEndingPacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
@@ -47,6 +49,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.*;
+import net.minecraftforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -131,6 +134,7 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
     private final JellyfishPartEntity leg2;
     private final JellyfishPartEntity leg3;
     private final JellyfishPartEntity[] legs;
+    private boolean endingTriggered = false;
 
     private final BlockPos[] groundPos = new BlockPos[]{
             new BlockPos(0,90,0),
@@ -942,13 +946,25 @@ public class JellyfishEntity extends PathfinderMob implements ICamShaker {
         }
     }
 
-    public void tickDeath(){
+    @Override
+    public void tickDeath() {
         this.deathTimer++;
-        if(!this.level.isClientSide && this.deathTimer>90){
-            if(BeyondTheEnd.jellyfishFightEvent!=null){
+
+        if (!this.level.isClientSide && this.deathTimer > 3 && !endingTriggered) {
+            endingTriggered = true;
+            if (BeyondTheEnd.jellyfishFightEvent != null) {
                 BeyondTheEnd.jellyfishFightEvent.setJellyFishKilled(this);
             }
-            this.level.broadcastEntityEvent(this, (byte)60);
+
+            this.level.broadcastEntityEvent(this, (byte) 60);
+            if (this.level instanceof ServerLevel serverLevel) {
+                for (ServerPlayer player : serverLevel.getPlayers(LivingEntity::isAlive)) {
+
+                    EndingTeleportHandler.allowTeleport(player);
+
+                    PacketHandler.MOD_CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), new StartEndingPacket());
+                }
+            }
             this.remove(Entity.RemovalReason.KILLED);
         }
     }

@@ -27,8 +27,11 @@ import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.server.ServerLifecycleHooks;
 import org.slf4j.Logger;
+
+import java.io.File;
 
 @Mod(BeyondTheEnd.MODID)
 public class BeyondTheEnd
@@ -44,8 +47,9 @@ public class BeyondTheEnd
     public static int z=5;
     public static int x=1;
 
-    public BeyondTheEnd()
-    {
+    public BeyondTheEnd() {
+        System.setProperty("org.bytedeco.javacpp.cachedir",
+                new File(FMLPaths.GAMEDIR.get().toFile(), "javacpp-cache").getAbsolutePath());
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
         modEventBus.addListener(this::clientSetup);

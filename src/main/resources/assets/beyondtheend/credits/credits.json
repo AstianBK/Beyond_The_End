@@ -1,0 +1,32 @@
+{
+  "Credits": [
+    {
+      "category": "Desarrolladores",
+      "authors": [
+        "Dev"
+      ]
+    },
+    {
+      "category": "Artistas",
+      "authors": [
+        "Artista 1",
+        "Artista 2",
+        "Artista 3"
+      ]
+    },
+    {
+      "category": "Musica",
+      "authors": [
+        "Compositor 1",
+        "Compositor 2"
+      ]
+    },
+    {
+      "category": "Agradecimientos especiales",
+      "authors": [
+        "Comunidad de Minecraft",
+        "Colaboradores"
+      ]
+    }
+  ]
+}

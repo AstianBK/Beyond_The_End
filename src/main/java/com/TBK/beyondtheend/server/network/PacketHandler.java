@@ -50,10 +50,11 @@ public class PacketHandler {
         channel.registerMessage(index++, PacketPlaySound.class, PacketPlaySound::toBytes,
                 PacketPlaySound::new, PacketPlaySound::handle);
 
+        channel.registerMessage(index++,StartEndingPacket.class,StartEndingPacket::write,
+                StartEndingPacket::new,StartEndingPacket::handle);
 
-
-
-
+        channel.registerMessage(index++,FinishEndingPacket.class,FinishEndingPacket::write,
+                FinishEndingPacket::new,FinishEndingPacket::handle);
 
     }
 
